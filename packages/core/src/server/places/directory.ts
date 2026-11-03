@@ -19,6 +19,7 @@ import { PLACE_PAGE_SIZE, type PlaceFilters } from '../../places/filters';
 import { foldText } from '../../systems/directory-filters';
 import type { PlaceFeature } from '../../places/features';
 import type { PlaceKind } from '../../places/types';
+import { stateOptions } from '../../places/states';
 import { featuresOf } from './features';
 import { isPartnerPlace, partnerOfPlace } from './partner-links';
 import { placeGms, placeSystems } from './people';
@@ -70,7 +71,7 @@ export type PlaceCard = {
 
 /**
  * One page of `/places` for the filters, and what the Estado, Cidade and Tags filters can offer:
- * the states with a place listed, the cities of the state picked, and the approved tags some listed
+ * all 27 states with how many places each has listed, the cities of the state picked, and the approved tags some listed
  * place has (plus any picked in the address, so a pick never vanishes from its own filter). Null for
  * a page past the last one, which the page answers with a 404 (the first page always exists, even
  * empty).
@@ -121,7 +122,7 @@ export async function listPlaces(db: AnyDb, filters: PlaceFilters, now: Date) {
       .orderBy(...order)
       .limit(PLACE_PAGE_SIZE)
       .offset((filters.page - 1) * PLACE_PAGE_SIZE),
-    tagOptions(db, 'state'),
+    stateCounts(db),
     filters.state ? tagOptions(db, 'city', `${filters.state}-`) : Promise.resolve([]),
     featureOptions(db, filters.tags),
   ]);
@@ -181,7 +182,18 @@ export async function placeCardsOf(
 }
 
 /** The tags of one kind that listed places carry, A to Z: the options of a filter. */
-async function tagOptions(db: AnyDb, kind: 'state' | 'city', prefix?: string) {
+/** Every state, each with how many listed places carry its tag. */
+async function stateCounts(db: AnyDb) {
+  const rows = await db
+    .select({ slug: placeTags.slug, count: sql<number>`count(distinct ${places.id})::int` })
+    .from(placeTags)
+    .innerJoin(places, eq(places.id, placeTags.placeId))
+    .where(and(listed, eq(placeTags.kind, 'state')))
+    .groupBy(placeTags.slug);
+  return stateOptions(new Map(rows.map((row) => [row.slug, Number(row.count)])));
+}
+
+async function tagOptions(db: AnyDb, kind: 'city', prefix?: string) {
   return db
     .selectDistinct({ slug: placeTags.slug, label: placeTags.label })
     .from(placeTags)

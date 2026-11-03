@@ -35,6 +35,7 @@
     plannedSessions = null,
     startsAt = null,
     nextSession = null,
+    scheduledNext = null,
     timezone = 'America/Sao_Paulo',
     durationHours = 4,
     step: initialStep = 'pergunta',
@@ -52,6 +53,8 @@
     startsAt?: Date | string | null;
     /** A weekly campaign's next date (`YYYY-MM-DDTHH:mm`, the table's zone): the picker starts on it. */
     nextSession?: string | null;
+    /** The next session is already on the list (Sessões): "Continua na sessão 5", with its date. */
+    scheduledNext?: { number: number; startsAt: Date } | null;
     timezone?: string;
     durationHours?: number;
     /** The step to open on, from `?etapa=`. */
@@ -122,6 +125,23 @@
 
   // svelte-ignore state_referenced_locally
   let nextAt = $state(nextSession ?? '');
+
+  // With the next session already scheduled, the answer does not ask for a date until "Mudar data".
+  let changeNext = $state(false);
+  const nextLabel = $derived(
+    scheduledNext
+      ? new Intl.DateTimeFormat(getLocale(), {
+          timeZone: timezone,
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+          .format(scheduledNext.startsAt)
+          .replace(' às ', ', ')
+      : null,
+  );
 
   // svelte-ignore state_referenced_locally
   let more = $state(!(plannedSessions && session && session >= plannedSessions));
@@ -357,9 +377,25 @@
           <div class="clear-both pt-2">
             <label class="{rowClass} min-h-14 border-b border-surface-200-800">
               <input type="radio" class="radio size-6" bind:group={more} value={true} />
-              {@render choice(m.manage_confirm_more_yes(), m.manage_confirm_more_yes_hint())}
+              {#if scheduledNext && nextLabel && !changeNext}
+                {@render choice(
+                  m.manage_confirm_more_scheduled({ number: scheduledNext.number }),
+                  m.manage_confirm_more_scheduled_at({ date: nextLabel }),
+                )}
+              {:else}
+                {@render choice(m.manage_confirm_more_yes(), m.manage_confirm_more_yes_hint())}
+              {/if}
             </label>
-            {#if more}
+            {#if more && scheduledNext && !changeNext}
+              <div class="mb-3 ml-10">
+                <button
+                  type="button"
+                  class="inline-flex min-h-11 items-center font-semibold text-link"
+                  onclick={() => (changeNext = true)}>{m.sessions_move()}</button
+                >
+              </div>
+            {/if}
+            {#if more && (!scheduledNext || changeNext)}
               <!-- Under the choice's text: the 24px control plus the 14px gap. -->
               <div class="mt-3 mb-4 ml-10">
                 <SessionPicker

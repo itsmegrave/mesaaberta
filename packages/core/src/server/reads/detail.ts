@@ -8,6 +8,7 @@ import { attendanceOf, listRegistrations, registrationStatus } from '../registra
 import { waitlistOf } from '../registrations/waitlist';
 import { findTableBySlug, joinDetailsOf } from '../tables/queries';
 import { hasStarted } from '../tables/schedule';
+import { listSessions } from '../tables/sessions';
 import { reportTargetsOf } from '../moderation/reports';
 import { systemWaitingOf } from '../systems';
 import { rosterBadges } from '../badges/reads';
@@ -116,5 +117,16 @@ export async function readDetail(db: AnyDb, profile: Actor | null, slug: string,
     // The "Onde jogar" place it happens at, when that place is listed. The web drops it while the
     // places directory is off.
     place: table.placeId ? await tablePlace(db, table.placeId) : null,
+    // The table's sessions (`use_table_sessions`; the web drops them while the flag is off): dates
+    // for everyone, notes for the table, attendance for quem mestra and each player's own.
+    sessions: await listSessions(
+      db,
+      { id, status: found.status },
+      manage
+        ? { role: 'gm' }
+        : profile && myStatus === 'confirmed'
+          ? { role: 'player', playerId: profile.id }
+          : { role: 'visitor' },
+    ),
   };
 }

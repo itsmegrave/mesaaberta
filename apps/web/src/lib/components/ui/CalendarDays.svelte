@@ -39,7 +39,8 @@
           ></DatePicker.NextTrigger
         >
       </DatePicker.ViewControl>
-      <DatePicker.Table class="w-full text-center text-sm">
+      <!-- No spacing between columns: seven 44px days fit a phone-wide dialog. -->
+      <DatePicker.Table class="w-full border-spacing-x-0 border-spacing-y-2 text-center text-sm">
         <DatePicker.TableHead>
           <DatePicker.TableRow>
             {#each picker().weekDays as weekDay (weekDay.long)}

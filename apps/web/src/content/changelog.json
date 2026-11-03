@@ -1,9 +1,24 @@
 [
   {
     "date": "2026-11-03",
-    "title": "A mesa na sua agenda",
-    "summary": "Quem mestra e quem tem vaga podem pôr a mesa na agenda direto da página dela.",
+    "title": "Sessões da mesa e a mesa na sua agenda",
+    "summary": "Campanhas e aventuras ganham uma lista de sessões que quem mestra agenda, muda ou cancela, e a mesa vai para a sua agenda direto da página dela.",
     "changes": [
+      {
+        "kind": "new",
+        "title": "Sessões em Gerenciar mesa",
+        "description": "Em Gerenciar mesa, a seção Sessões mostra as próximas datas e as já jogadas, com quantos estiveram. Dá para agendar mais uma sessão, mudar a data, escrever uma nota para quem joga ou cancelar uma sessão. Uma campanha semanal já deixa as 4 próximas datas na lista."
+      },
+      {
+        "kind": "new",
+        "title": "Sessões na página da mesa",
+        "description": "A página de uma campanha ou aventura lista as próximas sessões. Quem tem vaga também vê as notas de quem mestra e, nas sessões já jogadas, se esteve presente."
+      },
+      {
+        "kind": "improved",
+        "title": "A mesa continua?",
+        "description": "Ao fim de uma sessão, se a próxima já está agendada, a pergunta já mostra a data dela em vez de pedir outra."
+      },
       {
         "kind": "new",
         "title": "Adicionar à agenda",
@@ -14,6 +29,11 @@
         "title": "Financiamentos em Explorar",
         "description": "Os financiamentos coletivos agora ficam em Explorar, junto de Sistemas, Onde jogar e Quem mestra, no menu lateral e na barra do celular.",
         "href": "/crowdfunding"
+      },
+      {
+        "kind": "fixed",
+        "title": "Sem erro depois de salvar um formulário",
+        "description": "Salvar um formulário que leva para outra página podia travar a tela depois de enviar. Isso foi corrigido."
       }
     ]
   },

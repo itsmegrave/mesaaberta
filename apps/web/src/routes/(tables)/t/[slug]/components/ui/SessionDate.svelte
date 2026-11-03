@@ -12,8 +12,16 @@
     startsAt,
     timezone,
     stateLabel,
+    number = null,
     large = false,
-  }: { startsAt: Date; timezone: string; stateLabel?: string | null; large?: boolean } = $props();
+  }: {
+    startsAt: Date;
+    timezone: string;
+    stateLabel?: string | null;
+    /** Which session it is, for a table that lists its sessions: "Próxima sessão · sessão 5". */
+    number?: number | null;
+    large?: boolean;
+  } = $props();
 
   const locale = getLocale();
   const zone = $derived(shownTimezone(timezone));
@@ -30,7 +38,9 @@
     <span class="mt-1 text-xs font-bold tracking-wide uppercase">{box.month}</span>
   </div>
   <div>
-    <p class="text-sm font-semibold text-muted">{m.table_next_session()}</p>
+    <p class="text-sm font-semibold text-muted">
+      {number ? m.table_next_session_number({ number }) : m.table_next_session()}
+    </p>
     <p class="mt-1 {large ? 'text-xl' : 'text-lg'} leading-snug font-semibold">
       {formatSession(startsAt, zone, locale)}
     </p>

@@ -146,9 +146,10 @@
       name="tableId"
       value={controller.values.tableId}
     />{/if}
-  <div
-    class="flex items-end gap-1 rounded-xl border border-surface-200-800 bg-panel p-1 focus-within:ring-2 focus-within:ring-primary-500"
-  >
+  <!-- One row as in the layout's Mensagens boards: the field carries the border and the focus, and the
+       buttons keep to its last line as it grows. The field's 9px padding centers one 24px line in the
+       44px row (1px borders). -->
+  <div class="flex items-end gap-2">
     <EmojiPicker onselect={insertEmoji} finalFocusEl={() => textarea ?? null} />
     <label for="message-body" class="sr-only">{m.messages_composer_label()}</label>
     <MATextArea
@@ -165,12 +166,17 @@
       placeholder={m.messages_composer_placeholder()}
       aria-invalid={error ? 'true' : undefined}
       aria-describedby={error || notice ? 'message-notice' : undefined}
-      class="textarea field-sizing-content max-h-40 min-h-11 min-w-0 flex-1 resize-none overflow-y-auto rounded-lg border-0 bg-transparent px-2 py-3 shadow-none focus:outline-none"
+      class="textarea field-sizing-content max-h-40 min-w-0 flex-1 resize-none overflow-y-auto rounded-lg border-control border-ink-muted px-3 py-[9px] leading-6"
     ></MATextArea>
-    <MAButton type="submit" variant="primary" {controller} class="shrink-0 font-semibold">
+    <MAButton
+      type="submit"
+      variant="primary"
+      size="icon"
+      {controller}
+      aria-label={m.messages_send()}
+      class="shrink-0"
+    >
       <Icon name="send" size={18} />
-      <span class="hidden sm:inline">{m.messages_send()}</span>
-      <span class="sr-only sm:hidden">{m.messages_send()}</span>
     </MAButton>
   </div>
   <div class="flex items-center justify-between gap-3 text-sm">
