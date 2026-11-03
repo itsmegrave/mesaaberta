@@ -3194,6 +3194,7 @@
   "places_search_label": "Buscar lugar, bairro ou cidade",
   "places_state_label": "Estado",
   "places_state_any": "Todos os estados",
+  "places_state_option": "{name} ({count})",
   "places_city_label": "Cidade",
   "places_city_any": "Todas as cidades",
   "places_kind_label": "Tipo",
