@@ -28,6 +28,11 @@
         "kind": "fixed",
         "title": "Sem erro depois de salvar um formulário",
         "description": "Salvar um formulário que leva para outra página podia travar a tela depois de enviar. Isso foi corrigido."
+      },
+      {
+        "kind": "improved",
+        "title": "Cada sessão na sua agenda",
+        "description": "Uma sessão cancelada sai da agenda, uma sessão que mudou de data aparece na nova data e uma sessão extra entra no evento da mesa. Quando quem mestra muda uma sessão, todos recebem por e-mail o convite atualizado."
       }
     ]
   },
