@@ -9,7 +9,8 @@
   "preview_urls": false,
   // Event sweep every 5 minutes and the daily import at 04:00. They moved here from the web Worker
   // (../../wrangler.jsonc) in one step; two Workers on the same cron would run every job twice.
-  "triggers": { "crons": ["*/5 * * * *", "0 4 * * *"] },
+  // The game systems' logo search every 10 minutes (packages/core/src/server/systems/logos).
+  "triggers": { "crons": ["*/5 * * * *", "0 4 * * *", "*/10 * * * *"] },
   // Placeholders, like the web Worker's (../../wrangler.jsonc): a deployment keeps its own copy with
   // its own values. Secrets (database, Instagram, Resend) never go in a Wrangler file.
   "vars": {
@@ -28,6 +29,8 @@
     // Handler names the queue consumer runs for real, comma-separated (ADR 0003, stage 3). Blank
     // keeps it in the shadow stage: every message is acknowledged and nothing runs.
     "QUEUE_LIVE_HANDLERS": "",
+    // "off" stops the background logo search; blank runs it (admins review every find).
+    "LOGO_SEARCH": "",
   },
   "hyperdrive": [
     {

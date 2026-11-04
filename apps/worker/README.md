@@ -4,8 +4,9 @@ The background Worker of Trello #120: Cron Triggers today, the Queues consumer l
 event-delivery graph from `@mesaaberta/core`, the same code the web Worker dispatches with after a request.
 
 **Status: owns the crons.** It has no routes. The web Worker's `triggers.crons` is empty, this
-Worker runs the event sweep (`*/5 * * * *`) and the daily import (`0 4 * * *`), and `EVENT_POLLER`
-is off.
+Worker runs the event sweep (`*/5 * * * *`), the daily import (`0 4 * * *`) and the system logo
+search (`*/10 * * * *`, ten systems a run, off with `LOGO_SEARCH=off`; it has no Sentry monitor), and
+`EVENT_POLLER` is off.
 
 ## Cutover (done in one release)
 

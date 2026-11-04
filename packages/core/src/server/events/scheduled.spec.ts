@@ -27,3 +27,22 @@ it('routes the daily and five-minute cron independently even when both fire at 0
   expect(sweeper).toHaveBeenCalledOnce();
   expect(importer).toHaveBeenCalledOnce();
 });
+
+it('runs the logo search on its own ten-minute cron, and nothing else then', async () => {
+  const sweeper = vi.fn(),
+    importer = vi.fn(),
+    logoSearch = vi.fn(async () => ({ searched: 0, found: 0 }));
+  await runScheduled(
+    { cron: '*/10 * * * *', scheduledTime: 42 },
+    {},
+    {
+      log: logger,
+      sweeper,
+      importer,
+      logoSearch,
+    },
+  );
+  expect(logoSearch).toHaveBeenCalledOnce();
+  expect(sweeper).not.toHaveBeenCalled();
+  expect(importer).not.toHaveBeenCalled();
+});
