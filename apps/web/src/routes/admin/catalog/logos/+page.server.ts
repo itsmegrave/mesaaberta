@@ -76,6 +76,13 @@ export const actions: Actions = {
     const { approved = 0 } = await decideLogo(event.locals, actor, 'approveSure');
     return { form, approved };
   },
+  // Sends every system the search found nothing for back to the search (after it learns a source).
+  forgetMissing: async (event) => {
+    const actor = await admin(event);
+    const form = validateStringForm(await event.request.formData(), emptySchema, []);
+    const { forgotten = 0 } = await decideLogo(event.locals, actor, 'forgetMissing');
+    return { form, forgotten };
+  },
   // A logo the admin sends by hand for a system the search could not fill.
   upload: async (event) => {
     const actor = await admin(event);

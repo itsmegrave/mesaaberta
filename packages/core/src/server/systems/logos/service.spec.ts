@@ -6,6 +6,7 @@ import {
   approveLogo,
   approveSureLogos,
   forgetLogo,
+  forgetMissingLogos,
   listSystemLogos,
   recordLogoSearch,
   rejectLogo,
@@ -150,5 +151,14 @@ describe('system logos', () => {
       removed: 'systems/dh.png',
     });
     expect((await systemsToSearch(test.db, admin)).map((s) => s.slug)).toEqual(['daggerheart']);
+  });
+
+  it('sends every system found empty back to the search', async () => {
+    await expect(forgetMissingLogos(test.db, member)).rejects.toThrow();
+    expect(await forgetMissingLogos(test.db, admin)).toEqual({ forgotten: 1 });
+    expect((await systemsToSearch(test.db, admin, 10)).map((s) => s.slug)).toEqual([
+      'daggerheart',
+      'caseiro',
+    ]);
   });
 });

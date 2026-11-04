@@ -22,7 +22,7 @@ export const recordSchema = z.object({
   found: z
     .object({
       path: z.string().max(200),
-      method: z.enum(['wikidata', 'commons', 'website']),
+      method: z.enum(['wikidata', 'commons', 'website', 'wikipedia']),
       confidence: z.enum(['high', 'medium', 'low']),
       imageUrl: url,
       sourcePage: url,
@@ -258,6 +258,19 @@ export async function rejectLogo(db: AnyDb, actor: Actor, systemId: string) {
       .where(eq(systemLogos.systemId, systemId));
     return { removed: before.path };
   });
+}
+
+/**
+ * Forgets every system the search found nothing for, so the next search looks at them again (after
+ * the finder learns a new source). They have no file to delete.
+ */
+export async function forgetMissingLogos(db: AnyDb, actor: Actor) {
+  authorize(actor, 'admin:access');
+  const deleted = await db
+    .delete(systemLogos)
+    .where(eq(systemLogos.status, 'missing'))
+    .returning({ systemId: systemLogos.systemId });
+  return { forgotten: deleted.length };
 }
 
 /** Forgets what the search found for a system, so the next search looks at it again. */

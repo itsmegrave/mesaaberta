@@ -89,6 +89,7 @@ describe('api system logo routes over a database', () => {
     expect((await call('/toString', admin, {})).status).toBe(404);
 
     expect(await (await call('/approveSure', admin, {})).json()).toEqual({ approved: 1 });
+    expect(await (await call('/forgetMissing', admin, {})).json()).toEqual({ forgotten: 0 });
     expect(
       await (
         await call('/upload', admin, {
