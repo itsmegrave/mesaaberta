@@ -55,6 +55,14 @@ const checkPath = (path: string) => {
  */
 export async function systemsToSearch(db: AnyDb, actor: Actor, limit = LOGO_SEARCH_BATCH) {
   authorize(actor, 'admin:access');
+  return nextSystemsToSearch(db, limit);
+}
+
+/**
+ * `systemsToSearch` without an actor, for the background search (the worker's cron), which acts
+ * for no one. Never reachable from a request.
+ */
+export async function nextSystemsToSearch(db: AnyDb, limit = LOGO_SEARCH_BATCH) {
   return db
     .select({ id: systems.id, name: systems.name, slug: systems.slug })
     .from(systems)
@@ -140,6 +148,14 @@ export async function recordLogoSearch(
   data: z.infer<typeof recordSchema>,
 ): Promise<{ unused: string | null }> {
   authorize(actor, 'admin:access');
+  return recordSearch(db, data);
+}
+
+/** `recordLogoSearch` without an actor, for the background search. Never reachable from a request. */
+export async function recordSearch(
+  db: AnyDb,
+  data: z.infer<typeof recordSchema>,
+): Promise<{ unused: string | null }> {
   if (data.found) checkPath(data.found.path);
   const row = data.found
     ? { status: 'pending' as const, ...data.found }

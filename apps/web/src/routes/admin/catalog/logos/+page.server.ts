@@ -13,7 +13,7 @@ import type { SystemLogoList } from '@mesaaberta/core/server/systems/logos/servi
 import { validateFormData, validateStringForm } from '#lib/forms/contract.js';
 import { refuse, responseForm } from '#lib/forms/server.js';
 import { requireAdmin } from '#lib/server/admin-access.js';
-import { decideLogo, searchNextLogos, uploadLogo } from '#lib/server/admin/system-logos.js';
+import { decideLogo, uploadLogo } from '#lib/server/admin/system-logos.js';
 import { readFromApi, revivedDates } from '#lib/server/api-read.js';
 import { requireUser } from '#lib/server/auth/guard.js';
 import type { Actions, PageServerLoad, RequestEvent } from './$types';
@@ -64,12 +64,6 @@ const decision = (action: 'approve' | 'reject' | 'forget') => async (event: Requ
 };
 
 export const actions: Actions = {
-  // One step of the search: the page repeats it while `more` is true.
-  search: async (event) => {
-    const actor = await admin(event);
-    const form = validateStringForm(await event.request.formData(), emptySchema, []);
-    return { form, ...(await searchNextLogos(event.locals, actor)) };
-  },
   approveSure: async (event) => {
     const actor = await admin(event);
     const form = validateStringForm(await event.request.formData(), emptySchema, []);
