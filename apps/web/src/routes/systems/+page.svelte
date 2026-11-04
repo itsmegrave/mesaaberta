@@ -133,6 +133,14 @@
         href={(number) => `/systems${systemDirectoryQuery(filters, number)}`}
       />
     </div>
+    {#if data.systems.some((system) => system.logoUrl && system.logoMethod === 'logodev')}
+      <!-- Logo.dev's free plan asks for this link wherever its logos show. -->
+      <p class="mt-6 text-sm text-muted">
+        <a href="https://logo.dev" rel="noopener noreferrer" target="_blank"
+          >{m.system_logo_logodev()}</a
+        >
+      </p>
+    {/if}
   {:else if filters.query}
     <DirectoryEmpty
       class="mt-2"

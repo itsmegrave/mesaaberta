@@ -9,6 +9,7 @@ import {
 import { isInside, serverStorage } from '@mesaaberta/core/server/storage';
 import {
   findSystemLogo,
+  logoDevKeys,
   type FinderDeps,
   type LogoCandidate,
 } from '@mesaaberta/core/server/systems/logos/finder';
@@ -78,7 +79,10 @@ export async function searchNextLogos(
   );
   const searched: SearchOutcome[] = [];
   for (const system of systems) {
-    const search = await findSystemLogo(system.name, deps);
+    const search = await findSystemLogo(system.name, {
+      logoDev: logoDevKeys(locals.env),
+      ...deps,
+    });
     // Wikidata did not answer: record nothing (the system stays to be searched) and stop here, so
     // an outage never marks every system as missing.
     if (search.reason === 'lookup_failed') {

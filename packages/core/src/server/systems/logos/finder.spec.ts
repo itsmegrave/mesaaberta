@@ -366,6 +366,65 @@ describe('findSystemLogo', () => {
     });
   });
 
+  const png = () => new Response('png', { headers: { 'content-type': 'image/png' } });
+
+  it("takes Logo.dev's brand named like the system, at medium", async () => {
+    let authorization: string | null = null;
+    const fetcher = async (input: string, init?: RequestInit) => {
+      if (input.includes('api.logo.dev')) {
+        authorization = new Headers(init?.headers).get('authorization');
+        return json({
+          data: [
+            { name: 'Darrington Press', domain: 'darringtonpress.com' },
+            { name: 'Daggerheart', domain: 'daggerheart.com' },
+          ],
+        });
+      }
+      return routes({
+        wbsearchentities: () => json({ search: [] }),
+        'list=search': () => json({ query: { search: [] } }),
+        'wikipedia.org': () => json({}),
+        'img.logo.dev/daggerheart.com': png,
+      })(input);
+    };
+
+    const found = await findSystemLogo('Daggerheart', {
+      fetcher,
+      resolve: publicDns,
+      logoDev: { secretKey: 'sk_test', publishableKey: 'pk_test' },
+    });
+
+    expect(authorization).toBe('Bearer sk_test');
+    expect(found.candidate).toMatchObject({
+      sourcePage: 'https://daggerheart.com/',
+      method: 'logodev',
+      confidence: 'medium',
+      attribution: 'Logos provided by Logo.dev',
+    });
+    expect(found.candidate?.imageUrl).toMatch(
+      /^https:\/\/img\.logo\.dev\/daggerheart\.com\?token=pk_test&.*fallback=404/,
+    );
+  });
+
+  it("takes the official site's brand on Logo.dev at low when its domain is a publisher's", async () => {
+    const fetcher = routes({
+      wbsearchentities: () => json({ search: [{ id: 'Q8' }] }),
+      wbgetentities: () =>
+        json({ entities: { Q8: item('Q8', 'Fate', { website: 'https://www.evilhat.com/fate' }) } }),
+      'list=search': () => json({ query: { search: [] } }),
+      'img.logo.dev/www.evilhat.com': png,
+      'www.evilhat.com/fate': () => html('<p>no pictures</p>'),
+    });
+
+    const found = await findSystemLogo('Fate', {
+      fetcher,
+      resolve: publicDns,
+      logoDev: { publishableKey: 'pk_test' },
+    });
+
+    expect(found.candidate).toMatchObject({ method: 'logodev', confidence: 'low' });
+  });
+
   it('waits once when Wikidata asks it to slow down', async () => {
     let calls = 0;
     const found = await findSystemLogo('Sistema Caseiro', {

@@ -80,6 +80,7 @@ describe('listSystemDirectory', () => {
         totalTables: 4,
         gmCount: 2,
         logoPath: null,
+        logoMethod: null,
         gms: [
           { username: 'ana', avatarPath: null, avatarUrl: null },
           { username: 'bia', avatarPath: null, avatarUrl: null },

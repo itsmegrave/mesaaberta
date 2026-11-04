@@ -45,6 +45,7 @@ describe('the systems directory load', () => {
           totalTables: 9,
           gmCount: 2,
           logoPath: 'systems/t20.png',
+          logoMethod: 'wikidata',
           gms: [{ username: 'ana', avatarPath: 'ana/a.png', avatarUrl: null }],
         },
       ],

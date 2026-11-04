@@ -22,7 +22,10 @@ import {
  *    item or, when Wikidata does not know the system by that name, by searching Wikipedia (which
  *    also finds the item behind the article, for steps 1 and 3). The article's main picture is the
  *    `wikipedia` method: `medium` when its file name says logo, else `low` (it is often the cover).
- * 5. Any other logo on the official site, `low`: a publisher's page shows its own logo as often as
+ * 5. Logo.dev (when its keys are set): a brand whose name is the system's (its search, with the
+ *    secret key), or the brand of the official site. Its logo is the `logodev` method, `medium` when
+ *    the name matched or the domain carries the name, else `low` (a publisher's domain).
+ * 6. Any other logo on the official site, `low`: a publisher's page shows its own logo as often as
  *    the game's.
  *
  * Systems neither Wikidata nor Wikipedia know (most Brazilian indie ones) come back with nothing,
@@ -30,7 +33,7 @@ import {
  * just no logo.
  */
 
-export type LogoMethod = 'wikidata' | 'commons' | 'website' | 'wikipedia';
+export type LogoMethod = 'wikidata' | 'commons' | 'website' | 'wikipedia' | 'logodev';
 export type LogoConfidence = 'high' | 'medium' | 'low';
 
 export type LogoCandidate = {
@@ -61,7 +64,28 @@ export type LogoSearch = {
   retryAfter?: number;
 };
 
-export type FinderDeps = { fetcher?: Fetcher; resolve?: Resolver; timeoutMs?: number };
+/** Logo.dev's keys: the secret one searches brands by name, the publishable one serves logos. */
+export type LogoDevKeys = { secretKey?: string; publishableKey?: string };
+export type FinderDeps = {
+  fetcher?: Fetcher;
+  resolve?: Resolver;
+  timeoutMs?: number;
+  logoDev?: LogoDevKeys;
+};
+
+/** Logo.dev's keys from a Worker's env (secrets `LOGO_DEV_SECRET_KEY`, `LOGO_DEV_PUBLISHABLE_KEY`). */
+export function logoDevKeys(env: unknown): LogoDevKeys | undefined {
+  const config = (env ?? {}) as {
+    LOGO_DEV_SECRET_KEY?: unknown;
+    LOGO_DEV_PUBLISHABLE_KEY?: unknown;
+  };
+  const text = (value: unknown) => (typeof value === 'string' && value ? value : undefined);
+  const keys = {
+    secretKey: text(config.LOGO_DEV_SECRET_KEY),
+    publishableKey: text(config.LOGO_DEV_PUBLISHABLE_KEY),
+  };
+  return keys.publishableKey ? keys : undefined;
+}
 
 const USER_AGENT = 'MesaAbertaLogoFinder/1.0 (+https://github.com/itsmegrave/mesaaberta)';
 const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
@@ -527,6 +551,110 @@ async function articleOf(fetcher: Fetcher, entity: WikidataEntity, timeoutMs: nu
   return null;
 }
 
+// --- Logo.dev -------------------------------------------------------------------------------
+
+const LOGO_DEV_API = 'https://api.logo.dev/v2/search';
+/** "daggerheart.com" → "daggerheart"; "www.evilhat.com" → "evilhat". */
+const domainName = (host: string) =>
+  foldName(host.replace(/^www\./i, '').replace(/\.[^.]+$/, '')).replace(/ /g, '');
+
+/** Logo.dev's picture for a domain, or null when it has none (it answers 404, not a monogram). */
+async function logoDevImage(fetcher: Fetcher, domain: string, key: string, timeoutMs: number) {
+  const url = `https://img.logo.dev/${encodeURIComponent(domain)}?${new URLSearchParams({
+    token: key,
+    size: String(THUMB_WIDTH),
+    format: 'png',
+    fallback: '404',
+  })}`;
+  try {
+    // A GET whose body is dropped: the CDN answers 404 to every HEAD.
+    const response = await fetcher(url, {
+      headers: { 'user-agent': USER_AGENT },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    await response.body?.cancel().catch(() => undefined);
+    return response.ok && response.headers.get('content-type')?.startsWith('image/') ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The domain of the brand Logo.dev's search names exactly like the system, when one is. */
+async function logoDevDomain(fetcher: Fetcher, name: string, key: string, timeoutMs: number) {
+  const term =
+    searchNames(name)
+      .filter((n) => n.exact)
+      .at(-1)?.term ?? name;
+  let answer: { data?: { name?: string; domain?: string }[] };
+  try {
+    const response = await fetcher(
+      `${LOGO_DEV_API}?${new URLSearchParams({ q: term, limit: '5' })}`,
+      {
+        headers: { authorization: `Bearer ${key}`, accept: 'application/json' },
+        signal: AbortSignal.timeout(timeoutMs),
+      },
+    );
+    if (!response.ok) {
+      await response.body?.cancel().catch(() => undefined);
+      return null;
+    }
+    answer = await response.json();
+  } catch {
+    return null;
+  }
+  const results = answer.data ?? [];
+  for (const { term: searched, exact } of searchNames(name)) {
+    const wanted = foldName(searched);
+    const hit = results.find((r) => r.domain && r.name && foldName(r.name) === wanted);
+    if (hit?.domain) return { domain: hit.domain, exact };
+  }
+  return null;
+}
+
+/**
+ * The system's logo on Logo.dev: the brand its search names like the system, else the official
+ * site's brand. Null without keys, or when Logo.dev has no logo for either. Logo.dev's own
+ * failures are just no logo: it is an extra source, never a reason to stop the search.
+ */
+async function logoDevLogo(
+  fetcher: Fetcher,
+  name: string,
+  website: string | null,
+  exact: boolean,
+  keys: LogoDevKeys | undefined,
+  timeoutMs: number,
+): Promise<LogoCandidate | null> {
+  if (!keys?.publishableKey) return null;
+  const wanted = searchNames(name).map((n) => foldName(n.term).replace(/ /g, ''));
+  const tries: { domain: string; byName: boolean; exact: boolean }[] = [];
+  const named = keys.secretKey
+    ? await logoDevDomain(fetcher, name, keys.secretKey, timeoutMs)
+    : null;
+  if (named) tries.push({ domain: named.domain, byName: true, exact: named.exact });
+  const site = URL.canParse(website ?? '') ? new URL(website!).hostname : null;
+  if (site && site !== named?.domain) tries.push({ domain: site, byName: false, exact });
+  for (const attempt of tries) {
+    const imageUrl = await logoDevImage(fetcher, attempt.domain, keys.publishableKey, timeoutMs);
+    if (!imageUrl) continue;
+    const carriesName = wanted.some((w) => w.length >= 3 && domainName(attempt.domain) === w);
+    const sure = attempt.exact && (attempt.byName || carriesName);
+    return {
+      imageUrl,
+      sourcePage: `https://${attempt.domain}/`,
+      method: 'logodev',
+      confidence: sure ? 'medium' : 'low',
+      attribution: 'Logos provided by Logo.dev',
+      license: null,
+      note: attempt.byName
+        ? `Logo da marca "${attempt.domain}" no Logo.dev, achada pelo nome do sistema.`
+        : carriesName
+          ? `Logo do site oficial (${attempt.domain}) no Logo.dev, com o nome do sistema no domínio.`
+          : `Logo do site oficial (${attempt.domain}) no Logo.dev: pode ser o logo da editora.`,
+    };
+  }
+  return null;
+}
+
 /** Looks for the logo of the system called `name`. Never throws. */
 export async function findSystemLogo(name: string, deps: FinderDeps = {}): Promise<LogoSearch> {
   try {
@@ -606,6 +734,10 @@ async function search(name: string, deps: FinderDeps): Promise<LogoSearch> {
     }
   }
 
+  // Logo.dev's logo when it is the system's own brand; a publisher's waits for the article.
+  const brand = await logoDevLogo(fetcher, name, website, exact, deps.logoDev, timeoutMs);
+  if (brand?.confidence === 'medium') return found(brand);
+
   // The official site's logo, kept for last unless it carries the system's name.
   let siteLogo: LogoCandidate | null = null;
   let onlySvg = false;
@@ -645,6 +777,7 @@ async function search(name: string, deps: FinderDeps): Promise<LogoSearch> {
       });
     }
   }
+  if (brand) return found(brand);
   if (siteLogo) return found(siteLogo);
 
   if (!entity && !article)

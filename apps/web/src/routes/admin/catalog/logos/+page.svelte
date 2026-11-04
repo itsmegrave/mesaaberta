@@ -42,6 +42,7 @@
     commons: m.admin_logos_method_commons(),
     website: m.admin_logos_method_website(),
     wikipedia: m.admin_logos_method_wikipedia(),
+    logodev: m.admin_logos_method_logodev(),
     upload: m.admin_logos_method_upload(),
   };
   // The finder writes the reason as a code ("no_logo"), or "image_unreadable: <url>".

@@ -143,6 +143,13 @@
       <a href={system.logoSource} rel="noopener noreferrer nofollow" target="_blank"
         >{m.system_logo_source()}</a
       >
+      {#if system.logoMethod === 'logodev'}
+        <!-- Logo.dev's free plan asks for this link wherever its logos show. -->
+        ·
+        <a href="https://logo.dev" rel="noopener noreferrer" target="_blank"
+          >{m.system_logo_logodev()}</a
+        >
+      {/if}
     </p>
   {/if}
 </section>
