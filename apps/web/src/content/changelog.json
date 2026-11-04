@@ -88,7 +88,7 @@
       {
         "kind": "improved",
         "title": "Mais logos dos sistemas",
-        "description": "Para quem administra o site: a busca de logos dos sistemas de jogo agora também procura na Wikipédia e no Logo.dev, e dá para procurar de novo os sistemas que ainda estão sem logo. A busca também roda sozinha, aos poucos, para os sistemas novos."
+        "description": "Para quem administra o site: a busca de logos dos sistemas de jogo agora também procura na Wikipédia e no Logo.dev, e dá para procurar de novo os sistemas que ainda estão sem logo. A busca agora roda sozinha, aos poucos, nos sistemas que ainda não foram procurados."
       }
     ]
   },
