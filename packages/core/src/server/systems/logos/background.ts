@@ -116,7 +116,7 @@ export async function runLogoSearch(
       if (search.reason === 'lookup_failed') {
         log.warn('system_logos.lookup_failed', {
           code: 'lookup_failed',
-          retryAfter: search.retryAfter,
+          retryInSeconds: search.retryAfter,
         });
         break;
       }

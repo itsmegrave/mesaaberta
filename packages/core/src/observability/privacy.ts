@@ -45,6 +45,8 @@ const COUNTS = new Set([
   'deliveries',
   'attempts',
   'retry',
+  'searched',
+  'found',
 ]);
 const LABELS = new Set([
   'event',
