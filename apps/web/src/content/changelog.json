@@ -84,6 +84,11 @@
         "kind": "improved",
         "title": "Cada sessão na sua agenda",
         "description": "Uma sessão cancelada sai da agenda, uma sessão que mudou de data aparece na nova data e uma sessão extra entra no evento da mesa. Quando quem mestra muda uma sessão, todos recebem por e-mail o convite atualizado."
+      },
+      {
+        "kind": "improved",
+        "title": "Mais logos dos sistemas",
+        "description": "Para quem administra o site: a busca de logos dos sistemas de jogo agora também procura na Wikipédia e no Logo.dev, e dá para procurar de novo os sistemas que ainda estão sem logo."
       }
     ]
   },
