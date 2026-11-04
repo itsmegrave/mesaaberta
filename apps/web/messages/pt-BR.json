@@ -1536,6 +1536,8 @@
   "admin_logos_method_website": "Site oficial",
   "admin_logos_method_commons": "Wikimedia Commons, pelo nome do arquivo",
   "admin_logos_method_wikipedia": "Imagem do artigo da Wikipédia",
+  "admin_logos_method_logodev": "Logo.dev",
+  "system_logo_logodev": "Logos provided by Logo.dev",
   "admin_logos_forget_missing": "Procurar de novo os não achados",
   "admin_logos_forgot_missing_toast": "Sistemas de volta para a busca: {count}",
   "admin_logos_source": "Ver a fonte",

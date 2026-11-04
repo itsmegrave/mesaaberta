@@ -114,6 +114,7 @@ export async function listSystemDirectory(db: AnyDb, filters: SystemDirectoryFil
       totalTables,
       gmCount: sql<number>`coalesce(${stats.gmCount}, 0)`,
       logoPath: systemLogos.path,
+      logoMethod: systemLogos.method,
     })
     .from(systems)
     .leftJoin(stats, eq(stats.systemId, systems.id))
@@ -165,6 +166,7 @@ export async function readSystemPage(db: AnyDb, slug: string, now: Date) {
       mergedInto: systems.mergedInto,
       logoPath: systemLogos.path,
       logoSource: systemLogos.sourcePage,
+      logoMethod: systemLogos.method,
     })
     .from(systems)
     .leftJoin(systemLogos, approvedLogo)
@@ -243,6 +245,7 @@ export async function readSystemPage(db: AnyDb, slug: string, now: Date) {
       slug: found.slug,
       logoPath: found.logoPath,
       logoSource: found.logoSource,
+      logoMethod: found.logoMethod,
     },
     facts: (facts[0] ?? { openTables: 0, totalTables: 0, gmCount: 0 }) as SystemFacts,
     modalities: modalities.map((row) => row.modality).sort(),

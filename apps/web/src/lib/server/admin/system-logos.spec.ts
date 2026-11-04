@@ -5,7 +5,10 @@ import { requireApi } from '../api-required';
 import { decideLogo, searchNextLogos, uploadLogo } from './system-logos';
 
 vi.mock('../api-required', () => ({ requireApi: vi.fn() }));
-vi.mock('@mesaaberta/core/server/systems/logos/finder', () => ({ findSystemLogo: vi.fn() }));
+vi.mock('@mesaaberta/core/server/systems/logos/finder', async (original) => ({
+  ...(await original<typeof import('@mesaaberta/core/server/systems/logos/finder')>()),
+  findSystemLogo: vi.fn(),
+}));
 vi.mock('@mesaaberta/core/server/storage', async (original) => ({
   ...(await original<typeof import('@mesaaberta/core/server/storage')>()),
   serverStorage: vi.fn(),

@@ -22,7 +22,7 @@ export const recordSchema = z.object({
   found: z
     .object({
       path: z.string().max(200),
-      method: z.enum(['wikidata', 'commons', 'website', 'wikipedia']),
+      method: z.enum(['wikidata', 'commons', 'website', 'wikipedia', 'logodev']),
       confidence: z.enum(['high', 'medium', 'low']),
       imageUrl: url,
       sourcePage: url,
