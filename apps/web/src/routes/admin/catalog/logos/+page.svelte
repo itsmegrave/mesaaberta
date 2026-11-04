@@ -41,6 +41,7 @@
     wikidata: m.admin_logos_method_wikidata(),
     commons: m.admin_logos_method_commons(),
     website: m.admin_logos_method_website(),
+    wikipedia: m.admin_logos_method_wikipedia(),
     upload: m.admin_logos_method_upload(),
   };
   // The finder writes the reason as a code ("no_logo"), or "image_unreadable: <url>".
@@ -82,6 +83,21 @@
             toast.success(m.admin_logos_approved_toast({ count: approved }));
           }
         }}>{m.admin_logos_approve_sure()}</PostButton
+      >
+    {/if}
+    {#if data.status === 'missing' && data.counts.missing > 0}
+      <PostButton
+        action="?/forgetMissing"
+        schema={emptySchema}
+        errorMessage={decisionError}
+        variant="secondary"
+        size="md"
+        onResult={(result) => {
+          if (result.type === 'success') {
+            const forgotten = (result.data as { forgotten?: number } | undefined)?.forgotten ?? 0;
+            toast.success(m.admin_logos_forgot_missing_toast({ count: forgotten }));
+          }
+        }}>{m.admin_logos_forget_missing()}</PostButton
       >
     {/if}
   {/snippet}

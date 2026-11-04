@@ -124,15 +124,14 @@ export async function searchNextLogos(
 export async function decideLogo(
   locals: Locals,
   admin: Admin,
-  action: 'approve' | 'approveSure' | 'reject' | 'forget',
+  action: 'approve' | 'approveSure' | 'reject' | 'forget' | 'forgetMissing',
   systemId?: string,
 ) {
-  const answer = await requireApi<{ removed?: string | null; approved?: number }>(
-    locals,
-    admin,
-    `${API}/${action}`,
-    { method: 'POST', body: systemId ? { systemId } : {} },
-  );
+  const answer = await requireApi<{
+    removed?: string | null;
+    approved?: number;
+    forgotten?: number;
+  }>(locals, admin, `${API}/${action}`, { method: 'POST', body: systemId ? { systemId } : {} });
   await removeFiles(locals, [answer.removed]);
   return answer;
 }

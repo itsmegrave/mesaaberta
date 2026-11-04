@@ -16,21 +16,27 @@ import {
  * 2. Commons itself: a file titled with the system's name and "logo" (most RPG items have no P154,
  *    but the file is often there). That is the `commons` method, `medium` when the Wikidata item
  *    matched exactly, else `low` (found by name only).
- * 3. The item's `official website` (P856): an `<img>` there that calls itself a logo. That is the
- *    `website` method, and never better than `medium`: a publisher's page shows the publisher's own
- *    logo as often as the game's.
+ * 3. The item's `official website` (P856): an `<img>` there that calls itself a logo and carries
+ *    the system's name. That is the `website` method, and never better than `medium`.
+ * 4. Wikipedia (English, then Portuguese): the article about the game, found through the Wikidata
+ *    item or, when Wikidata does not know the system by that name, by searching Wikipedia (which
+ *    also finds the item behind the article, for steps 1 and 3). The article's main picture is the
+ *    `wikipedia` method: `medium` when its file name says logo, else `low` (it is often the cover).
+ * 5. Any other logo on the official site, `low`: a publisher's page shows its own logo as often as
+ *    the game's.
  *
- * Systems Wikidata does not know (most Brazilian indie ones) come back with nothing, and the admin
- * adds their logo by hand. Nothing here throws on a bad answer from the web: it is just no logo.
+ * Systems neither Wikidata nor Wikipedia know (most Brazilian indie ones) come back with nothing,
+ * and the admin adds their logo by hand. Nothing here throws on a bad answer from the web: it is
+ * just no logo.
  */
 
-export type LogoMethod = 'wikidata' | 'commons' | 'website';
+export type LogoMethod = 'wikidata' | 'commons' | 'website' | 'wikipedia';
 export type LogoConfidence = 'high' | 'medium' | 'low';
 
 export type LogoCandidate = {
   /** Where the picture's bytes are read from (PNG, JPEG or WebP; SVG is refused downstream). */
   imageUrl: string;
-  /** The page that shows the logo and its terms: the Commons file page or the official site. */
+  /** The page that shows the logo and its terms: the file page on Commons or Wikipedia, or the site. */
   sourcePage: string;
   method: LogoMethod;
   confidence: LogoConfidence;
@@ -46,7 +52,6 @@ export type LogoSearch = {
   candidate: LogoCandidate | null;
   wikidataId: string | null;
   website: string | null;
-  /** Why there is no candidate, when there is none. */
   /**
    * Why there is no candidate, when there is none. `lookup_failed` is not an answer about the
    * system: Wikidata or Commons could not be read, so nothing should be recorded for it.
@@ -61,6 +66,7 @@ export type FinderDeps = { fetcher?: Fetcher; resolve?: Resolver; timeoutMs?: nu
 const USER_AGENT = 'MesaAbertaLogoFinder/1.0 (+https://github.com/itsmegrave/mesaaberta)';
 const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
 const COMMONS_API = 'https://commons.wikimedia.org/w/api.php';
+const wikipediaApi = (language: string) => `https://${language}.wikipedia.org/w/api.php`;
 /** Wide enough for a crisp logo on a retina card, small enough to stay under the image cap. */
 const THUMB_WIDTH = 512;
 const LANGUAGES = ['en', 'pt'] as const;
@@ -121,6 +127,7 @@ export type WikidataEntity = {
   aliases?: Record<string, { value: string }[]>;
   descriptions?: Record<string, { value: string }>;
   claims?: Record<string, Claim[]>;
+  sitelinks?: Record<string, { title: string }>;
 };
 
 const claimValues = (entity: WikidataEntity, property: string) =>
@@ -284,6 +291,22 @@ async function getJson<T>(
 const query = (base: string, params: Record<string, string>) =>
   `${base}?${new URLSearchParams({ format: 'json', ...params })}`;
 
+/** Wikidata items by id, with what the search reads of them (and their Wikipedia articles). */
+async function readEntities(fetcher: Fetcher, ids: string[], timeoutMs: number) {
+  const read = await getJson<{ entities?: Record<string, WikidataEntity> }>(
+    fetcher,
+    query(WIKIDATA_API, {
+      action: 'wbgetentities',
+      ids: ids.join('|'),
+      props: 'labels|aliases|descriptions|claims|sitelinks',
+      languages: 'pt|en|mul',
+      sitefilter: LANGUAGES.map((language) => `${language}wiki`).join('|'),
+    }),
+    timeoutMs,
+  );
+  return Object.values(read.entities ?? {}).filter((entity) => !('missing' in entity));
+}
+
 /**
  * The Wikidata item that is this system, asking as little as it can (Wikimedia rate-limits
  * anonymous clients): each searched name in English, then in Portuguese only when English found
@@ -309,17 +332,7 @@ async function findItem(fetcher: Fetcher, name: string, timeoutMs: number) {
       const fresh = (found.search ?? []).map((hit) => hit.id).filter((id) => !seen.has(id));
       if (fresh.length === 0) continue;
       for (const id of fresh) seen.add(id);
-      const read = await getJson<{ entities?: Record<string, WikidataEntity> }>(
-        fetcher,
-        query(WIKIDATA_API, {
-          action: 'wbgetentities',
-          ids: fresh.join('|'),
-          props: 'labels|aliases|descriptions|claims',
-          languages: 'pt|en|mul',
-        }),
-        timeoutMs,
-      );
-      entities.push(...Object.values(read.entities ?? {}));
+      entities.push(...(await readEntities(fetcher, fresh, timeoutMs)));
       const picked = pickEntity(name, entities);
       if (picked?.exact) return picked;
       break;
@@ -349,11 +362,14 @@ const plainText = (html: string | undefined) =>
     .replace(/\s+/g, ' ')
     .trim() || null;
 
-/** A Commons file as a PNG thumbnail, with its file page, licence and author. */
-async function commonsFile(fetcher: Fetcher, file: string, timeoutMs: number) {
+/**
+ * A file on Commons (or on a Wikipedia, for its own non-free files) as a PNG/JPEG thumbnail, with
+ * its file page, licence and author.
+ */
+async function wikiFile(fetcher: Fetcher, file: string, timeoutMs: number, api = COMMONS_API) {
   const info = await getJson<CommonsInfo>(
     fetcher,
-    query(COMMONS_API, {
+    query(api, {
       action: 'query',
       titles: `File:${file}`,
       prop: 'imageinfo',
@@ -367,10 +383,10 @@ async function commonsFile(fetcher: Fetcher, file: string, timeoutMs: number) {
   const meta = image.extmetadata ?? {};
   return {
     imageUrl: image.thumburl,
-    // Commons answers the page protocol-relative ("//commons.wikimedia.org/...").
+    // The wikis answer the page protocol-relative ("//commons.wikimedia.org/...").
     sourcePage: image.descriptionurl
-      ? new URL(image.descriptionurl, 'https://commons.wikimedia.org').href
-      : `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(file.replace(/ /g, '_'))}`,
+      ? new URL(image.descriptionurl, api).href
+      : new URL(`/wiki/File:${encodeURIComponent(file.replace(/ /g, '_'))}`, api).href,
     license: plainText(meta.LicenseShortName?.value),
     attribution: plainText(meta.Artist?.value) ?? plainText(meta.Credit?.value),
   };
@@ -411,6 +427,106 @@ async function commonsLogoByTitle(fetcher: Fetcher, name: string, timeoutMs: num
   return null;
 }
 
+// --- Wikipedia ------------------------------------------------------------------------------
+
+export type ArticlePage = {
+  title: string;
+  index?: number;
+  description?: string;
+  /** The article's main picture (its infobox image), a file name without "File:". */
+  pageimage?: string;
+  pageprops?: { wikibase_item?: string };
+};
+export type Article = {
+  language: (typeof LANGUAGES)[number];
+  title: string;
+  image: string | null;
+  itemId: string | null;
+};
+
+const QUALIFIER = /\s*\(([^)]*)\)\s*$/;
+
+/**
+ * The article about this system among search results: its title, without a qualifier such as
+ * "(role-playing game)", is one of the searched names, and the qualifier or the article's short
+ * description says it is a role-playing game. The most exact name first, then the search's order.
+ */
+export function pickArticle(
+  name: string,
+  pages: readonly ArticlePage[],
+): { page: ArticlePage; exact: boolean } | null {
+  const ranked = [...pages].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+  for (const { term, exact } of searchNames(name)) {
+    const wanted = foldName(term);
+    const page = ranked.find((candidate) => {
+      const qualifier = candidate.title.match(QUALIFIER);
+      const bare = qualifier ? candidate.title.slice(0, qualifier.index) : candidate.title;
+      return (
+        foldName(bare) === wanted &&
+        ((qualifier && RPG_WORDS.test(qualifier[1])) || RPG_WORDS.test(candidate.description ?? ''))
+      );
+    });
+    if (page) return { page, exact };
+  }
+  return null;
+}
+
+type ArticleAnswer = { query?: { pages?: Record<string, ArticlePage> } };
+const ARTICLE_PROPS = {
+  prop: 'pageimages|pageprops|description',
+  piprop: 'name',
+  // Most game articles show a non-free cover or logo, which the default (free only) leaves out.
+  pilicense: 'any',
+  ppprop: 'wikibase_item',
+} as const;
+
+const articleFrom = (language: Article['language'], page: ArticlePage): Article => ({
+  language,
+  title: page.title,
+  image: page.pageimage ?? null,
+  itemId: page.pageprops?.wikibase_item ?? null,
+});
+
+/** The article about the system, by searching Wikipedia in English, then in Portuguese. */
+async function searchArticle(fetcher: Fetcher, name: string, timeoutMs: number) {
+  const term =
+    searchNames(name)
+      .filter((n) => n.exact)
+      .at(-1)?.term ?? name;
+  for (const language of LANGUAGES) {
+    const found = await getJson<ArticleAnswer>(
+      fetcher,
+      query(wikipediaApi(language), {
+        action: 'query',
+        generator: 'search',
+        gsrsearch: term,
+        gsrlimit: '5',
+        ...ARTICLE_PROPS,
+      }),
+      timeoutMs,
+    );
+    const picked = pickArticle(name, Object.values(found.query?.pages ?? {}));
+    if (picked) return { article: articleFrom(language, picked.page), exact: picked.exact };
+  }
+  return null;
+}
+
+/** The Wikipedia article of a Wikidata item, in English, else in Portuguese, when it has one. */
+async function articleOf(fetcher: Fetcher, entity: WikidataEntity, timeoutMs: number) {
+  for (const language of LANGUAGES) {
+    const title = entity.sitelinks?.[`${language}wiki`]?.title;
+    if (!title) continue;
+    const found = await getJson<ArticleAnswer>(
+      fetcher,
+      query(wikipediaApi(language), { action: 'query', titles: title, ...ARTICLE_PROPS }),
+      timeoutMs,
+    );
+    const page = Object.values(found.query?.pages ?? {})[0];
+    if (page) return articleFrom(language, page);
+  }
+  return null;
+}
+
 /** Looks for the logo of the system called `name`. Never throws. */
 export async function findSystemLogo(name: string, deps: FinderDeps = {}): Promise<LogoSearch> {
   try {
@@ -433,82 +549,105 @@ async function search(name: string, deps: FinderDeps): Promise<LogoSearch> {
   const timeoutMs = deps.timeoutMs ?? 8_000;
 
   const picked = await findItem(fetcher, name, timeoutMs);
-  const entity = picked?.entity ?? null;
-  const exact = picked?.exact ?? false;
+  let entity = picked?.entity ?? null;
+  let exact = picked?.exact ?? false;
+  let article: Article | null = null;
+  // Wikidata did not know the name: Wikipedia's search is looser (other spellings, the Portuguese
+  // title), and its article leads back to the item.
+  if (!entity) {
+    const hit = await searchArticle(fetcher, name, timeoutMs);
+    if (hit) {
+      article = hit.article;
+      exact = hit.exact;
+      if (hit.article.itemId)
+        entity = (await readEntities(fetcher, [hit.article.itemId], timeoutMs))[0] ?? null;
+    }
+  }
   const website = entity ? (stringClaims(entity, 'P856')[0] ?? null) : null;
   const item = entity ? `https://www.wikidata.org/wiki/${entity.id}` : null;
   const wikidataId = entity?.id ?? null;
+  const found = (candidate: LogoCandidate): LogoSearch => ({
+    candidate,
+    wikidataId,
+    website,
+    reason: null,
+  });
 
   const logoFile = entity ? stringClaims(entity, 'P154')[0] : undefined;
   if (entity && logoFile) {
-    const file = await commonsFile(fetcher, logoFile, timeoutMs);
+    const file = await wikiFile(fetcher, logoFile, timeoutMs);
     if (file) {
-      return {
-        candidate: {
-          ...file,
-          method: 'wikidata',
-          confidence: exact ? 'high' : 'medium',
-          note: exact
-            ? `Logo do item ${entity.id} do Wikidata, com o mesmo nome do sistema.`
-            : `Logo do item ${entity.id} do Wikidata, com o nome sem a edição: pode ser o logo de outra edição.`,
-        },
-        wikidataId,
-        website,
-        reason: null,
-      };
+      return found({
+        ...file,
+        method: 'wikidata',
+        confidence: exact ? 'high' : 'medium',
+        note: exact
+          ? `Logo do item ${entity.id} do Wikidata, com o mesmo nome do sistema.`
+          : `Logo do item ${entity.id} do Wikidata, com o nome sem a edição: pode ser o logo de outra edição.`,
+      });
     }
   }
 
   // Most RPG items have no logo statement, but Commons often has the file anyway.
   const titled = await commonsLogoByTitle(fetcher, name, timeoutMs);
   if (titled) {
-    const file = await commonsFile(fetcher, titled, timeoutMs);
+    const file = await wikiFile(fetcher, titled, timeoutMs);
     if (file) {
-      return {
-        candidate: {
-          ...file,
-          method: 'commons',
-          confidence: exact ? 'medium' : 'low',
-          note: `Arquivo do Wikimedia Commons chamado "${titled}"${
-            exact && entity
-              ? `; o sistema é o item ${entity.id} do Wikidata`
-              : ', achado só pelo nome'
-          }.`,
-        },
-        wikidataId,
-        website,
-        reason: null,
-      };
+      return found({
+        ...file,
+        method: 'commons',
+        confidence: exact && entity ? 'medium' : 'low',
+        note: `Arquivo do Wikimedia Commons chamado "${titled}"${
+          exact && entity
+            ? `; o sistema é o item ${entity.id} do Wikidata`
+            : ', achado só pelo nome'
+        }.`,
+      });
     }
   }
-  if (!entity)
-    return { candidate: null, wikidataId: null, website: null, reason: 'no_wikidata_item' };
 
+  // The official site's logo, kept for last unless it carries the system's name.
+  let siteLogo: LogoCandidate | null = null;
+  let onlySvg = false;
   if (website) {
     const page = await readPage(website, { fetcher, resolve });
-    if (page) {
-      const found = findLogoInHtml(page.html, page.finalUrl, name);
-      if (found && 'url' in found) {
-        return {
-          candidate: {
-            imageUrl: found.url,
-            sourcePage: page.finalUrl.href,
-            method: 'website',
-            confidence: found.mentionsName && exact ? 'medium' : 'low',
-            attribution: null,
-            license: null,
-            note: found.mentionsName
-              ? `Imagem marcada como logo no site oficial (${item}), com o nome do sistema.`
-              : `Primeira imagem marcada como logo no site oficial (${item}): pode ser o logo da editora.`,
-          },
-          wikidataId,
-          website,
-          reason: null,
-        };
-      }
-      if (found && 'onlySvg' in found)
-        return { candidate: null, wikidataId, website, reason: 'only_svg' };
+    const logo = page && findLogoInHtml(page.html, page.finalUrl, name);
+    if (page && logo && 'url' in logo) {
+      siteLogo = {
+        imageUrl: logo.url,
+        sourcePage: page.finalUrl.href,
+        method: 'website',
+        confidence: logo.mentionsName && exact ? 'medium' : 'low',
+        attribution: null,
+        license: null,
+        note: logo.mentionsName
+          ? `Imagem marcada como logo no site oficial (${item}), com o nome do sistema.`
+          : `Primeira imagem marcada como logo no site oficial (${item}): pode ser o logo da editora.`,
+      };
+      if (logo.mentionsName) return found(siteLogo);
+    }
+    onlySvg = !!logo && 'onlySvg' in logo;
+  }
+
+  article ??= entity ? await articleOf(fetcher, entity, timeoutMs) : null;
+  if (article?.image) {
+    const api = wikipediaApi(article.language);
+    const file = await wikiFile(fetcher, article.image, timeoutMs, api);
+    if (file) {
+      const saysLogo = /logo/i.test(article.image);
+      return found({
+        ...file,
+        method: 'wikipedia',
+        confidence: saysLogo && exact ? 'medium' : 'low',
+        note: `Imagem principal do artigo "${article.title}" da Wikipédia (${article.language})${
+          saysLogo ? ', com logo no nome do arquivo' : ': pode ser a capa do livro, não o logo'
+        }.`,
+      });
     }
   }
-  return { candidate: null, wikidataId, website, reason: 'no_logo' };
+  if (siteLogo) return found(siteLogo);
+
+  if (!entity && !article)
+    return { candidate: null, wikidataId: null, website: null, reason: 'no_wikidata_item' };
+  return { candidate: null, wikidataId, website, reason: onlySvg ? 'only_svg' : 'no_logo' };
 }

@@ -5,6 +5,7 @@ import {
   findSystemLogo,
   foldName,
   isRpgItem,
+  pickArticle,
   pickEntity,
   searchNames,
   type WikidataEntity,
@@ -24,9 +25,17 @@ const item = (
     logo,
     website,
     aliases = [],
-  }: { description?: string; logo?: string; website?: string; aliases?: string[] } = {},
+    enwiki,
+  }: {
+    description?: string;
+    logo?: string;
+    website?: string;
+    aliases?: string[];
+    enwiki?: string;
+  } = {},
 ): WikidataEntity => ({
   id,
+  ...(enwiki ? { sitelinks: { enwiki: { title: enwiki } } } : {}),
   labels: { en: { value: label } },
   aliases: { en: aliases.map((value) => ({ value })) },
   descriptions: { en: { value: description } },
@@ -80,6 +89,28 @@ describe('pickEntity', () => {
     expect(isRpgItem(item('Q5', 'Tormenta', { description: 'fenômeno meteorológico' }))).toBe(
       false,
     );
+  });
+});
+
+describe('pickArticle', () => {
+  it('takes the article named like the system that says it is a role-playing game', () => {
+    const film = { title: 'Blades in the Dark', index: 1, description: '2025 film' };
+    const game = {
+      title: 'Blades in the Dark (role-playing game)',
+      index: 2,
+      pageimage: 'Blades.jpg',
+    };
+    const other = { title: 'A Blade in the Dark', index: 3, description: 'tabletop RPG' };
+
+    expect(pickArticle('Blades in the Dark', [other, game, film])).toEqual({
+      page: game,
+      exact: true,
+    });
+    expect(pickArticle('Blades in the Dark', [film, other])).toBeNull();
+    expect(
+      pickArticle('Tormenta 20 (T20)', [{ title: 'Tormenta 20', description: 'jogo de RPG' }])
+        ?.exact,
+    ).toBe(true);
   });
 });
 
@@ -228,6 +259,7 @@ describe('findSystemLogo', () => {
       fetcher: routes({
         wbsearchentities: () => json({ search: [] }),
         'list=search': () => json({ query: { search: [] } }),
+        'wikipedia.org': () => json({}),
       }),
       resolve: publicDns,
     });
@@ -251,6 +283,87 @@ describe('findSystemLogo', () => {
       resolve: publicDns,
     });
     expect(refused.reason).toBe('lookup_failed');
+  });
+
+  it('finds the system through Wikipedia when Wikidata does not know the name', async () => {
+    const fetcher = routes({
+      wbsearchentities: () => json({ search: [] }),
+      wbgetentities: () => json({ entities: { Q5: item('Q5', 'Call of Cthulhu') } }),
+      'list=search': () => json({ query: { search: [] } }),
+      'prop=imageinfo': () =>
+        json({
+          query: {
+            pages: {
+              '1': {
+                imageinfo: [
+                  {
+                    thumburl: 'https://upload.wikimedia.org/pt/coc.png',
+                    descriptionurl: '//pt.wikipedia.org/wiki/Ficheiro:Chamado_logo.png',
+                    extmetadata: { LicenseShortName: { value: 'Uso restrito' } },
+                  },
+                ],
+              },
+            },
+          },
+        }),
+      'en.wikipedia.org': () => json({ query: { pages: {} } }),
+      'pt.wikipedia.org': () =>
+        json({
+          query: {
+            pages: {
+              '9': {
+                title: 'Chamado de Cthulhu',
+                index: 1,
+                description: 'jogo de RPG de horror',
+                pageimage: 'Chamado logo.png',
+                pageprops: { wikibase_item: 'Q5' },
+              },
+            },
+          },
+        }),
+    });
+
+    const found = await findSystemLogo('Chamado de Cthulhu', { fetcher, resolve: publicDns });
+
+    expect(found).toMatchObject({
+      wikidataId: 'Q5',
+      reason: null,
+      candidate: {
+        imageUrl: 'https://upload.wikimedia.org/pt/coc.png',
+        sourcePage: 'https://pt.wikipedia.org/wiki/Ficheiro:Chamado_logo.png',
+        method: 'wikipedia',
+        confidence: 'medium',
+        license: 'Uso restrito',
+      },
+    });
+  });
+
+  it("takes the item's article picture, at low, when nothing else has a logo", async () => {
+    const fetcher = routes({
+      wbsearchentities: () => json({ search: [{ id: 'Q6' }] }),
+      wbgetentities: () =>
+        json({ entities: { Q6: item('Q6', '13th Age', { enwiki: '13th Age' }) } }),
+      'list=search': () => json({ query: { search: [] } }),
+      'prop=imageinfo': () =>
+        json({
+          query: {
+            pages: {
+              '1': { imageinfo: [{ thumburl: 'https://upload.wikimedia.org/en/13th.jpg' }] },
+            },
+          },
+        }),
+      'en.wikipedia.org': () =>
+        json({ query: { pages: { '3': { title: '13th Age', pageimage: '13th Age cover.jpg' } } } }),
+    });
+
+    const found = await findSystemLogo('13th Age', { fetcher, resolve: publicDns });
+
+    expect(found.candidate).toMatchObject({
+      imageUrl: 'https://upload.wikimedia.org/en/13th.jpg',
+      sourcePage: 'https://en.wikipedia.org/wiki/File:13th_Age_cover.jpg',
+      method: 'wikipedia',
+      confidence: 'low',
+    });
   });
 
   it('waits once when Wikidata asks it to slow down', async () => {

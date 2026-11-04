@@ -9,6 +9,7 @@ import {
   approveSureLogos,
   decisionSchema,
   forgetLogo,
+  forgetMissingLogos,
   listSystemLogos,
   recordLogoSearch,
   recordSchema,
@@ -61,6 +62,7 @@ export function systemLogoRoutes(open: Open = createDb) {
       return (db, actor) => approveLogo(db, actor, systemId);
     },
     approveSure: () => (db, actor) => approveSureLogos(db, actor),
+    forgetMissing: () => (db, actor) => forgetMissingLogos(db, actor),
     reject: (body) => {
       const { systemId } = decisionSchema.parse(body);
       return (db, actor) => rejectLogo(db, actor, systemId);
