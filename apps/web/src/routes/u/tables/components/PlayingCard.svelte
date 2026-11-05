@@ -5,6 +5,7 @@
   import { m } from '#lib/paraglide/messages.js';
   import ActionForm from '#lib/components/ActionForm.svelte';
   import NextSession from '#lib/components/ui/NextSession.svelte';
+  import { isTableOver, tableStatusLabel, type TableStatus } from '#lib/tables/status.js';
 
   type Item = {
     slug: string;
@@ -12,6 +13,8 @@
     systemName: string;
     gmName: string;
     status: 'pending' | 'confirmed';
+    /** A table that is over shows its state instead of a next session. */
+    tableStatus: TableStatus;
     timezone: string;
     startsAt: Date;
     canRate: boolean;
@@ -21,6 +24,7 @@
   let { item, next }: { item: Item; next: string } = $props();
 
   const page = $derived(`/t/${item.slug}`);
+  const over = $derived(isTableOver(item.tableStatus));
 </script>
 
 <article class="rounded-lg border border-surface-200-800 bg-panel p-6">
@@ -40,7 +44,11 @@
     <span class="sr-only">{m.table_gm()}: </span><UserLink username={item.gmName} />
   </p>
 
-  <NextSession startsAt={item.startsAt} timezone={item.timezone} />
+  {#if over}
+    <p class="mt-4"><Pill tone="outline">{tableStatusLabel(item.tableStatus)}</Pill></p>
+  {:else}
+    <NextSession startsAt={item.startsAt} timezone={item.timezone} />
+  {/if}
 
   {#if item.canRate}
     <p class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-lamp-wash px-4 py-3">

@@ -248,14 +248,15 @@ describe('Minhas mesas', () => {
       expect(page.getByText('aconteceu?').elements()).toHaveLength(0);
     });
 
-    it('shows no table status to a player or a GM: statuses are only for admin', async () => {
+    it('tags only a table that is over; a table still on shows no status', async () => {
       await page.viewport(1280, 800);
       show({
         playing: [{ ...playing, tableStatus: 'concluded' as TableStatus }],
         running: [awaiting],
       });
 
-      for (const word of ['Aguardando confirmação', 'Concluída', 'Mesa concluída', 'Desativada']) {
+      await expect.element(page.getByText('Mesa concluída')).toBeVisible();
+      for (const word of ['Aguardando confirmação da mestragem', 'Desativada']) {
         expect(page.getByText(word).elements()).toHaveLength(0);
       }
     });

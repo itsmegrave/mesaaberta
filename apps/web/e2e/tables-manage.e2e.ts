@@ -409,9 +409,11 @@ test.describe('editing and disabling', () => {
     expect(response?.status()).toBe(404);
     await visitor.close();
 
-    // The GM still finds it on their dashboard, with no table status: those are for admin.
+    // The GM still finds it on their dashboard, tagged as over, with no next session.
     await page.goto('/u/tables');
-    await expect(page.getByText(title)).toBeVisible();
-    await expect(page.getByText('Mesa desativada')).toHaveCount(0);
+    const card = page.locator('article', { hasText: title });
+    await expect(card).toBeVisible();
+    await expect(card.getByText('Mesa desativada')).toBeVisible();
+    await expect(card.getByText(/Próxima sessão/)).toHaveCount(0);
   });
 });

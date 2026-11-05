@@ -9,6 +9,11 @@ export const TABLE_STATUSES = [
 ] as const;
 export type TableStatus = (typeof TABLE_STATUSES)[number];
 
+// The table is over, whatever its date says: concluded (a campaign the GM finished keeps the date
+// its next session would have had), not held, or disabled. It has no next session.
+export const isTableOver = (status: TableStatus) =>
+  status === 'concluded' || status === 'not_held' || status === 'disabled';
+
 // What became of one session of a table (`table_sessions`): still ahead (or waiting for its GM to
 // say whether it happened), it happened, it did not, or the GM called it off beforehand.
 export const TABLE_SESSION_STATUSES = ['scheduled', 'held', 'not_held', 'cancelled'] as const;

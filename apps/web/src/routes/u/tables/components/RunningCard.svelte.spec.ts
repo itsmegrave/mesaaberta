@@ -35,6 +35,27 @@ describe('RunningCard', () => {
       .toHaveAttribute('href', '/t/cronicas/edit');
   });
 
+  it('marks a concluded table, with no next session, no Editar mesa and no Remover', async () => {
+    render(RunningCard, props({ tableStatus: 'concluded' }));
+
+    await expect.element(page.getByText('Mesa concluída')).toBeVisible();
+    expect(document.body.textContent).not.toMatch(/10 de outubro/);
+    expect(document.querySelector('a[href="/t/cronicas/edit"]')).toBeNull();
+    expect(document.querySelector('form[action="/t/cronicas?/remove"]')).toBeNull();
+    await expect.element(page.getByText('@Ana')).toBeVisible();
+    await expect
+      .element(page.getByRole('link', { name: 'Gerenciar mesa' }))
+      .toHaveAttribute('href', '/t/cronicas/manage');
+  });
+
+  it('marks a disabled table and shows no next session, but can still be edited', async () => {
+    render(RunningCard, props({ tableStatus: 'disabled' }));
+
+    await expect.element(page.getByText('Mesa desativada')).toBeVisible();
+    expect(document.body.textContent).not.toMatch(/10 de outubro/);
+    await expect.element(page.getByRole('link', { name: 'Editar mesa' })).toBeVisible();
+  });
+
   it('sends "Sim, aconteceu" to the attendance step on Gerenciar mesa, and posts "Não aconteceu"', async () => {
     render(RunningCard, props({ tableStatus: 'awaiting_confirmation' }));
 
@@ -85,11 +106,13 @@ describe('RunningCard', () => {
     await expect.element(page.getByText('Ninguém ainda.')).toBeVisible();
   });
 
-  it('keeps showing the session date for a table that is not active, without a table status', async () => {
-    render(RunningCard, props({ tableStatus: 'disabled' }));
+  it('keeps showing the session date while the GM still has to confirm it', async () => {
+    render(RunningCard, props({ tableStatus: 'awaiting_confirmation' }));
 
-    await expect.element(page.getByText('Mesa desativada')).not.toBeInTheDocument();
     await expect.element(page.getByText(/sábado, 10 de outubro às 19:00/)).toBeVisible();
+    await expect
+      .element(page.getByText('Aguardando confirmação da mestragem'))
+      .not.toBeInTheDocument();
   });
 
   it('shows names as text, never as markup', async () => {

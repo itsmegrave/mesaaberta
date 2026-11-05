@@ -2,7 +2,7 @@
   import UserLink from '#lib/components/ui/UserLink.svelte';
   import Pill from '#lib/components/ui/Pill.svelte';
   import { Collapsible } from '@skeletonlabs/skeleton-svelte';
-  import type { TableStatus } from '#lib/tables/status.js';
+  import { isTableOver, tableStatusLabel, type TableStatus } from '#lib/tables/status.js';
   import { m } from '#lib/paraglide/messages.js';
   import { seatSummary } from '#lib/tables/format.js';
   import ActionForm from '#lib/components/ActionForm.svelte';
@@ -64,6 +64,11 @@
       : []),
   ]);
   const manage = $derived(`/t/${item.slug}/manage`);
+  // A table that is over has no next session, even when its date is still ahead (a campaign the
+  // GM finished keeps the date of the session that would have come next).
+  const over = $derived(isTableOver(item.tableStatus));
+  // A concluded table is history: it can't be edited (policy) and its players stay on it.
+  const concluded = $derived(item.tableStatus === 'concluded');
 </script>
 
 <article
@@ -71,8 +76,8 @@
   class="scroll-mt-6 rounded-lg border border-surface-200-800 bg-panel p-6"
 >
   <p class="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold text-muted">
-    {#if item.tableStatus === 'draft'}
-      <Pill tone="outline">{m.table_status_draft()}</Pill>
+    {#if item.tableStatus === 'draft' || over}
+      <Pill tone="outline">{tableStatusLabel(item.tableStatus)}</Pill>
     {/if}
     {#if item.systemName}<span>{item.systemName}</span>{/if}
     <span class="ml-auto"
@@ -89,7 +94,7 @@
     </p>
   {/if}
 
-  <!-- The date has passed: the GM says whether it happened. Table statuses are only for admin. -->
+  <!-- The date has passed: the GM says whether it happened. Only a table that is over gets a status tag. -->
   {#if item.tableStatus === 'awaiting_confirmation'}
     <div
       role="group"
@@ -122,15 +127,19 @@
     <SeatDots taken={item.players.length} capacity={item.capacity} reserved={item.reserved} />
   </p>
 
-  <NextSession startsAt={item.startsAt} timezone={item.timezone} />
+  {#if !over}
+    <NextSession startsAt={item.startsAt} timezone={item.timezone} />
+  {/if}
 
   <div class="mt-4 flex flex-wrap items-center gap-3">
     <a href={`/t/${item.slug}/manage`} class="{buttonClass('primary')} font-semibold"
       >{m.dash_manage()}</a
     >
-    <a href={`/t/${item.slug}/edit`} class="{buttonClass('secondary')} font-semibold"
-      >{m.dash_edit()}</a
-    >
+    {#if !concluded}
+      <a href={`/t/${item.slug}/edit`} class="{buttonClass('secondary')} font-semibold"
+        >{m.dash_edit()}</a
+      >
+    {/if}
     <KebabMenu name={item.title} items={menu} class="ml-auto" />
   </div>
 
@@ -195,14 +204,16 @@
                   class="flex items-center justify-between gap-3 rounded-lg bg-surface-950-50/5 px-3 py-2"
                 >
                   <span><UserLink username={player.username} /></span>
-                  <ActionForm
-                    action="{page}?/remove"
-                    playerId={player.playerId}
-                    {next}
-                    label={m.table_remove()}
-                    buttonClass="btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-alert"
-                    success={m.toast_removed()}
-                  />
+                  {#if !concluded}
+                    <ActionForm
+                      action="{page}?/remove"
+                      playerId={player.playerId}
+                      {next}
+                      label={m.table_remove()}
+                      buttonClass="btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-alert"
+                      success={m.toast_removed()}
+                    />
+                  {/if}
                 </li>
               {/each}
             </ul>

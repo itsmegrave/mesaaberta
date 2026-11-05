@@ -26,6 +26,7 @@ beforeAll(async () => {
     { id: id(4), username: 'ana' },
     { id: id(5), username: 'bruno' },
     { id: id(6), username: 'anfitria' },
+    { id: id(7), username: 'campanha' },
   ]);
 });
 afterAll(() => test.close());
@@ -213,6 +214,22 @@ describe('listRunning', () => {
       'Primeira',
       'Segunda',
       'Encerrada',
+    ]);
+  });
+
+  it('puts a table that is over last, even when its date is still ahead', async () => {
+    const host = id(7);
+    await makeTable({
+      title: 'Campanha concluída',
+      gmId: host,
+      status: 'concluded',
+      startsAt: new Date('2026-10-03T20:00:00Z'),
+    });
+    await makeTable({ title: 'Ativa', gmId: host, startsAt: new Date('2026-10-20T20:00:00Z') });
+
+    expect((await listRunning(test.db, host, now)).map((r) => r.title)).toEqual([
+      'Ativa',
+      'Campanha concluída',
     ]);
   });
 
