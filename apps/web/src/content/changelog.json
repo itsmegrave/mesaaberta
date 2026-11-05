@@ -20,6 +20,11 @@
         "kind": "fixed",
         "title": "Menos páginas de erro em falhas rápidas",
         "description": "Quando o servidor falha por um instante ao carregar uma página, o site tenta de novo logo em seguida, em vez de mostrar uma página de erro."
+      },
+      {
+        "kind": "fixed",
+        "title": "Você continua conectado",
+        "description": "Quando o site não consegue carregar o seu perfil por um instante, você não aparece mais como desconectado. O menu da sua conta continua no topo e o Início mostra Tente de novo em vez da página de quem não tem conta."
       }
     ]
   },
