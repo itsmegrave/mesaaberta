@@ -29,7 +29,7 @@ export async function requireApi<T = Record<string, unknown>>(
   const reason = (answer.body as { error?: unknown } | null)?.error;
   locals.log.warn('api.call_failed_answer', {
     code: 'api_call_failed',
-    route: routeTemplate(path),
+    apiRoute: routeTemplate(path),
     status: answer.status,
     reason: typeof reason === 'string' ? reason : undefined,
   });
