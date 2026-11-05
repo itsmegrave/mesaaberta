@@ -86,15 +86,19 @@ export async function callApiRaw(
   method: 'GET' | 'POST' | 'DELETE' = 'POST',
 ): Promise<ApiAnswer | null> {
   const first = await answerOnce(env, path, actorId, log, json, headers, method);
-  // A read is safe to send again. When Cloudflare answered for the api Worker (an error page, not
-  // the api's own JSON), that isolate failed while the next one usually does not: one more try
-  // keeps the page up instead of a 503.
-  if (first.kind === 'not_json' && method === 'GET' && first.status >= 500) {
-    const second = await answerOnce(env, path, actorId, log, json, headers, method);
+  // A read is safe to send again. When the answer was not the api's JSON (Cloudflare's error page,
+  // an empty 500, or a body cut off mid-stream) that isolate failed while the next one usually does
+  // not: one more try, a moment later, keeps the page up instead of a 503.
+  if (first.kind === 'not_json' && method === 'GET') {
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+    const second = await answerOnce(env, path, actorId, log, json, headers, method, 2);
     return second.kind === 'answer' ? second.answer : null;
   }
   return first.kind === 'answer' ? first.answer : null;
 }
+
+/** How long a failed read waits before its one retry. */
+export const RETRY_DELAY_MS = 150;
 
 type Attempt =
   { kind: 'answer'; answer: ApiAnswer } | { kind: 'not_json'; status: number } | { kind: 'none' };
@@ -107,27 +111,66 @@ async function answerOnce(
   json: unknown,
   headers: Record<string, string>,
   method: 'GET' | 'POST' | 'DELETE',
+  attempt = 1,
 ): Promise<Attempt> {
-  let status: number | undefined;
+  let response: Response | null = null;
   let text: string | undefined;
   try {
-    const response = await sendToApi(env, path, actorId, { method, json, headers });
+    response = await sendToApi(env, path, actorId, { method, json, headers });
     if (!response) return { kind: 'none' };
-    status = response.status;
     text = await response.text();
-    return { kind: 'answer', answer: { ok: response.ok, status, body: JSON.parse(text) } };
+    const body = JSON.parse(text);
+    return { kind: 'answer', answer: { ok: response.ok, status: response.status, body } };
   } catch (error) {
     // With a status, the api (or Cloudflare in front of it) answered something that is not JSON:
-    // an error page when the api Worker itself failed. Without one, the call never got an answer.
+    // an error page when the api Worker itself failed, or a body that broke off. Without one, the
+    // call never got an answer.
+    const status = response?.status;
     log.warn('api.call_failed', {
       code: status === undefined ? 'api_call_failed' : 'api_answer_not_json',
-      route: routeTemplate(path),
+      // Not `route`: the web request's logger stamps its own page route over that field.
+      apiRoute: routeTemplate(path),
+      method,
       status,
+      attempt,
       reason: cloudflareErrorOf(text),
+      ...(response && answerShapeOf(response, text)),
       error,
     });
     return status === undefined ? { kind: 'none' } : { kind: 'not_json', status };
   }
+}
+
+/**
+ * What a failed answer looked like, never its text: whether a body arrived and of what kind, its
+ * size, and where Cloudflare placed the api (`cf-placement`, e.g. `remote-GRU`), so an incident can
+ * tell an empty platform 500 from an error page or a body cut off mid-stream.
+ */
+export function answerShapeOf(
+  response: Response,
+  text: string | undefined,
+): { bodyKind: string; bodyBytes?: number; placement?: string } {
+  const type = response.headers.get('content-type') ?? '';
+  const bodyKind =
+    text === undefined
+      ? 'unread'
+      : text === ''
+        ? 'empty'
+        : type.includes('html')
+          ? 'html'
+          : type.includes('json')
+            ? 'json'
+            : type.startsWith('text/')
+              ? 'text'
+              : type
+                ? 'other'
+                : 'untyped';
+  const placement = response.headers.get('cf-placement') ?? undefined;
+  return {
+    bodyKind,
+    ...(text === undefined ? {} : { bodyBytes: text.length }),
+    ...(placement && { placement }),
+  };
 }
 
 /**
@@ -155,7 +198,7 @@ export async function callApi<T>(
   if (!answer.ok) {
     log.warn('api.call_refused', {
       code: 'api_call_refused',
-      route: routeTemplate(path),
+      apiRoute: routeTemplate(path),
       status: answer.status,
       reason: (answer.body as { error?: unknown } | null)?.error as string | undefined,
     });

@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { describe, expect, it, vi } from 'vitest';
 import { setRequestContextStore, withRequestId } from '@mesaaberta/contracts';
-import { callApi, callApiRaw, cloudflareErrorOf } from './api-client';
+import { answerShapeOf, callApi, callApiRaw, cloudflareErrorOf } from './api-client';
 
 const log = { warn: vi.fn() } as never;
 const envWith = (fetch: (request: Request) => Promise<Response>) =>
@@ -74,7 +74,8 @@ describe('callApi', () => {
 });
 
 describe('callApiRaw when Cloudflare answers for the api', () => {
-  const errorPage = () => new Response('error code: 1102', { status: 500 });
+  const errorPage = () =>
+    new Response('error code: 1102', { status: 500, headers: { 'content-type': 'text/plain' } });
 
   it('tries a read once more, so one failed isolate is not a 503 page', async () => {
     const fetch = vi
@@ -99,8 +100,63 @@ describe('callApiRaw when Cloudflare answers for the api', () => {
     expect(fetch).toHaveBeenCalledTimes(2);
     expect(warn).toHaveBeenCalledWith(
       'api.call_failed',
-      expect.objectContaining({ code: 'api_answer_not_json', status: 500, reason: 'cf_1102' }),
+      expect.objectContaining({
+        code: 'api_answer_not_json',
+        apiRoute: '/v1/reads/systems/mausritter',
+        method: 'GET',
+        status: 500,
+        attempt: 1,
+        reason: 'cf_1102',
+        bodyKind: 'text',
+      }),
     );
+  });
+
+  it('tries a read again when the body broke off after a 200', async () => {
+    const cut = new Response(
+      new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('{"id":'));
+          controller.error(new Error('Network connection lost.'));
+        },
+      }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    );
+    const fetch = vi
+      .fn<(request: Request) => Promise<Response>>()
+      .mockResolvedValueOnce(cut)
+      .mockResolvedValueOnce(Response.json({ id: 'me' }));
+    const warn = vi.fn();
+
+    const answer = await callApiRaw(
+      envWith(fetch),
+      '/v1/me',
+      'a',
+      { warn } as never,
+      undefined,
+      {},
+      'GET',
+    );
+
+    expect(answer).toEqual({ ok: true, status: 200, body: { id: 'me' } });
+    expect(warn).toHaveBeenCalledWith(
+      'api.call_failed',
+      expect.objectContaining({ status: 200, bodyKind: 'unread' }),
+    );
+  });
+
+  it('says what the failed answer looked like, never its text', () => {
+    const empty = new Response('', { status: 500, headers: { 'cf-placement': 'remote-GRU' } });
+    expect(answerShapeOf(empty, '')).toEqual({
+      bodyKind: 'empty',
+      bodyBytes: 0,
+      placement: 'remote-GRU',
+    });
+    const page = new Response('<html></html>', {
+      status: 500,
+      headers: { 'content-type': 'text/html' },
+    });
+    expect(answerShapeOf(page, '<html></html>')).toEqual({ bodyKind: 'html', bodyBytes: 13 });
   });
 
   it('is null when the second try fails too', async () => {

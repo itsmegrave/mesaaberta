@@ -47,6 +47,7 @@ const COUNTS = new Set([
   'retry',
   'searched',
   'found',
+  'bodyBytes',
 ]);
 const LABELS = new Set([
   'event',
@@ -66,6 +67,9 @@ const LABELS = new Set([
   'reason',
   'resourceType',
   'colo',
+  // What a failed api answer looked like (`empty`, `html`) and where Cloudflare placed the api.
+  'bodyKind',
+  'placement',
   // The MCP tool a call ran (`search_tables`), never its arguments.
   'tool',
 ]);
@@ -80,6 +84,7 @@ export const LOGGED_FIELDS: ReadonlySet<string> = new Set([
   ...IDS,
   'resourceId',
   'route',
+  'apiRoute',
   'error',
 ]);
 // A resource is named by its uuid or by its public handle (a table's slug, a profile's @username).
@@ -103,7 +108,11 @@ export function safeFields(
       safe[key] = value;
     // Route templates, never the requested pathname with user-controlled slugs: SvelteKit's
     // (`/t/[slug]`) and the api's (`/v1/tables/:slug`).
-    if (key === 'route' && typeof value === 'string' && /^\/[a-zA-Z0-9/_[\]()=.:-]*$/.test(value))
+    if (
+      (key === 'route' || key === 'apiRoute') &&
+      typeof value === 'string' &&
+      /^\/[a-zA-Z0-9/_[\]()=.:-]*$/.test(value)
+    )
       safe[key] = value;
   }
   return safe;

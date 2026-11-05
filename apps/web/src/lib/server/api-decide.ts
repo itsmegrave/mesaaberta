@@ -59,7 +59,7 @@ export async function decideViaApi(
   }
   locals.log.warn('api.decision_failed', {
     code: 'api_call_failed',
-    route: routeTemplate(path),
+    apiRoute: routeTemplate(path),
     status: answer.status,
     reason: typeof body.error === 'string' ? body.error : undefined,
   });

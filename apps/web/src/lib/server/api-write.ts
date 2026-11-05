@@ -62,7 +62,7 @@ export async function writeViaApi(
   if (refusal) throw refusal;
   locals.log.warn('api.write_failed', {
     code: 'api_call_failed',
-    route: routeTemplate(path),
+    apiRoute: routeTemplate(path),
     status: answer.status,
     reason: typeof json.error === 'string' ? json.error : undefined,
   });
