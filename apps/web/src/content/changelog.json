@@ -1,5 +1,18 @@
 [
   {
+    "date": "2026-11-05",
+    "title": "Mesas encerradas em Minhas mesas",
+    "summary": "Em Minhas mesas, uma mesa que já acabou mostra a situação dela e vai para o fim da lista.",
+    "changes": [
+      {
+        "kind": "fixed",
+        "title": "Mesas encerradas não parecem mais ativas",
+        "description": "Em Minhas mesas, uma mesa concluída, que não aconteceu ou desativada mostra a situação dela no lugar de Próxima sessão e vai para o fim da lista. Mesas concluídas não mostram mais Editar mesa nem Remover.",
+        "href": "/u/tables"
+      }
+    ]
+  },
+  {
     "date": "2026-11-03",
     "title": "Sessões da mesa e a mesa na sua agenda",
     "summary": "Campanhas e aventuras ganham uma lista de sessões que quem mestra agenda, muda ou cancela, e a mesa vai para a sua agenda direto da página dela.",
