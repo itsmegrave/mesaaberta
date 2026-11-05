@@ -265,8 +265,13 @@ test.describe('ratings', () => {
           .first(),
       ).toBeVisible();
 
-      // The dashboard shows what was given, and the GM cannot rate their own table.
+      // The dashboard shows what was given, under the concluded tables, and the GM cannot rate
+      // their own table.
       await page.goto('/u/tables');
+      await page
+        .getByRole('button', { name: /Encerradas/ })
+        .first()
+        .click();
       await expect(page.getByText('Sua nota para a mestragem: 4')).toBeVisible();
       await gmPage.goto(`/t/${slug}`);
       await expect(gmPage.getByRole('heading', { name: 'Avalie a mestragem' })).toHaveCount(0);
