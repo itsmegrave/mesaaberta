@@ -36,13 +36,18 @@
   import { arrivingSkeleton } from '#lib/navigation/skeletons.js';
   import { reloadPage } from '#lib/forms/leave-guard.svelte.js';
   import { syncBrowserTimezone } from '#lib/time/browser-timezone.js';
+  import { keepFullAccount } from '#lib/components/shell/last-account.js';
   import { onMount } from 'svelte';
 
   let { children, data: layoutData } = $props();
   const accountQuery = pageQuery(() => layoutData.accountRead ?? { summary: null }, client);
+  // While the api cannot read the profile, the server sends a bare account for the same person:
+  // the menu keeps the one it showed last (picture, admin link, counts) until the api answers.
+  const lastFullAccount = keepFullAccount<NonNullable<typeof layoutData.account>>();
+  const shown = $derived(lastFullAccount(layoutData.account, layoutData.cacheIdentity));
   const data = $derived({
     ...layoutData,
-    account: layoutData.account && { ...layoutData.account, ...(accountQuery.data?.summary ?? {}) },
+    account: shown && { ...shown, ...(accountQuery.data?.summary ?? {}) },
   });
   // The directories whose flag is on, for the sidebar and the phone's Explorar.
   const directories = $derived(directoryNav(data.directories));

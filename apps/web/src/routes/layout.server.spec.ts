@@ -38,6 +38,23 @@ describe('the layout load', () => {
     expect(data.account).toBeNull();
     expect(log.error).toHaveBeenCalledWith('layout.profile_load_failed', expect.anything());
   });
+
+  it('keeps someone Supabase verified signed in when the api cannot read their profile', async () => {
+    const { event: e } = event(async () => {
+      throw new Error('api_answer_not_json');
+    });
+    Object.assign(e.locals, {
+      getUser: async () => ({ id: 'u', user_metadata: { full_name: 'Ana Souza' } }),
+    });
+
+    const data = (await run(e)) as unknown as {
+      account: { displayName: string; unavailable: boolean } | null;
+      cacheIdentity: string;
+    };
+
+    expect(data.cacheIdentity).toBe('u');
+    expect(data.account).toMatchObject({ displayName: 'Ana Souza', unavailable: true });
+  });
 });
 
 describe('the account menu', () => {

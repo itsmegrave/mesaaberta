@@ -103,6 +103,22 @@ describe('the home page load', () => {
     expect(error).toHaveBeenCalledOnce();
   });
 
+  it('does not show a member the landing page when the api cannot read their profile', async () => {
+    const member = {
+      ...event(),
+      locals: {
+        ...event().locals,
+        getUser: async () => ({ id: 'me' }),
+        getProfile: async () => {
+          throw new Error('api_answer_not_json');
+        },
+      },
+    } as unknown as RequestEvent;
+
+    await expect(run(member)).rejects.toMatchObject({ status: 503 });
+    expect(listed).not.toHaveBeenCalled();
+  });
+
   it('gives a member with use_signed_in_home their Início instead of the landing page', async () => {
     vi.mocked(readHome).mockResolvedValue({
       rows: { followed: null, systems: [], fresh: [] },
