@@ -11,6 +11,27 @@ import { isPublished } from '#lib/blog.js';
 import { posts } from '#lib/server/blog.js';
 import type { LayoutServerLoad } from './$types';
 
+/**
+ * The account menu while the api cannot read the profile: the name Supabase holds and nothing the
+ * api would have counted. `unavailable` lets the shell keep the full account it showed last.
+ */
+const unavailableAccount = (user: { user_metadata?: Record<string, unknown> }) => {
+  const metadata = user.user_metadata ?? {};
+  const name = [metadata.full_name, metadata.name].find(
+    (value): value is string => typeof value === 'string' && value.trim() !== '',
+  );
+  return {
+    displayName: name?.trim() ?? 'Pessoa sem nome',
+    username: null as string | null,
+    avatarUrl: null as string | null,
+    isAdmin: false,
+    pendingSuggestionsCount: 0,
+    notifications: { unread: 0, latest: [], seenAt: new Date().toISOString() },
+    messagesUnread: 0,
+    unavailable: true as const,
+  };
+};
+
 export const load: LayoutServerLoad = async (event) => {
   const { locals, cookies, route } = event;
   const authEnabled = locals.supabase !== null;
@@ -76,8 +97,11 @@ export const load: LayoutServerLoad = async (event) => {
       },
     };
   } catch (error) {
-    // The page is still worth showing without the account menu.
+    // The page is still worth showing. Someone whose session Supabase just verified stays signed
+    // in: only the api's read of their profile failed, and a header with "Entrar" (and a cleared
+    // client cache) would look like being signed out on every link they follow until it answers.
     locals.log.error('layout.profile_load_failed', { error });
+    const user = await locals.getUser().catch(() => null);
     return {
       authEnabled,
       site,
@@ -85,8 +109,8 @@ export const load: LayoutServerLoad = async (event) => {
       maintenance: false,
       maintenanceBypass,
       viewer: viewerTimezone(null, cookies.get(TIMEZONE_COOKIE)),
-      account: null,
-      cacheIdentity: 'anonymous',
+      account: user && unavailableAccount(user),
+      cacheIdentity: user?.id ?? 'anonymous',
       accountRead: null,
       directories: NO_DIRECTORIES,
       beginners: false,
