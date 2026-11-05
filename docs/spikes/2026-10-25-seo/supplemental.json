@@ -1,0 +1,49 @@
+{
+  "initialProbe": {
+    "requests": 47,
+    "capturedAt": [
+      "2026-10-25T21:11:50.082576+00:00",
+      "2026-10-25T21:13:27.389989+00:00"
+    ]
+  },
+  "transportSamples": [
+    {
+      "requested": "https://mesaaberta.app/",
+      "status": 200,
+      "elapsedSeconds": 1.09,
+      "bytes": 166555
+    },
+    {
+      "requested": "https://mesaaberta.app/t",
+      "status": 200,
+      "elapsedSeconds": 0.398,
+      "bytes": 158188
+    },
+    {
+      "requested": "https://mesaaberta.app/cf",
+      "status": 200,
+      "elapsedSeconds": 2.742,
+      "bytes": 125812
+    }
+  ],
+  "transportCaveat": "End-to-end single HTTP samples, not Core Web Vitals or controlled performance benchmarks; uncompressed body bytes.",
+  "userAgentComparison": {
+    "userAgent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+    "requested": "https://mesaaberta.app/t",
+    "status": 200,
+    "wordCount": 216,
+    "caveat": "Spoofed User-Agent, not verified Googlebot or Search Console."
+  },
+  "wwwProbe": {
+    "requested": "https://www.mesaaberta.app/",
+    "error": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
+    "caveat": "Resolver result from this machine; no global DNS survey."
+  },
+  "pageSpeedAttempt": {
+    "url": "https://mesaaberta.app/",
+    "strategy": "mobile",
+    "apiStatus": 429,
+    "reason": "Anonymous PageSpeed API quota exhausted",
+    "scoresObtained": false
+  }
+}
