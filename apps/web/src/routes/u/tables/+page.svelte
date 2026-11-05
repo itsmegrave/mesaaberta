@@ -14,6 +14,8 @@
   import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import Pill from '#lib/components/ui/Pill.svelte';
+  import MAAccordion from '#lib/components/ui/MAAccordion.svelte';
+  import MAAccordionItem from '#lib/components/ui/MAAccordionItem.svelte';
   import { formatSession } from '@mesaaberta/core/tables/format';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
@@ -44,7 +46,10 @@
   type Tab = 'playing' | 'running';
   // svelte-ignore state_referenced_locally
   let tab = $state<Tab>(
-    data.totals.playing === 0 && data.totals.running > 0 ? 'running' : 'playing',
+    data.totals.playing + data.ended.playing.length === 0 &&
+      data.totals.running + data.ended.running.length > 0
+      ? 'running'
+      : 'playing',
   );
 
   // A link to one of the GM's tables (the banner, or a shared `#mesa-...`) opens their tab first,
@@ -77,8 +82,13 @@
     empty: string;
     href: string;
     cta: string;
+    /** How many tables that are over sit in the folded "Encerradas" section (page 1 only). */
+    ended: number;
+    /** The section starts open when it holds something to do now (a rating to give). */
+    endedOpen: boolean;
   },
   cards: Snippet,
+  endedCards: Snippet,
 )}
   <Tabs.Content value={list.value}>
     {#snippet element(attributes)}
@@ -104,6 +114,24 @@
             <ul class="mt-5 grid gap-5">
               {@render cards()}
             </ul>
+          {/if}
+          {#if list.ended > 0}
+            <!-- Concluded, not held or disabled: kept for the record, folded away from the tables still on. -->
+            <MAAccordion
+              class="mt-6 border-y border-surface-200-800"
+              value={list.endedOpen ? ['ended'] : []}
+            >
+              <MAAccordionItem
+                value="ended"
+                level={3}
+                title={m.dash_ended()}
+                summary={m.dash_count({ count: list.ended })}
+              >
+                <ul class="grid gap-5">
+                  {@render endedCards()}
+                </ul>
+              </MAAccordionItem>
+            </MAAccordion>
           {/if}
         </section>
       </div>
@@ -261,17 +289,35 @@
           <li><RunningCard {item} {next} openPlayers={index === 0} /></li>
         {/each}
       {/snippet}
+      {#snippet endedPlayingCards()}
+        {#each data.ended.playing as item (item.slug)}
+          <li><PlayingCard {item} {next} /></li>
+        {/each}
+      {/snippet}
+      {#snippet endedRunningCards()}
+        {#each data.ended.running as item (item.slug)}
+          <li><RunningCard {item} {next} /></li>
+        {/each}
+      {/snippet}
       {@render column(
         {
           value: 'playing',
           title: m.dash_playing(),
           total: data.totals.playing,
           shown: data.playing.length,
-          empty: data.totals.playing === 0 ? m.dash_playing_empty() : m.dash_page_empty(),
+          empty:
+            data.totals.playing > 0
+              ? m.dash_page_empty()
+              : data.ended.playing.length > 0
+                ? m.dash_playing_none_on()
+                : m.dash_playing_empty(),
           href: '/tables',
           cta: m.dash_find_table(),
+          ended: data.page === 1 ? data.ended.playing.length : 0,
+          endedOpen: data.ended.playing.some((item) => item.canRate && !item.rating),
         },
         playingCards,
+        endedPlayingCards,
       )}
       {@render column(
         {
@@ -279,11 +325,19 @@
           title: m.dash_running(),
           total: data.totals.running,
           shown: data.running.length,
-          empty: data.totals.running === 0 ? m.dash_running_empty() : m.dash_page_empty(),
+          empty:
+            data.totals.running > 0
+              ? m.dash_page_empty()
+              : data.ended.running.length > 0
+                ? m.dash_running_none_on()
+                : m.dash_running_empty(),
           href: '/tables/new',
           cta: m.tables_open_cta(),
+          ended: data.page === 1 ? data.ended.running.length : 0,
+          endedOpen: false,
         },
         runningCards,
+        endedRunningCards,
       )}
     </div>
   </Tabs>

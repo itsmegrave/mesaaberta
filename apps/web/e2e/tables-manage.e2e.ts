@@ -409,8 +409,12 @@ test.describe('editing and disabling', () => {
     expect(response?.status()).toBe(404);
     await visitor.close();
 
-    // The GM still finds it on their dashboard, tagged as over, with no next session.
+    // The GM still finds it on their dashboard, under "Encerradas", tagged, with no next session.
     await page.goto('/u/tables');
+    await page
+      .getByRole('button', { name: /Encerradas/ })
+      .first()
+      .click();
     const card = page.locator('article', { hasText: title });
     await expect(card).toBeVisible();
     await expect(card.getByText('Mesa desativada')).toBeVisible();

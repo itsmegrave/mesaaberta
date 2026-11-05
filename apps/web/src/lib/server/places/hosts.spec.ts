@@ -31,7 +31,9 @@ import type { StoredEvent } from '@mesaaberta/core/server/events/types';
 import { submitPlace } from '@mesaaberta/core/server/places/service';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
-const now = new Date('2026-10-29T15:00:00Z');
+// Today: the event handler checks the invite against the real clock, so a fixed date would let
+// the invite expire under the test a week later.
+const now = new Date();
 const id = (n: number) => `00000000-0000-4000-8000-0000000008${String(n).padStart(2, '0')}`;
 const member = (n: number): Actor => ({ id: id(n), role: 'member', status: 'active' });
 const admin: Actor = { id: id(99), role: 'admin', status: 'active' };

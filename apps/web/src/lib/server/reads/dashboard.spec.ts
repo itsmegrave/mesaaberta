@@ -15,7 +15,8 @@ vi.mock('@mesaaberta/core/server/dashboard/queries', () => ({
   listRunning: vi.fn(),
 }));
 
-const table = (n: number, requests = 0) => ({
+const table = (n: number, requests = 0, tableStatus = 'active') => ({
+  tableStatus,
   startsAt: new Date('2099-01-01T20:00:00Z'),
   slug: `mesa-${n}`,
   title: `Mesa ${n}`,
@@ -68,6 +69,23 @@ describe('the Minhas mesas read', () => {
       tables: 1,
       first: { slug: 'mesa-11', title: 'Mesa 11', page: 2 },
     });
+  });
+
+  it('keeps the tables that are over out of the pages, whole in `ended`', async () => {
+    vi.mocked(listRunning).mockResolvedValue([
+      table(1),
+      table(2, 0, 'concluded'),
+      table(3, 0, 'disabled'),
+    ] as never);
+    vi.mocked(listPlaying).mockResolvedValue([table(4, 0, 'not_held')] as never);
+
+    const dashboard = await read(event());
+    expect(dashboard.running.map((item) => item.slug)).toEqual(['mesa-1']);
+    expect(dashboard.playing).toEqual([]);
+    expect(dashboard.totals).toEqual({ playing: 0, running: 1 });
+    expect(dashboard.ended.running.map((item) => item.slug)).toEqual(['mesa-2', 'mesa-3']);
+    expect(dashboard.ended.playing.map((item) => item.slug)).toEqual(['mesa-4']);
+    expect(dashboard.ended.running[0].startsAt).toBeInstanceOf(Date);
   });
 
   it('reads anything but a positive whole number as page 1, and 404s past the last', async () => {

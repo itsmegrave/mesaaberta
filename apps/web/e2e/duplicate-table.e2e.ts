@@ -25,6 +25,11 @@ test('duplicates a concluded owned table with its image, a new date and no inher
   try {
     await db`update game_tables set status = 'concluded', min_players = 3, ical_sequence = 8 where slug = ${originalSlug}`;
     await page.goto('/u/tables');
+    // A concluded table sits in the folded "Encerradas" section.
+    await page
+      .getByRole('button', { name: /Encerradas/ })
+      .first()
+      .click();
     const card = page.locator(`#mesa-${originalSlug}`);
     await card.getByRole('button', { name: /^Mais ações:/ }).click();
     await page.getByRole('menuitem', { name: 'Duplicar mesa' }).click();

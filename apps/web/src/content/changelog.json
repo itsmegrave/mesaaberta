@@ -2,12 +2,18 @@
   {
     "date": "2026-11-05",
     "title": "Mesas encerradas em Minhas mesas",
-    "summary": "Em Minhas mesas, uma mesa que já acabou mostra a situação dela e vai para o fim da lista.",
+    "summary": "Em Minhas mesas, as mesas que já acabaram ficam em uma seção própria, Encerradas.",
     "changes": [
       {
         "kind": "fixed",
         "title": "Mesas encerradas não parecem mais ativas",
-        "description": "Em Minhas mesas, uma mesa concluída, que não aconteceu ou desativada mostra a situação dela no lugar de Próxima sessão e vai para o fim da lista. Mesas concluídas não mostram mais Editar mesa nem Remover.",
+        "description": "Em Minhas mesas, uma mesa concluída, que não aconteceu ou desativada mostra a situação dela no lugar de Próxima sessão. Mesas concluídas não mostram mais Editar mesa nem Remover.",
+        "href": "/u/tables"
+      },
+      {
+        "kind": "improved",
+        "title": "Seção Encerradas em Minhas mesas",
+        "description": "As mesas que já acabaram saem da lista e ficam em Encerradas, fechada embaixo de Jogando e de Mestrando. Ela já abre quando tem uma mesa esperando a sua avaliação.",
         "href": "/u/tables"
       }
     ]
