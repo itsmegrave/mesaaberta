@@ -235,15 +235,20 @@ describe('+layout.svelte', () => {
       expect(hrefs.indexOf('/systems')).toBeGreaterThan(hrefs.indexOf('/tables'));
     });
 
-    it("links Financiamentos straight from the phone bar when it is Explorar's only link", async () => {
+    it('puts Financiamentos and Ferramentas in the phone Explorar sheet with every directory off', async () => {
       await page.viewport(390, 844);
       render(Layout, { children, data: signedOut });
       const bar = page.getByRole('navigation', { name: 'Navegação móvel' });
 
+      expect(bar.getByRole('link').elements()).toHaveLength(3);
+      await bar.getByRole('button', { name: 'Explorar' }).click();
+      const sheet = page.getByRole('dialog', { name: 'Explorar' });
       await expect
-        .element(bar.getByRole('link', { name: 'Financiamentos' }))
+        .element(sheet.getByRole('link', { name: /Financiamentos/ }))
         .toHaveAttribute('href', '/crowdfunding');
-      expect(bar.getByRole('link').elements()).toHaveLength(4);
+      await expect
+        .element(sheet.getByRole('link', { name: /Ferramentas/ }))
+        .toHaveAttribute('href', '/tools');
     });
 
     it('puts Financiamentos in the phone Explorar sheet once a directory is on', async () => {
