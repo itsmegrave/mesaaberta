@@ -20,7 +20,7 @@ refusals come back as the form's codes:
 (`POST /v1/table-writes` to create, `/:slug/update`, `/:slug/disable`; web
 still validates the form, stores the image and resolves the CEP, and sends the result). The inbox (`POST /v1/inbox/:action` with
 `send`, `mute`, `open`, `read` and `readAll`). What a member submits
-(`POST /v1/submissions/partners`, `/partners/:id` and `/crowdfundings`; web
+(`POST /v1/submissions/partners`, `/partners/:id`, `/crowdfundings`, `/tools` and `/tools/:id`; web
 still validates the form and stores the picture). The game systems' logos (`GET /v1/admin/system-logos?status=&page=` the review list, `GET /v1/admin/system-logos/to-search` the next systems the search has not looked at, and `POST /v1/admin/system-logos/:action` with `record`, `approve`, `approveSure`, `reject` and `forget`; web runs the finder and stores the pictures, and a write that frees a file answers its path for web to delete). The admin's hand actions on an installed extension (`POST /v1/admin/:extension/:action`, from its
 `adminActions`, behind the flag `api_admin_<extension>` that the extension declares; none is installed in this repository, and the private Instagram connector's `queue` and `reconcile` use `api_admin_instagram`). The admin
 announcements console (`POST /v1/admin/announcements`: count the audience, then send), the direct conversation with someone (`POST /v1/inbox/direct`) and an admin's "[Admin] @username" conversation with someone (`POST /v1/inbox/admin`). Reporting a table, a partner or a campaign and withdrawing
@@ -165,7 +165,7 @@ Web turns the dates back with `revivedDates` (`api-read.ts`).
 The admin pages read no database in web; each route is behind the admin guard, takes the page's filters as the query string, and answers a 404 past the last page:
 
 - `GET /v1/admin-reads/counts`: what waits beside each section (`adminCounts`, now in core).
-- `GET /v1/admin-reads/{badges,audit,reports,places,claims,crowdfundings,partners}` and `GET /v1/admin-reads/reports/:id`.
+- `GET /v1/admin-reads/{badges,audit,reports,places,claims,crowdfundings,partners,tools}`, `GET /v1/admin-reads/reports/:id` and `GET /v1/admin-reads/tools/:id` (one tool for the edit form).
 - `GET /v1/admin-reads/catalog?kind=&q=&status=&page=&size=&sort=` (the console, with the approved entries of that kind) and `GET /v1/admin-reads/queue` (suggestions waiting, recent decisions, the approved catalog).
 - `GET /v1/admin-reads/announcements` (audience sizes and history) and `GET /v1/admin-reads/recipients?q=` (usernames).
 - `GET /v1/admin-reads/users/:id?badges=1` and `GET /v1/admin-reads/tables/:id` (one person or table, with history; badges only while `use_badges` is on for the admin).
@@ -190,6 +190,12 @@ The extension panels (`/admin/[ext]`) still run in web until the api can read th
 - `GET /v1/crowdfundings?…`: the list for visitors too, each campaign with its `submitterId` (web turns it into `canReport` and never sends it to the browser).
 - `GET /v1/crowdfundings/listed?url=`: whether a campaign at that link is listed already.
 - `POST /v1/crowdfundings/link-read`: counts one read of a campaign page against `LINK_READ_LIMIT` (`rate_limited` past it), for the link preview and the add form's own read.
+
+## Ferramentas
+
+`/v1/tools` (`tools.ts`); suggesting a tool is `POST /v1/submissions/tools` (`{ input, logoPath }`) and an admin's edit `POST /v1/submissions/tools/:id`; approving and removing are the `tool.approve` and `tool.remove` moderation decisions:
+
+- `GET /v1/tools?q=`: the approved tools grouped by kind, with the open tables on each table platform, plus the viewer's own suggestions that still wait.
 
 ## CEP, health and suspended accounts
 

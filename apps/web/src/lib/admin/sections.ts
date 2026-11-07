@@ -8,6 +8,8 @@ export type AdminCounts = {
   connections: number;
   events: number;
   partners: number;
+  /** Tools suggested by members, waiting for an admin. */
+  tools: number;
   places: number;
   /** Places reports hid: the admins' high alert, counted in red beside "Lugares". */
   hiddenPlaces: number;
@@ -74,6 +76,12 @@ export function adminGroups(
           label: m.admin_nav_partners(),
           icon: 'game-icons:trade',
           count: counts.partners,
+        },
+        {
+          path: '/admin/tools',
+          label: m.admin_nav_tools(),
+          icon: 'game-icons:toolbox',
+          count: counts.tools,
         },
         {
           path: '/admin/places',

@@ -1317,6 +1317,55 @@ export const partnerLinks = pgTable(
   ],
 ).enableRLS();
 
+// A tool of the "Ferramentas" page (/tools): a platform or app tables use to play (a virtual
+// tabletop, a chat, a call, character sheets). Seeded from the table platforms; a member suggests
+// one, it waits for an admin (`approvedAt`), and an admin edits, rejects or removes it
+// (`removedAt`). Who suggested it is shown to admins only.
+export const tools = pgTable(
+  'tools',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    // Made from the name and kept; also the logo file name of a seeded tool.
+    slug: text('slug').notNull(),
+    name: text('name').notNull(),
+    // Mirror TOOL_KINDS in `@mesaaberta/core/tools/schema`.
+    kind: text('kind').notNull(),
+    siteUrl: text('site_url').notNull(),
+    description: text('description').notNull(),
+    // A path in the avatar bucket (`tools/<submitter id>/...`), a site path for a seeded tool
+    // (`/tools/discord.svg`), or null: the card shows the name's first letter.
+    logoPath: text('logo_path'),
+    // The table platform it is, when there is one: the card links to the tables that use it.
+    platformId: uuid('platform_id').references(() => platforms.id, { onDelete: 'set null' }),
+    // Null for the seeded ones.
+    submitterId: uuid('submitter_id').references(() => profiles.id, { onDelete: 'set null' }),
+    approvedAt: timestamp('approved_at', { withTimezone: true }),
+    // The admin who approved it. Not a foreign key, like `partners.approved_by`.
+    approvedBy: uuid('approved_by'),
+    removedAt: timestamp('removed_at', { withTimezone: true }),
+    removedBy: uuid('removed_by'),
+    removalReason: reportReason('removal_reason'),
+    removalNote: text('removal_note'),
+    ...timestamps,
+  },
+  (tool) => [
+    uniqueIndex('tools_slug_unique').on(tool.slug),
+    // One tool per site while it is up: a repeat points at the existing one.
+    uniqueIndex('tools_site_unique')
+      .on(sql`lower(${tool.siteUrl})`)
+      .where(sql`${tool.removedAt} IS NULL`),
+    index('tools_submitter_idx').on(tool.submitterId),
+    index('tools_approved_idx').on(tool.approvedAt, tool.removedAt),
+    check('tools_slug_format', sql`${tool.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+    // Mirror TOOL_KINDS and TOOL_LIMITS in `@mesaaberta/core/tools/schema`.
+    check('tools_kind_known', sql`${tool.kind} IN ('vtt', 'chat', 'call', 'helper')`),
+    check('tools_name_length', sql`char_length(${tool.name}) BETWEEN 1 AND 60`),
+    check('tools_description_length', sql`char_length(${tool.description}) BETWEEN 1 AND 140`),
+    check('tools_site_url_length', sql`char_length(${tool.siteUrl}) <= 300`),
+    check('tools_removal_note_length', sql`char_length(${tool.removalNote}) <= 1000`),
+  ],
+).enableRLS();
+
 // What an "Onde jogar" place is. Mirror PLACE_KINDS in `@mesaaberta/core/places/types`.
 export const placeKind = pgEnum('place_kind', [
   'store',

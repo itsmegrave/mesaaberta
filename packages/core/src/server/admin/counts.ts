@@ -7,6 +7,7 @@ import { hiddenPlaceCount, pendingPlaceCount } from '../places/admin';
 import { pendingClaimCount } from '../places/claims';
 import { pendingPartnerLinkCount } from '../places/partner-links';
 import { waitingReports } from '../moderation/admin';
+import { pendingToolCount } from '../tools/service';
 
 /** What waits on an admin, counted beside each section of the admin pages. */
 export type AdminCounts = {
@@ -15,6 +16,8 @@ export type AdminCounts = {
   connections: number;
   events: number;
   partners: number;
+  /** Tool suggestions waiting, beside "Ferramentas". */
+  tools: number;
   places: number;
   /** Places reports hid: the admins' high alert, counted in red beside "Lugares". */
   hiddenPlaces: number;
@@ -28,29 +31,41 @@ export async function adminCounts(
   db: AnyDb,
   extensions: readonly Extension[] = installed,
 ): Promise<AdminCounts> {
-  const [reports, queue, events, partners, places, claims, links, hiddenPlaces, connections] =
-    await Promise.all([
-      waitingReports(db),
-      pendingCount(db),
-      failedEventCount(db),
-      pendingPartnerCount(db),
-      pendingPlaceCount(db),
-      // A claim waits in the same queue: "Lugares" counts both.
-      pendingClaimCount(db),
-      // So does a place asking to be shown as a partner's.
-      pendingPartnerLinkCount(db),
-      hiddenPlaceCount(db),
-      // What waits on an admin in each extension's connection, such as an Instagram post to reconcile.
-      Promise.all(
-        extensions.map(({ admin }) => (admin && !admin.section ? admin.count(db) : 0)),
-      ).then((counts) => counts.reduce((total, waiting) => total + waiting, 0)),
-    ]);
+  const [
+    reports,
+    queue,
+    events,
+    partners,
+    places,
+    claims,
+    links,
+    hiddenPlaces,
+    connections,
+    tools,
+  ] = await Promise.all([
+    waitingReports(db),
+    pendingCount(db),
+    failedEventCount(db),
+    pendingPartnerCount(db),
+    pendingPlaceCount(db),
+    // A claim waits in the same queue: "Lugares" counts both.
+    pendingClaimCount(db),
+    // So does a place asking to be shown as a partner's.
+    pendingPartnerLinkCount(db),
+    hiddenPlaceCount(db),
+    // What waits on an admin in each extension's connection, such as an Instagram post to reconcile.
+    Promise.all(
+      extensions.map(({ admin }) => (admin && !admin.section ? admin.count(db) : 0)),
+    ).then((counts) => counts.reduce((total, waiting) => total + waiting, 0)),
+    pendingToolCount(db),
+  ]);
   return {
     reports,
     queue,
     connections,
     events,
     partners,
+    tools,
     places: places + claims + links,
     hiddenPlaces,
   };

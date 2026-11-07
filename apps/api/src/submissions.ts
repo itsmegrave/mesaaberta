@@ -21,7 +21,7 @@ type Action = {
 
 /**
  * What a member submits (Trello #120): `POST /partners`, `POST /partners/:id` (an edit) and
- * `POST /crowdfundings`. The web Worker has validated the form and stored the picture; this takes
+ * `POST /crowdfundings`, and `POST /tools` (a suggestion) and `POST /tools/:id` (an admin's edit). The web Worker has validated the form and stored the picture; this takes
  * the input and the stored path and runs the same services, from core's `submissionActions`.
  * Answers `{ eventIds, ... }`, or the refusal the service made.
  */
@@ -46,6 +46,8 @@ export function submissionRoutes(open: Open = openDb) {
   app.post('/partners', (c) => run(c, 'partnerAdd', ''));
   app.post('/partners/:id', (c) => run(c, 'partnerUpdate', c.req.param('id')));
   app.post('/crowdfundings', (c) => run(c, 'crowdfundingAdd', ''));
+  app.post('/tools', (c) => run(c, 'toolSuggest', ''));
+  app.post('/tools/:id', (c) => run(c, 'toolUpdate', c.req.param('id')));
 
   return app;
 }

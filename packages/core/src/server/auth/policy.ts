@@ -101,6 +101,8 @@ type Resources = {
   'crowdfunding:report': { submitterId: string | null };
   /** Sending a partner: any signed-in member. An admin approves it before it is listed. */
   'partner:add': undefined;
+  /** Suggesting a tool for "Ferramentas": any signed-in member. An admin approves it first. */
+  'tool:suggest': undefined;
   /**
    * Editing or withdrawing a partner, and choosing who looks after it: only those accounts
    * (`ownersOf`: the submitter alone until someone accepts an invite).
@@ -267,6 +269,7 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
   'crowdfunding:report': (actor, campaign) =>
     campaign !== undefined && actor.id !== campaign.submitterId,
   'partner:add': () => true,
+  'tool:suggest': () => true,
   'partner:edit': (actor, partner) => partner !== undefined && partner.ownerIds.includes(actor.id),
   'partner:report': (actor, partner) =>
     partner !== undefined && !partner.ownerIds.includes(actor.id),

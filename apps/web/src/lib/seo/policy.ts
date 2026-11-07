@@ -14,6 +14,7 @@ export function indexingPolicy(
       '/tables',
       '/partners',
       '/crowdfunding',
+      '/tools',
       '/systems',
       '/gamemasters',
       '/places',
@@ -50,6 +51,7 @@ export function indexingPolicy(
   if (
     path === '/partners' ||
     path === '/crowdfunding' ||
+    path === '/tools' ||
     path === '/systems' ||
     path === '/gamemasters' ||
     path === '/places'
