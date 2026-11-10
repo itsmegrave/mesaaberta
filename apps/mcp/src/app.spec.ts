@@ -3,7 +3,7 @@ import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type JWK } from
 import { createFlags } from '@mesaaberta/core/server/flags/flags';
 import type { FlagName } from '@mesaaberta/core/server/flags/registry';
 import { createMcp, type McpEnv } from './app';
-import { TOOL_NAMES } from './tools';
+import { TOOL_NAMES, WRITE_TOOL_NAMES } from './tools';
 
 const SUPABASE = 'https://project.supabase.co';
 const ISSUER = `${SUPABASE}/auth/v1`;
@@ -32,7 +32,7 @@ const tokenFor = (claims: Claims = {}, key = privateKey) =>
     .setExpirationTime((claims.exp as number) ?? '1h')
     .sign(key);
 
-type Seen = { path: string; actor: string | null };
+type Seen = { path: string; actor: string | null; method: string; body: unknown };
 /** A stand-in for the api Worker's binding: answers by path and records who asked for what. */
 function fakeApi(
   answers: Record<string, { status?: number; body: unknown }> = {},
@@ -43,7 +43,8 @@ function fakeApi(
     fetch: async (request: Request) => {
       const url = new URL(request.url);
       const path = url.pathname + url.search;
-      seen.push({ path, actor: request.headers.get('x-actor-id') });
+      const body: unknown = request.method === 'GET' ? null : await request.json();
+      seen.push({ path, actor: request.headers.get('x-actor-id'), method: request.method, body });
       if (url.pathname === '/v1/me') return Response.json({ profile });
       const answer = answers[path] ?? answers[url.pathname];
       if (!answer) return Response.json({ error: 'not_found' }, { status: 404 });
@@ -165,14 +166,23 @@ describe('the MCP door', () => {
 });
 
 describe('the read tools', () => {
-  it('lists only read-only tools', async () => {
+  it('marks every tool read-only except the few that add something', async () => {
     const { rpc } = setUp();
     const response = await rpc('tools/list');
     const { result } = (await response.json()) as {
-      result: { tools: { name: string; annotations?: { readOnlyHint?: boolean } }[] };
+      result: {
+        tools: {
+          name: string;
+          annotations?: { readOnlyHint?: boolean; destructiveHint?: boolean };
+        }[];
+      };
     };
     expect(result.tools.map((tool) => tool.name).sort()).toEqual([...TOOL_NAMES].sort());
-    expect(result.tools.every((tool) => tool.annotations?.readOnlyHint === true)).toBe(true);
+    const writes = new Set<string>(WRITE_TOOL_NAMES);
+    for (const tool of result.tools) {
+      expect(tool.annotations?.readOnlyHint, tool.name).toBe(!writes.has(tool.name));
+      if (writes.has(tool.name)) expect(tool.annotations?.destructiveHint, tool.name).toBe(false);
+    }
   });
 
   it('calls the api as the person the token names, never as someone an argument names', async () => {
@@ -250,5 +260,74 @@ describe('the read tools', () => {
     expect(isError).toBe(true);
     // Only the account check ran; no read was sent for the bad slug.
     expect(seen.slice(before).every((request) => request.path === '/v1/me')).toBe(true);
+  });
+});
+
+describe('add_tool', () => {
+  const ID = '00000000-0000-4000-8000-000000000001';
+  const breu = {
+    name: 'Breu: gerador de atributos',
+    siteUrl: 'https://gerador-breu.mesaaberta.app',
+    kind: 'helper',
+    description: 'Rola os seis atributos de um personagem de Breu.',
+  };
+
+  it('suggests the tool as the caller, then approves it so it is listed', async () => {
+    const { call, seen } = setUp({
+      answers: {
+        '/v1/submissions/tools': { body: { eventIds: ['e1'], id: ID } },
+        '/v1/admin/moderation/tool.approve': { body: { eventIds: ['e2'] } },
+      },
+    });
+    expect(await call('add_tool', breu)).toEqual({
+      isError: false,
+      body: { id: ID, listed: true },
+    });
+    const writes = seen.filter((request) => request.method === 'POST');
+    expect(writes).toEqual([
+      {
+        path: '/v1/submissions/tools',
+        actor: USER,
+        method: 'POST',
+        body: { input: breu, logoPath: null },
+      },
+      { path: '/v1/admin/moderation/tool.approve', actor: USER, method: 'POST', body: { id: ID } },
+    ]);
+  });
+
+  it('passes on the field and code of a refused suggestion (a site already listed)', async () => {
+    const { call, seen } = setUp({
+      answers: {
+        '/v1/submissions/tools': {
+          status: 400,
+          body: { error: 'invalid', field: 'siteUrl', message: 'duplicate' },
+        },
+      },
+    });
+    expect(await call('add_tool', breu)).toEqual({
+      isError: true,
+      body: { error: 'invalid', field: 'siteUrl', code: 'duplicate' },
+    });
+    expect(seen.some((request) => request.path.includes('tool.approve'))).toBe(false);
+  });
+
+  it('says the tool waits for approval when approving it fails', async () => {
+    const { call } = setUp({
+      answers: {
+        '/v1/submissions/tools': { body: { eventIds: ['e1'], id: ID } },
+        '/v1/admin/moderation/tool.approve': { status: 403, body: { error: 'forbidden' } },
+      },
+    });
+    expect(await call('add_tool', breu)).toEqual({
+      isError: true,
+      body: { error: 'forbidden', id: ID, pending: true },
+    });
+  });
+
+  it('refuses a kind the page does not group before reaching the api', async () => {
+    const { call, seen } = setUp();
+    const before = seen.length;
+    expect((await call('add_tool', { ...breu, kind: 'game' })).isError).toBe(true);
+    expect(seen.slice(before).every((request) => request.method === 'GET')).toBe(true);
   });
 });

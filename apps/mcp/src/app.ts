@@ -9,7 +9,7 @@ import { can, type Actor } from '@mesaaberta/core/server/auth/policy';
 import { buildInfoOf, type BuildEnv } from '@mesaaberta/core/server/build-info';
 import type { Flags } from '@mesaaberta/core/server/flags/flags';
 import { logger } from '@mesaaberta/core/server/logger';
-import { apiReader, type ApiEnv } from './api';
+import { apiClient, type ApiEnv } from './api';
 import { bearerOf, issuerOf, supabaseKeys, verifyToken } from './auth';
 import { mcpFlags, type FlagsEnv } from './flags';
 import { registerTools } from './tools';
@@ -33,8 +33,9 @@ const INSTRUCTIONS =
   'Mesa Aberta (mesaaberta.app) is a Brazilian site for finding and running tabletop RPG tables ' +
   '(mesas). These tools read it as the person who connected this client: open tables, their own ' +
   'tables and calendar, the game systems, places to play (Onde jogar), game masters (Quem mestra), ' +
-  'profiles, notifications and messages. The site is in Brazilian Portuguese; answer in the ' +
-  "person's language. Nothing here changes anything on the site.";
+  'tools (Ferramentas), profiles, notifications and messages. The site is in Brazilian ' +
+  "Portuguese; answer in the person's language. Only add_tool changes the site: it lists a new " +
+  'tool, so confirm the details with the person first.';
 
 /** The address of `/mcp` as clients reach it, which the protected-resource metadata names. */
 const resourceOf = (c: Context<{ Bindings: McpEnv }>) =>
@@ -112,9 +113,10 @@ export function createMcp({ keys = supabaseKeys, flags = mcpFlags }: Deps = {}) 
     if (!caller) return challenge('invalid_token');
     const { userId } = caller;
 
-    let read;
+    let api;
     try {
-      read = apiReader(env, userId);
+      api = apiClient(env, userId);
+      const { read } = api;
       // The account as the api reads it: one that has not finished signing up, or a suspended
       // one, gets nothing here, as on the site.
       const me = await read('/v1/me');
@@ -146,7 +148,7 @@ export function createMcp({ keys = supabaseKeys, flags = mcpFlags }: Deps = {}) 
       { instructions: INSTRUCTIONS, jsonSchemaValidator: new CfWorkerJsonSchemaValidator() },
     );
     registerTools(server, {
-      read,
+      ...api,
       isEnabled: (flag) => flagSet.isEnabled(flag, { id: userId, isAdmin: true }),
       userId,
     });

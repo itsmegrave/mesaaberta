@@ -58,8 +58,8 @@ export const submissionActions = {
       _id: string,
       { input, logoPath }: { input: ToolInput; logoPath: string | null },
     ) => {
-      const { eventId } = await suggestTool(db, actor, input, { logoPath });
-      return { eventIds: [eventId] };
+      const { id, eventId } = await suggestTool(db, actor, input, { logoPath });
+      return { eventIds: [eventId], id };
     },
   },
   // An admin's "Editar" on a tool (the service checks the admin).
