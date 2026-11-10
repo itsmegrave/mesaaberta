@@ -82,8 +82,18 @@ function checkLists(
   });
 }
 
-/** Sending or editing a place. The photo is optional either way. */
-export const placeSchema = z.object({ ...fields, image: imageFile }).superRefine(checkLists);
+const placeObject = z.object({ ...fields, image: imageFile });
+
+/** Editing a place. The photo is optional. */
+export const placeSchema = placeObject.superRefine(checkLists);
+
+/**
+ * Sending a new place: the same, plus the sender's word that it is open to the public and not
+ * someone's home ("Onde jogar" is not for homes). Only the form checks it; the api never sees it.
+ */
+export const newPlaceSchema = placeObject
+  .extend({ publicVenue: z.literal(true, 'public_venue') })
+  .superRefine(checkLists);
 
 export type PlaceFormInput = z.output<typeof placeSchema>;
 
@@ -107,6 +117,8 @@ export const NEW_PLACE_VALUES = {
   linkNetwork: [] as string[],
   linkUrl: [] as string[],
   removeImage: false,
+  // Only "Cadastrar lugar" asks for it (`newPlaceSchema`); an edit drops it.
+  publicVenue: false,
   image: undefined,
 };
 

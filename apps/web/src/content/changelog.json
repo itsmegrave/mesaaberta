@@ -1,5 +1,24 @@
 [
   {
+    "date": "2026-11-10",
+    "title": "Onde jogar é só para lugares abertos ao público",
+    "summary": "O cadastro de lugares deixa claro que Onde jogar é para lojas, luderias, clubes e outros lugares abertos ao público, e mostra onde fica a mesa na casa de alguém.",
+    "changes": [
+      {
+        "kind": "improved",
+        "title": "Cadastrar lugar explica para que serve",
+        "description": "O cadastro avisa logo no começo que Onde jogar mostra o endereço completo e não aceita a casa de ninguém, avisa quando o endereço parece de uma casa ou apartamento e pede para confirmar que o lugar é aberto ao público.",
+        "href": "/pp/new"
+      },
+      {
+        "kind": "improved",
+        "title": "Mesa em casa sem expor o endereço",
+        "description": "Ao criar uma mesa presencial, a opção Outro lugar agora se chama Em casa ou outro lugar. Com ela, só o bairro e a cidade aparecem.",
+        "href": "/tables/new"
+      }
+    ]
+  },
+  {
     "date": "2026-11-05",
     "title": "Mesas encerradas em Minhas mesas",
     "summary": "Em Minhas mesas, as mesas que já acabaram ficam em uma seção própria, Encerradas.",

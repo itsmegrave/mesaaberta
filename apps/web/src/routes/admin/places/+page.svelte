@@ -25,6 +25,7 @@
   } from '@mesaaberta/core/moderation/reports';
   import { PLACE_ADMIN_STATUSES } from '@mesaaberta/core/places/admin-filters';
   import { placeOwnerSchema } from '@mesaaberta/core/places/claims';
+  import { looksResidential } from '@mesaaberta/core/places/residence';
   import { placeTags } from '@mesaaberta/core/places/tags';
   import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import type { AdminPlaces } from '@mesaaberta/core/server/places/admin';
@@ -55,6 +56,8 @@
         : row.approvedAt
           ? 'place:up'
           : 'place:pending') as Status;
+  // Members have sent their homes: an address that reads like one is flagged for whoever reviews it.
+  const looksHome = (row: Row) => !row.removedAt && looksResidential(row.street, row.complement);
   const street = (row: Row) =>
     [row.street, row.complement].filter(Boolean).join(', ') + ` · ${formatCep(row.postalCode)}`;
   // What approving gives it: the tags its kind, address and approved tags make, as /places shows them.
@@ -203,6 +206,11 @@
                   >{m.admin_places_high_priority()}</span
                 >
               {/if}
+              {#if looksHome(row)}
+                <span class="text-sm font-semibold text-warning-700-300"
+                  >{m.admin_places_looks_home()}</span
+                >
+              {/if}
             </div>
           </div>
         </div>
@@ -242,6 +250,11 @@
           {#if hidden(row)}
             <span class="text-sm font-semibold text-error-700-300"
               >{m.admin_places_high_priority()}</span
+            >
+          {/if}
+          {#if looksHome(row)}
+            <span class="text-sm font-semibold text-warning-700-300"
+              >{m.admin_places_looks_home()}</span
             >
           {/if}
           {#if row.reports > 0}

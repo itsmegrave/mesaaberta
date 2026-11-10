@@ -3,6 +3,8 @@
   // gives the neighbourhood, city and state), when it opens and what it offers, a photo and links.
   // The card it will have sits beside it (below it on a phone), with the tags its address, kind and
   // picked tags make. An admin approves what is sent; an edit by whoever sent it goes back to them.
+  // "Onde jogar" is only for places open to the public: a new place starts with that rule (and where
+  // a home game goes instead), warns when the address reads like a home, and needs a box ticked.
   import CepLookup from '#lib/components/CepLookup.svelte';
   import CheckboxPills from '#lib/components/ui/CheckboxPills.svelte';
   import EditorForm from '#lib/components/ui/EditorForm.svelte';
@@ -15,6 +17,8 @@
   import RadioCards from '#lib/components/ui/RadioCards.svelte';
   import SearchSelect from '#lib/components/ui/SearchSelect.svelte';
   import FieldError from '#lib/components/ui/FieldError.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import MACheckbox from '#lib/components/ui/MACheckbox.svelte';
   import type { SelectItem } from '#lib/components/ui/select.svelte.js';
   import TextInput from '#lib/components/ui/TextInput.svelte';
   import PlaceCard from '#lib/components/directory/ui/PlaceCard.svelte';
@@ -29,7 +33,8 @@
   import { toast } from '#lib/toaster.js';
   import type { CepPlace } from '@mesaaberta/core/location/cep';
   import { PARTNER_NETWORKS } from '@mesaaberta/core/partners/schema';
-  import { placeSchema } from '@mesaaberta/core/places/schema';
+  import { newPlaceSchema, placeSchema } from '@mesaaberta/core/places/schema';
+  import { looksResidential } from '@mesaaberta/core/places/residence';
   import { MAX_PLACE_FEATURES } from '@mesaaberta/core/places/features';
   import { placeTags } from '@mesaaberta/core/places/tags';
   import { pickName } from '@mesaaberta/core/tables/catalog';
@@ -53,6 +58,8 @@
     linkNetwork: string[];
     linkUrl: string[];
     removeImage: boolean;
+    /** "Cadastrar lugar" only: the sender says it is open to the public, not a home. */
+    publicVenue?: boolean;
     image?: File;
   };
 
@@ -92,7 +99,7 @@
   // svelte-ignore state_referenced_locally
   const controller = actionForm<Values>({
     ...fromResult(initial),
-    schema: placeSchema,
+    schema: mode === 'new' ? newPlaceSchema : placeSchema,
     onSuccess: () => toast.success(m.place_form_sent()),
     errorMessage: m.form_error_unavailable,
   });
@@ -123,6 +130,9 @@
   const errors = fieldErrors<keyof Values>(controller, say);
   const { err } = errors;
   const kindError = $derived(controller.errors.kind?.[0] ? m.place_err_kind() : undefined);
+  const publicVenueError = $derived(
+    controller.errors.publicVenue?.[0] ? m.place_err_public_venue() : undefined,
+  );
   const postalCodeError = $derived(
     controller.errors.postalCode?.[0]
       ? errorText(controller.errors.postalCode[0], 'postalCode')
@@ -151,6 +161,7 @@
       problem('kind', m.place_form_kind(), kindError),
       problem('postalCode', m.form_postal_code(), postalCodeError),
       problem('image', m.form_image(), imageError),
+      problem('publicVenue', m.place_form_public_confirm_field(), publicVenueError),
     ),
   );
 
@@ -173,6 +184,9 @@
     controller.change('image', files[0]);
     controller.validateField('image');
   }
+
+  // A hint, never a refusal: an apartment, a block or a numbered house in the address.
+  const residential = $derived(looksResidential($draft.street, $draft.complement));
 
   const kind = $derived(isPlaceKind($draft.kind) ? $draft.kind : 'other');
   // A suggestion only counts once an admin approves it; the preview shows what the page will.
@@ -239,6 +253,26 @@
     </p>
   {/if}
 
+  {#if !editing}
+    <div
+      role="note"
+      aria-labelledby="public-only-title"
+      class="flex items-start gap-3 rounded-lg border border-warning-500 bg-panel p-4"
+    >
+      <Icon name="triangle-alert" size={20} class="mt-0.5 shrink-0 text-warning-700-300" />
+      <div class="grid gap-2">
+        <h2 id="public-only-title" class="font-semibold">{m.place_form_public_title()}</h2>
+        <p>{m.place_form_public_text()}</p>
+        <p class="text-sm">
+          {m.place_form_home_text()}
+          <a href="/tables/new" class="font-semibold text-link underline underline-offset-4"
+            >{m.place_form_home_cta()}</a
+          >
+        </p>
+      </div>
+    </div>
+  {/if}
+
   <FormSection id="about-section" step={1} title={m.place_form_about()}>
     <FormField
       id="name"
@@ -286,9 +320,6 @@
   </FormSection>
 
   <FormSection id="address-section" step={2} title={m.place_form_address()}>
-    <p role="note" class="flex items-start gap-2 rounded-lg bg-surface-wash p-4 text-sm">
-      {m.place_form_public_notice()}
-    </p>
     <div>
       <FormField
         id="postalCode"
@@ -349,6 +380,15 @@
         />
       {/snippet}
     </FormField>
+    <!-- Announced as it appears, after the street or the complement is typed. -->
+    <div role="status">
+      {#if residential}
+        <p class="flex items-start gap-2 rounded-lg border border-warning-500 bg-panel p-4 text-sm">
+          <Icon name="triangle-alert" size={16} class="mt-0.5 shrink-0 text-warning-700-300" />
+          <span>{m.place_form_residential_warning()}</span>
+        </p>
+      {/if}
+    </div>
   </FormSection>
 
   <FormSection id="hours-section" step={3} title={m.place_form_open()}>
@@ -454,6 +494,23 @@
       buttonClass="btn h-11 rounded-lg btn-secondary px-4 font-semibold"
     />
   </FormSection>
+
+  {#if !editing}
+    <div>
+      <MACheckbox
+        id="publicVenue"
+        name="publicVenue"
+        value="true"
+        align="start"
+        bind:checked={$draft.publicVenue}
+        aria-invalid={publicVenueError ? 'true' : undefined}
+        aria-describedby={publicVenueError ? 'publicVenue-error' : undefined}
+      >
+        <span>{m.place_form_public_confirm()}</span>
+      </MACheckbox>
+      <FieldError id="publicVenue" message={publicVenueError} />
+    </div>
+  {/if}
 
   {#snippet actions()}
     <MAButton
