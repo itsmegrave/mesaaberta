@@ -49,8 +49,8 @@ FROM (VALUES
 	('telegram', 'Telegram', 'chat', 'https://telegram.org', 'Mensagens e grupos, com chamadas de voz em grupo.', '/tools/telegram.svg'),
 	('whatsapp', 'WhatsApp', 'chat', 'https://www.whatsapp.com', 'Mensagens e chamadas pelo celular. Bom para combinar a próxima sessão.', '/tools/whatsapp.svg'),
 	('old-dragon-online', 'Old Dragon Online', 'helper', 'https://olddragon.com.br', 'Fichas e ferramentas online do Old Dragon 2e, RPG brasileiro de fantasia.', '/tools/old-dragon-online.png'),
-	('breu-character-roller', 'Breu: gerador de atributos', 'helper', 'https://breu-character-roller.itsmegrave.workers.dev', 'Rola os seis atributos de um personagem de Breu (2d4 cada) e avisa quando ele nasce fraco demais.', NULL),
-	('5e-to-daggerheart', '5e → Daggerheart', 'helper', 'https://5e-to-daggerheart.itsmegrave.workers.dev', 'Converte criaturas de D&D 5e em adversários de Daggerheart, com a regra por trás de cada número.', '/tools/5e-to-daggerheart.svg')
+	('breu-character-roller', 'Breu: gerador de atributos', 'helper', 'https://gerador-breu.mesaaberta.app', 'Rola os seis atributos de um personagem de Breu (2d4 cada) e avisa quando ele nasce fraco demais.', NULL),
+	('5e-to-daggerheart', '5e → Daggerheart', 'helper', 'https://5e-to-dh.mesaaberta.app', 'Converte criaturas de D&D 5e em adversários de Daggerheart, com a regra por trás de cada número.', '/tools/5e-to-daggerheart.svg')
 ) AS v(slug, name, kind, site_url, description, logo_path)
 LEFT JOIN "platforms" p ON lower(p.slug) = v.slug
 ON CONFLICT DO NOTHING;
