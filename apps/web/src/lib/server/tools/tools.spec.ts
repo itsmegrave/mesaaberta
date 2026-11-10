@@ -67,7 +67,12 @@ describe('the seeded list', () => {
     const list = await listTools(test.db, { now });
     expect(list.groups.map((group) => group.kind)).toEqual(['vtt', 'chat', 'call', 'helper']);
     const all = list.groups.flatMap((group) => group.tools);
-    expect(all).toHaveLength(13);
+    expect(all).toHaveLength(15);
+    expect(all.find((tool) => tool.slug === '5e-to-daggerheart')).toMatchObject({
+      kind: 'helper',
+      logoPath: '/tools/5e-to-daggerheart.svg',
+      platformSlug: null,
+    });
     expect(all.find((tool) => tool.slug === 'discord')).toMatchObject({
       kind: 'chat',
       siteUrl: 'https://discord.com',
