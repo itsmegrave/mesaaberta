@@ -1,5 +1,24 @@
 [
   {
+    "date": "2026-11-07",
+    "title": "Ferramentas para jogar",
+    "summary": "Explorar ganha Ferramentas: as plataformas e apps que as mesas usam para jogar, com o link e uma linha sobre cada uma.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Página Ferramentas",
+        "description": "Em Explorar, Ferramentas reúne mesas virtuais, chat, chamadas e fichas, como Foundry VTT, Roll20, Owlbear Rodeo e Discord. Cada card abre o site da ferramenta e mostra quantas mesas abertas jogam nela.",
+        "href": "/tools"
+      },
+      {
+        "kind": "new",
+        "title": "Sugira uma ferramenta",
+        "description": "Conhece outra plataforma ou app que ajuda a jogar? Em Sugerir ferramenta, você manda o nome, o site, o tipo e o logo. A administração confere e você recebe um aviso no sino quando ela entrar.",
+        "href": "/tools/new"
+      }
+    ]
+  },
+  {
     "date": "2026-11-05",
     "title": "Mesas encerradas em Minhas mesas",
     "summary": "Em Minhas mesas, as mesas que já acabaram ficam em uma seção própria, Encerradas.",

@@ -21,6 +21,7 @@ import { storeHealth } from './health';
 import { partnerRoutes } from './partners';
 import { placeRoutes } from './places';
 import { crowdfundingRoutes } from './crowdfundings';
+import { toolRoutes } from './tools';
 import { dispatchAfterWrites } from './dispatch';
 import { inboxRoutes } from './inbox';
 import { locationRoutes } from './location';
@@ -148,6 +149,8 @@ export function createApi() {
   app.route('/v1/places', placeRoutes());
   // Financiamentos: the list and the add form's checks.
   app.route('/v1/crowdfundings', crowdfundingRoutes());
+  // Ferramentas: the list (suggesting one is a submission).
+  app.route('/v1/tools', toolRoutes());
   // The person's own profile (the form and the direct-messages switch).
   app.route('/v1/account', accountRoutes());
 

@@ -117,6 +117,13 @@ export const imageUrl = (storageUrl: string | undefined, path: string | null) =>
 export const partnerLogoUrl = (storageUrl: string | undefined, path: string | null) =>
   objectUrl(storageUrl, AVATAR_BUCKET, path);
 
+/**
+ * A tool's logo: the seeded ones ship with the site (`/tools/<slug>.svg`, a path from the root) and a
+ * suggested one lives in the avatar bucket under `tools/<submitter id>/`.
+ */
+export const toolLogoUrl = (storageUrl: string | undefined, path: string | null) =>
+  path?.startsWith('/') ? path : objectUrl(storageUrl, AVATAR_BUCKET, path);
+
 /** The public URL of a profile's cover, which lives in the avatar bucket under `<id>/banners/`. */
 export const bannerUrl = (storageUrl: string | undefined, path: string | null) =>
   objectUrl(storageUrl, AVATAR_BUCKET, path);

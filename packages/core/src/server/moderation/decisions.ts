@@ -25,6 +25,8 @@ import type { AnyDb } from '../db/client';
 import { reports } from '../db/schema';
 import { Invalid } from '../errors';
 import { approvePartner, removePartner, setPartnerTypes } from '../partners/admin';
+import { approveTool, removeTool } from '../tools/service';
+import { removeToolSchema, toolIdSchema } from '../../tools/schema';
 import { approvePlace, removePlace, restorePlace } from '../places/admin';
 import { approveClaim, rejectClaim, removePlaceOwner } from '../places/claims';
 import { approveClaimSchema, placeOwnerSchema, rejectClaimSchema } from '../../places/claims';
@@ -149,6 +151,15 @@ export const moderationDecisions = {
   'partner.setTypes': decision({
     schema: partnerTypesSchema,
     apply: (db, actor, { id, types }) => setPartnerTypes(db, actor, id, types),
+  }),
+  // Approving, turning down and removing tools from `/admin/tools`.
+  'tool.approve': decision({
+    schema: toolIdSchema,
+    apply: (db, actor, { id }) => approveTool(db, actor, id),
+  }),
+  'tool.remove': decision({
+    schema: removeToolSchema,
+    apply: (db, actor, { id, reason, note }) => removeTool(db, actor, id, { reason, note }),
   }),
   // Approving, rejecting and removing "Onde jogar" places from `/admin/places`.
   'place.approve': decision({

@@ -9,6 +9,7 @@ import {
   type ReportReason,
   type ReportTarget,
 } from '@mesaaberta/core/moderation/reports';
+import { TOOL_REMOVAL_NOTE_MAX, TOOL_REMOVAL_REASONS } from '@mesaaberta/core/tools/schema';
 import { m } from '#lib/paraglide/messages.js';
 
 type Write = { name: 'note' | 'reason'; label: string; hint: string; required?: boolean };
@@ -63,6 +64,33 @@ export function removePartner(name: string): Words & {
     text: m.admin_partners_remove_text(),
     confirm: m.admin_partners_remove_confirm(),
     success: m.admin_partners_remove_done(),
+  };
+}
+
+/** Taking a tool off Ferramentas (or turning a suggestion down), with the reason and a note. */
+export function removeTool(
+  name: string,
+  approved: boolean,
+): Words & {
+  danger: true;
+  reasons: readonly ReportReason[];
+  reasonTarget: ReportTarget;
+  write: Write;
+} {
+  return {
+    danger: true,
+    reasons: TOOL_REMOVAL_REASONS,
+    reasonTarget: 'place',
+    write: {
+      name: 'note',
+      label: m.admin_tools_remove_note(),
+      hint: m.admin_tools_remove_note_hint({ max: TOOL_REMOVAL_NOTE_MAX }),
+    },
+    label: approved ? m.admin_tools_remove() : m.admin_tools_reject(),
+    title: approved ? m.admin_tools_remove_title({ name }) : m.admin_tools_reject_title({ name }),
+    text: m.admin_tools_remove_text(),
+    confirm: approved ? m.admin_tools_remove_confirm() : m.admin_tools_reject_confirm(),
+    success: approved ? m.admin_tools_remove_done() : m.admin_tools_reject_done(),
   };
 }
 

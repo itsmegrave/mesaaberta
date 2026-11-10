@@ -105,6 +105,7 @@ describe('SiteFooter.svelte', () => {
       'Mesas',
       'Parceiros',
       'Financiamentos coletivos',
+      'Ferramentas',
       'Sistemas',
       'Onde jogar',
       'Quem mestra',

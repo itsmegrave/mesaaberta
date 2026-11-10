@@ -33,6 +33,9 @@
     | 'partner:up'
     | 'partner:removed'
     | 'partner:withdrawn'
+    | 'tool:pending'
+    | 'tool:up'
+    | 'tool:removed'
     | 'place:pending'
     | 'place:up'
     | 'place:hidden'
@@ -164,6 +167,10 @@
       dot: 'border-2 border-surface-500 bg-transparent',
       text: 'muted',
     },
+    // A tool waits for an admin, is on Ferramentas, or was turned down or taken off.
+    'tool:pending': { label: () => m.partner_status_pending(), dot: 'bg-warning-500' },
+    'tool:up': { label: () => m.partner_status_up(), dot: 'bg-success-500' },
+    'tool:removed': { label: () => m.tool_status_removed(), dot: 'bg-error-500', text: 'danger' },
     // A place waits for an admin, is listed, was hidden by reports, or was taken down.
     'place:pending': { label: () => m.partner_status_pending(), dot: 'bg-warning-500' },
     'place:up': { label: () => m.partner_status_up(), dot: 'bg-success-500' },

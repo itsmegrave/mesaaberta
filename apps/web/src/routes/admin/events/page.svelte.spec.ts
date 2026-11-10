@@ -25,6 +25,7 @@ vi.mock('$app/state', () => ({
         connections: 0,
         events: 1,
         partners: 0,
+        tools: 0,
         places: 0,
         hiddenPlaces: 0,
       },
