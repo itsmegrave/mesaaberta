@@ -2,12 +2,14 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { AnyFlagName } from '@mesaaberta/core/server/flags/flags';
 import { logger } from '@mesaaberta/core/server/logger';
+import { TOOL_KINDS, TOOL_LIMITS } from '@mesaaberta/core/tools/schema';
 import { z } from 'zod';
-import { queryOf, type ApiAnswer, type ApiReader } from './api';
+import { queryOf, type ApiAnswer, type ApiReader, type ApiWriter } from './api';
 
 /** What a tool needs: the api as the caller, and the caller's flags. */
 export type ToolContext = {
   read: ApiReader;
+  write: ApiWriter;
   isEnabled: (flag: AnyFlagName) => Promise<boolean>;
   userId: string;
 };
@@ -16,8 +18,15 @@ const SLUG = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 const USERNAME = z.string().regex(/^@?[a-z0-9]+(?:-[a-z0-9]+)*$/i);
 const PAGE = z.number().int().min(1).optional().describe('Page number, from 1.');
 
-// Everything here only reads: no tool changes anything on the site (phase 1 of the MCP plan).
+// Most tools only read. The few that write add something and never remove or overwrite anything;
+// the api checks the caller's permission for each one as it does for the site's own forms.
 const READ = { readOnlyHint: true, openWorldHint: false } as const;
+const WRITE = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  idempotentHint: false,
+  openWorldHint: false,
+} as const;
 
 /** The refusal a tool answers, as a code the model can act on; never the api's own text. */
 const refusal = (status: number) =>
@@ -28,6 +37,16 @@ const refusal = (status: number) =>
       : status === 429
         ? 'rate_limited'
         : 'unavailable';
+
+/** The api's 400 as the field and the code it named (codes such as `duplicate`, never prose). */
+const invalid = (body: unknown) => {
+  const { field, message } = (body ?? {}) as { field?: unknown; message?: unknown };
+  return {
+    error: 'invalid',
+    ...(typeof field === 'string' && field ? { field } : {}),
+    ...(typeof message === 'string' && message ? { code: message } : {}),
+  };
+};
 
 const result = (body: unknown, isError = false): CallToolResult => ({
   content: [{ type: 'text', text: JSON.stringify(body) }],
@@ -43,7 +62,22 @@ const page = (n: number | undefined) => (n && n > 1 ? n : undefined);
  * does. Logs carry the tool and the status, never the arguments.
  */
 export function registerTools(server: McpServer, context: ToolContext) {
-  const { read, isEnabled, userId } = context;
+  const { read, write, isEnabled, userId } = context;
+
+  const ok = ({ status }: ApiAnswer) => status >= 200 && status < 300;
+
+  const refused = (tool: string, { status, body }: ApiAnswer, extra: object = {}) => {
+    logger.info('mcp.tool_refused', { tool, status, userId });
+    return result(
+      { ...(status === 400 ? invalid(body) : { error: refusal(status) }), ...extra },
+      true,
+    );
+  };
+
+  const failed = (tool: string, error: unknown, extra: object = {}) => {
+    logger.warn('mcp.tool_failed', { tool, code: 'api_call_failed', userId, error });
+    return result({ error: 'unavailable', ...extra }, true);
+  };
 
   const answer = async (
     tool: string,
@@ -51,13 +85,11 @@ export function registerTools(server: McpServer, context: ToolContext) {
     shape: (body: unknown) => unknown = (body) => body,
   ) => {
     try {
-      const { status, body } = await call();
-      if (status >= 200 && status < 300) return result(shape(body));
-      logger.info('mcp.tool_refused', { tool, status, userId });
-      return result({ error: refusal(status) }, true);
+      const answered = await call();
+      if (ok(answered)) return result(shape(answered.body));
+      return refused(tool, answered);
     } catch (error) {
-      logger.warn('mcp.tool_failed', { tool, code: 'api_call_failed', userId, error });
-      return result({ error: 'unavailable' }, true);
+      return failed(tool, error);
     }
   };
 
@@ -321,6 +353,64 @@ export function registerTools(server: McpServer, context: ToolContext) {
     async ({ id, before }) =>
       answer('read_conversation', () => read(`/v1/messages/${id}${queryOf({ before })}`)),
   );
+
+  server.registerTool(
+    'list_tools',
+    {
+      title: 'Tools (Ferramentas)',
+      description:
+        'Ferramentas: the platforms and helpers people use to play (virtual tabletops, chat, ' +
+        'calls, helpers), with their site and short description.',
+      inputSchema: { query: z.string().max(100).optional().describe('Part of the name.') },
+      annotations: READ,
+    },
+    async ({ query }) => answer('list_tools', () => read(`/v1/tools${queryOf({ q: query })}`)),
+  );
+
+  server.registerTool(
+    'add_tool',
+    {
+      title: 'Add a tool (Ferramentas)',
+      description:
+        'Adds a tool to Ferramentas (/tools) and approves it, so it is listed at once. Admins ' +
+        'only. Write the name and description in Brazilian Portuguese, as the page is. A site ' +
+        'already listed is refused (`invalid`, field `siteUrl`). The logo is added on the site, ' +
+        'in Admin > Ferramentas. Confirm the details with the person before calling.',
+      inputSchema: {
+        name: z.string().trim().min(1).max(TOOL_LIMITS.name),
+        siteUrl: z.string().trim().min(1).max(2048).describe('The address, such as "https://…".'),
+        kind: z
+          .enum(TOOL_KINDS)
+          .describe('vtt (virtual tabletop), chat, call (voice/video) or helper (anything else).'),
+        description: z
+          .string()
+          .trim()
+          .min(1)
+          .max(TOOL_LIMITS.description)
+          .describe('One short sentence on what it does.'),
+      },
+      annotations: WRITE,
+    },
+    async (input) => {
+      let suggested: ApiAnswer;
+      try {
+        suggested = await write('/v1/submissions/tools', { input, logoPath: null });
+      } catch (error) {
+        return failed('add_tool', error);
+      }
+      const id = (suggested.body as { id?: unknown } | null)?.id;
+      if (!ok(suggested) || typeof id !== 'string') return refused('add_tool', suggested);
+      // The suggestion is in; approving it is what lists it. If that step fails, the tool waits
+      // in Admin > Ferramentas, and the answer says so (`pending`).
+      try {
+        const approved = await write('/v1/admin/moderation/tool.approve', { id });
+        if (!ok(approved)) return refused('add_tool', approved, { id, pending: true });
+      } catch (error) {
+        return failed('add_tool', error, { id, pending: true });
+      }
+      return result({ id, listed: true });
+    },
+  );
 }
 
 /** The tool names, for the README and the specs. */
@@ -338,4 +428,11 @@ export const TOOL_NAMES = [
   'my_notifications',
   'list_conversations',
   'read_conversation',
+  'list_tools',
+  'add_tool',
 ] as const;
+
+/** The tools that change something on the site; every other one only reads. */
+export const WRITE_TOOL_NAMES = [
+  'add_tool',
+] as const satisfies readonly (typeof TOOL_NAMES)[number][];

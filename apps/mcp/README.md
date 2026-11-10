@@ -4,9 +4,10 @@ The [MCP](https://modelcontextprotocol.io) server of Mesa Aberta: Claude (claude
 the desktop app) and other MCP clients read the site as the person who connected them. It is a door
 to the api and nothing more: no database, no business rule, no store and no secret.
 
-**Status: phase 1, read-only, admins only (kill switch `use_mcp`).** Every tool reads; none changes anything. Writes
-(asking for a seat, the GM's answers, messages) come in a later phase, each one confirmed by the
-person before it runs.
+**Status: phase 1 (reads) plus the first write, admins only (kill switch `use_mcp`).** Every tool
+reads except `add_tool`, which adds and approves a tool in Ferramentas. Other writes (asking for a
+seat, the GM's answers, messages) come in a later phase, each one confirmed by the person before it
+runs.
 
 ## How a client gets in
 
@@ -34,21 +35,30 @@ ends access. A "Connected apps" screen in the account is a later phase.
 
 ## Tools
 
-| Tool                                      | api route                                                        |
-| ----------------------------------------- | ---------------------------------------------------------------- |
-| `search_tables`                           | `GET /v1/reads/tables`                                           |
-| `get_table`                               | `GET /v1/reads/detail/:slug`                                     |
-| `my_tables`                               | `GET /v1/reads/dashboard`                                        |
-| `my_calendar`                             | `GET /v1/me/calendar`                                            |
-| `list_systems`, `get_system`              | `GET /v1/reads/systems[/:slug]` (behind `api_directory_systems`) |
-| `list_places`, `get_place`                | `GET /v1/reads/places[/:slug]` (behind `api_directory_places`)   |
-| `list_gamemasters`                        | `GET /v1/reads/gamemasters` (behind `api_directory_gms`)         |
-| `get_profile`                             | `GET /v1/profiles/:username`                                     |
-| `my_notifications`                        | `GET /v1/me/notifications`                                       |
-| `list_conversations`, `read_conversation` | `GET /v1/messages/inbox`, `GET /v1/messages/:id`                 |
+| Tool                                      | api route                                                                   |
+| ----------------------------------------- | --------------------------------------------------------------------------- |
+| `search_tables`                           | `GET /v1/reads/tables`                                                      |
+| `get_table`                               | `GET /v1/reads/detail/:slug`                                                |
+| `my_tables`                               | `GET /v1/reads/dashboard`                                                   |
+| `my_calendar`                             | `GET /v1/me/calendar`                                                       |
+| `list_systems`, `get_system`              | `GET /v1/reads/systems[/:slug]` (behind `api_directory_systems`)            |
+| `list_places`, `get_place`                | `GET /v1/reads/places[/:slug]` (behind `api_directory_places`)              |
+| `list_gamemasters`                        | `GET /v1/reads/gamemasters` (behind `api_directory_gms`)                    |
+| `get_profile`                             | `GET /v1/profiles/:username`                                                |
+| `my_notifications`                        | `GET /v1/me/notifications`                                                  |
+| `list_conversations`, `read_conversation` | `GET /v1/messages/inbox`, `GET /v1/messages/:id`                            |
+| `list_tools`                              | `GET /v1/tools`                                                             |
+| `add_tool` (writes)                       | `POST /v1/submissions/tools`, then `POST /v1/admin/moderation/tool.approve` |
 
 Each tool answers the api's JSON as text, or `{ "error": code }` (`not_found`, `forbidden`,
-`rate_limited`, `unavailable`) with `isError`. Reading messages here does not mark them read.
+`rate_limited`, `unavailable`, or `invalid` with the `field` and `code` the api named) with
+`isError`. Reading messages here does not mark them read.
+
+`add_tool` is a suggestion and its approval in one call, both as the caller, so the api checks the
+admin as it does on `/admin/tools`. It answers `{ id, listed: true }`; if the approval fails, the
+error carries `id` and `pending: true` and the tool waits in Admin > Ferramentas. It sends no logo
+(uploads go through the site's storage): add one there. The events it records reach the bell
+through the worker's sweep, since the MCP does not dispatch them itself.
 
 ## Settings
 

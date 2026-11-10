@@ -15,6 +15,11 @@
         "title": "Sugira uma ferramenta",
         "description": "Conhece outra plataforma ou app que ajuda a jogar? Em Sugerir ferramenta, você manda o nome, o site, o tipo e o logo. A administração confere e você recebe um aviso no sino quando ela entrar.",
         "href": "/tools/new"
+      },
+      {
+        "kind": "improved",
+        "title": "Ferramentas pelo conector do Claude",
+        "description": "Para a administração: o conector do Mesa Aberta no Claude agora lista as ferramentas e adiciona uma nova já aprovada."
       }
     ]
   },
