@@ -229,6 +229,7 @@
 </script>
 
 <span
+  data-status-badge
   class="inline-flex h-6 max-w-full shrink-0 items-center gap-2 rounded-full border border-surface-200-800 bg-panel px-2 text-xs font-[650] whitespace-nowrap {look.text ===
   'danger'
     ? 'text-error-700-300'

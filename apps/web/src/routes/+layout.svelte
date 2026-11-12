@@ -124,6 +124,13 @@
 <SeoHead />
 
 <QueryClientProvider {client}>
+  <!-- Overdrive's wobbly sticker letters (overdrive.css points its buttons at this filter). -->
+  <svg aria-hidden="true" width="0" height="0" class="absolute">
+    <filter id="comic-wobble">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="1" seed="7" />
+      <feDisplacementMap in="SourceGraphic" scale="1.6" />
+    </filter>
+  </svg>
   <a
     href="#main"
     class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-surface-100-900 focus:px-3 focus:py-2 focus:text-surface-950-50 focus:shadow-md"
