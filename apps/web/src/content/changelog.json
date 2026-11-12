@@ -58,6 +58,12 @@
         "kind": "improved",
         "title": "Avisos pelo conector do Claude",
         "description": "Para a administração: o conector do Claude agora manda avisos para o sino, como Admin › Notificações. Ele conta antes quantas pessoas vão receber e só envia depois de confirmar."
+      },
+      {
+        "kind": "improved",
+        "title": "Ferramentas em mais de uma seção",
+        "description": "Uma ferramenta pode estar em mais de uma seção, as seções recolhem com um toque e, no celular, dá para passar de uma seção para a outra.",
+        "href": "/tools"
       }
     ]
   },
