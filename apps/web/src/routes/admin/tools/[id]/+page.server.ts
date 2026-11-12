@@ -26,7 +26,7 @@ export const load: PageServerLoad = async ({ locals, url, params, setHeaders }) 
     form: initialForm({
       name: tool.name,
       siteUrl: tool.siteUrl,
-      kind: tool.kind,
+      kinds: [...tool.kinds] as string[],
       description: tool.description,
       logo: undefined as File | undefined,
     }),

@@ -3973,6 +3973,20 @@
   "tool_kind_call": "Voz e vídeo",
   "tool_kind_helper": "Fichas e apoio",
   "tool_group_vtt": "Mesas virtuais",
+  "tool_sections_label": "Seções",
+  "tool_count": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 ferramenta",
+        "count=*": "{count} ferramentas"
+      }
+    }
+  ],
+  "tool_section_position": "{current} de {total}",
+  "tool_section_previous": "Seção anterior",
+  "tool_section_next": "Próxima seção",
   "tool_status_removed": "Removida",
   "tool_opens_new_tab": "(abre o site em nova aba)",
   "tool_open_tables": [
@@ -3995,8 +4009,8 @@
   "tool_form_name": "Nome",
   "tool_form_site": "Site",
   "tool_form_site_hint": "O endereço oficial. O card abre este link.",
-  "tool_form_kind": "Tipo",
-  "tool_form_kind_hint": "Escolha um. A ferramenta aparece na seção dele.",
+  "tool_form_kind": "Tipos",
+  "tool_form_kind_hint": "Marque um ou mais. A ferramenta aparece na seção de cada um.",
   "tool_form_description": "Descrição curta",
   "tool_form_description_hint": "Uma linha sobre o que ela faz e se é grátis.",
   "tool_form_logo": "Logo",
@@ -4009,7 +4023,7 @@
   "tool_form_saved": "Ferramenta salva.",
   "tool_err_invalid_url": "Confira o endereço do site, por exemplo https://site.com.",
   "tool_err_duplicate": "Essa ferramenta já está na lista (ou já foi sugerida).",
-  "tool_err_kind_required": "Escolha o tipo.",
+  "tool_err_kind_required": "Marque pelo menos um tipo.",
   "notification_tool_approved": "Sua sugestão “{tool}” foi aprovada e já aparece em Ferramentas.",
   "notification_tool_removed": "Sua sugestão “{tool}” não está em Ferramentas. Motivo: {reason}.",
   "notification_tool_removed_note": "Sua sugestão “{tool}” não está em Ferramentas. Motivo: {reason}. Recado: {note}",
@@ -4029,7 +4043,7 @@
   "admin_tools_search_label": "Buscar por nome ou site",
   "admin_tools_empty": "Nenhuma ferramenta por aqui.",
   "admin_tools_col_tool": "Ferramenta",
-  "admin_tools_col_kind": "Tipo",
+  "admin_tools_col_kind": "Tipos",
   "admin_tools_col_site": "Site",
   "admin_tools_col_sender": "Enviada por",
   "admin_tools_seed": "Catálogo inicial",
