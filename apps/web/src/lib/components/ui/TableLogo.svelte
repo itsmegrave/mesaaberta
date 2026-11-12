@@ -18,19 +18,57 @@
     <circle cx="8.05" cy="23.95" r="3.75" class="fill-current" />
     <circle cx="23.95" cy="8.05" r="2.9" class="fill-none stroke-current" stroke-width="1.7" />
   {:else}
-    <circle cx="16" cy="16" r="7.25" class="table-top fill-primary-500" />
-    <g transform="rotate(-12 16 16)">
-      <rect x="11.5" y="12.25" width="9" height="7.5" rx="0.9" class="fill-primary-contrast-500" />
-      <path
-        d="M14.5 12.25v7.5M17.5 12.25v7.5M11.5 14.75h9M11.5 17.25h9"
-        class="stroke-primary-500/50"
-        stroke-width="0.75"
+    <!-- Overdrive's sticker of the same mark: ink outlines, a yellow map, the open seat dashed. -->
+    <g data-look="comic">
+      <circle cx="16.8" cy="16.8" r="7.6" data-ink-shadow />
+      <circle cx="16" cy="16" r="7.6" data-ink class="fill-primary-500" stroke-width="1.5" />
+      <g transform="rotate(-14 16 16)">
+        <rect
+          x="11.3"
+          y="12.2"
+          width="9.4"
+          height="7.6"
+          rx="0.6"
+          data-ink
+          class="fill-warning-400"
+          stroke-width="1.1"
+        />
+      </g>
+      <circle cx="7.9" cy="7.9" r="3.6" data-ink class="fill-success-500" stroke-width="1.4" />
+      <circle cx="24.1" cy="24.1" r="3.6" data-ink class="fill-tertiary-400" stroke-width="1.4" />
+      <circle cx="7.9" cy="24.1" r="3.6" data-ink class="fill-secondary-300" stroke-width="1.4" />
+      <circle
+        cx="24.1"
+        cy="7.9"
+        r="3"
+        data-open-seat
+        class="fill-none"
+        stroke-width="1.8"
+        stroke-dasharray="2 1.4"
       />
     </g>
-    <circle cx="7.87" cy="7.87" r="3.5" class="fill-success-500" />
-    <circle cx="24.13" cy="24.13" r="3.5" class="fill-tertiary-400" />
-    <circle cx="7.87" cy="24.13" r="3.5" class="fill-secondary-300" />
-    <circle cx="24.13" cy="7.87" r="2.75" class="fill-none stroke-lamp" stroke-width="1.5" />
+    <g data-look="plain">
+      <circle cx="16" cy="16" r="7.25" class="table-top fill-primary-500" />
+      <g transform="rotate(-12 16 16)">
+        <rect
+          x="11.5"
+          y="12.25"
+          width="9"
+          height="7.5"
+          rx="0.9"
+          class="fill-primary-contrast-500"
+        />
+        <path
+          d="M14.5 12.25v7.5M17.5 12.25v7.5M11.5 14.75h9M11.5 17.25h9"
+          class="stroke-primary-500/50"
+          stroke-width="0.75"
+        />
+      </g>
+      <circle cx="7.87" cy="7.87" r="3.5" class="fill-success-500" />
+      <circle cx="24.13" cy="24.13" r="3.5" class="fill-tertiary-400" />
+      <circle cx="7.87" cy="24.13" r="3.5" class="fill-secondary-300" />
+      <circle cx="24.13" cy="7.87" r="2.75" class="fill-none stroke-lamp" stroke-width="1.5" />
+    </g>
   {/if}
 </svg>
 

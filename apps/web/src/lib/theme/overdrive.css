@@ -171,3 +171,85 @@
 [data-theme='overdrive'] :is(.input, .select, .textarea) {
   border-width: 2px;
 }
+
+/* Sticker icons, the logo and the GM's striped seat (Icon, TableLogo, Chair) draw both looks; only
+   the one this theme asks for shows. Unlayered, so the hiding wins over a display utility, and
+   revert-layer hands the shown one back to its utilities (`hidden md:block` keeps working). */
+[data-look='comic'] {
+  display: none;
+}
+[data-theme='overdrive'] [data-look='comic'] {
+  display: revert-layer;
+}
+[data-theme='overdrive'] [data-look='plain'] {
+  display: none;
+}
+[data-ink] {
+  stroke: var(--color-surface-950);
+}
+[data-ink-shadow] {
+  fill: var(--comic-shadow, var(--color-surface-950));
+}
+/* The open seat: ink on paper, yellow in the night. */
+[data-open-seat] {
+  stroke: light-dark(var(--color-surface-950), var(--color-warning-400));
+}
+
+/* Seats: every meeple gets an ink outline; an open one is dashed. Units are the meeple's 512 grid. */
+[data-theme='overdrive'] [data-chair='taken'] path[data-meeple] {
+  stroke: var(--color-surface-950);
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+}
+[data-theme='overdrive'] [data-chair='free'] path[data-meeple] {
+  stroke-dasharray: 48 32;
+}
+
+/* The wordmark in comic letters with an ink edge. */
+[data-theme='overdrive'] .font-brand {
+  font-family: var(--font-comic);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: light-dark(var(--color-warning-400), var(--color-surface-50));
+  -webkit-text-stroke: 1px var(--color-surface-950);
+  paint-order: stroke fill;
+  text-shadow: 2px 2px 0 var(--comic-shadow);
+}
+
+/* Status pills: a sticker in the colour of their dot, ink text, a hard shadow and a lean. */
+[data-theme='overdrive'] [data-status-badge] {
+  border: 2px solid var(--color-surface-950);
+  color: var(--color-surface-950);
+  font-weight: 800;
+  box-shadow: 2px 2px 0 var(--comic-shadow);
+  background-color: var(--color-surface-50);
+  rotate: -2deg;
+}
+[data-theme='overdrive'] :nth-child(even of [data-status-badge]) {
+  rotate: 2deg;
+}
+[data-theme='overdrive'] [data-status-badge] > span:first-child {
+  background-color: var(--color-surface-950);
+  border-color: var(--color-surface-950);
+}
+[data-theme='overdrive'] [data-status-badge]:has(> .bg-success-500) {
+  background-color: var(--color-success-500);
+}
+[data-theme='overdrive'] [data-status-badge]:has(> .bg-warning-500) {
+  background-color: var(--color-warning-400);
+}
+[data-theme='overdrive'] [data-status-badge]:has(> .bg-primary-500) {
+  background-color: var(--color-tertiary-400);
+}
+[data-theme='overdrive'] [data-status-badge]:has(> .bg-error-500) {
+  background-color: var(--color-error-300);
+}
+
+/* Letters that wobble: sticker buttons pass through a small, still displacement (the filter is drawn
+   once by the root layout), kept subtle so the label stays easy to read. */
+[data-theme='overdrive']
+  .btn:is(.preset-filled-primary-500, .btn-secondary, .preset-filled-error-700) {
+  filter: url('#comic-wobble');
+}

@@ -65,11 +65,36 @@
       d={meeple}
       transform={place}
       fill="url(#{gradient})"
+      data-look="plain"
       class="stroke-surface-950"
       stroke-width="1"
       vector-effect="non-scaling-stroke"
       stroke-linejoin="round"
       data-gm-chair
+    />
+    <!-- Overdrive: the three colours as diagonal stripes, swapped in by the stylesheet. -->
+    <defs>
+      <pattern
+        id="{gradient}-stripes"
+        width="96"
+        height="96"
+        patternUnits="userSpaceOnUse"
+        patternTransform="rotate(35)"
+      >
+        <rect width="32" height="96" class="fill-success-500" />
+        <rect x="32" width="32" height="96" class="fill-tertiary-400" />
+        <rect x="64" width="32" height="96" class="fill-secondary-300" />
+      </pattern>
+    </defs>
+    <path
+      d={meeple}
+      transform={place}
+      fill="url(#{gradient}-stripes)"
+      data-look="comic"
+      data-ink
+      stroke-width="1.5"
+      vector-effect="non-scaling-stroke"
+      stroke-linejoin="round"
     />
   </g>
 {:else}
@@ -82,9 +107,10 @@
         class="fill-none"
         stroke-width="31"
         stroke-linejoin="round"
+        data-meeple
       />
     {:else}
-      <path d={meeple} transform={place} class="stroke-none" />
+      <path d={meeple} transform={place} class="stroke-none" data-meeple />
     {/if}
   </g>
 {/if}

@@ -99,6 +99,15 @@ export function applyStyle(style: ThemeStyle, remember = true): void {
   if (remember) write(STYLE_KEY, style === 'overdrive' ? 'overdrive' : null);
   document.documentElement.dataset.theme = THEME_NAMES[style];
   paintChrome(readChoice());
+  paintFavicon(style);
+}
+
+/** The tab's icon: Overdrive's sticker while it paints, the classic monogram otherwise. */
+function paintFavicon(style: ThemeStyle): void {
+  const icon = document.querySelector<HTMLLinkElement>('link[rel="icon"][type="image/svg+xml"]');
+  if (!icon) return;
+  const name = style === 'overdrive' ? 'favicon-overdrive.svg' : 'favicon.svg';
+  icon.href = icon.href.replace(/favicon(-overdrive)?\.svg$/, name);
 }
 
 /** The theme in use, as the analytics event and the person's profile carry it. */

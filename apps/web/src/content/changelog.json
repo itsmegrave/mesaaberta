@@ -38,6 +38,11 @@
         "kind": "new",
         "title": "Pedal Overdrive",
         "description": "Ao lado de Claro e Escuro, um pedal liga o Overdrive, um tema de gibi com letras de quadrinho, cards tortos e cores fortes: Gibi no modo claro e Neon no escuro. O navegador lembra a sua escolha."
+      },
+      {
+        "kind": "improved",
+        "title": "Overdrive com ícones de adesivo",
+        "description": "Com o pedal ligado, os ícones do menu viram adesivos, o logo e o ícone da aba ganham versão de gibi, quem joga aparece com contorno de tinta, quem mestra ganha listras e os status viram adesivos coloridos."
       }
     ]
   },
