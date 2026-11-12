@@ -45,6 +45,11 @@
         "description": "Com o pedal ligado, os ícones do menu viram adesivos, o logo e o ícone da aba ganham versão de gibi, quem joga aparece com contorno de tinta, quem mestra ganha listras e os status viram adesivos coloridos."
       },
       {
+        "kind": "improved",
+        "title": "Títulos com tinta no Overdrive",
+        "description": "No Overdrive, o título da página ganhou contorno de nanquim e sombra colorida, os títulos de seção viraram caixas de legenda amarelas, como num gibi, e o nome Mesa Aberta no topo tem uma pincelada embaixo."
+      },
+      {
         "kind": "fixed",
         "title": "Botões do Overdrive no iPhone",
         "description": "No Safari, os botões do Overdrive saíam com a sombra cortada e o botão de contorno sumia no modo Neon. Agora a sombra aparece inteira e o contorno fica visível."
