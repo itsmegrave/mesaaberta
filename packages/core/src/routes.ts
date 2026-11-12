@@ -12,6 +12,7 @@ export const routes = {
   matches: '/matches',
   matchList: '/matches/list',
   matchCard: '/matches/card',
+  matchPlayed: '/matches/played',
   community: '/community',
   myTables: '/u/tables',
   calendar: '/u/tables/calendar',

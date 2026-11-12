@@ -68,3 +68,18 @@ export async function directoryLinksEnabled(
     profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},
   );
 }
+
+/**
+ * Whether Combinar's graph is on for the person reading (`use_play_graph`): recent table-mates out
+ * of the deck, people in common first, and Quem já jogou comigo. Signed-in people only.
+ */
+export async function playGraphEnabled(
+  locals: Pick<App.Locals, 'flags' | 'getProfile'>,
+): Promise<boolean> {
+  const profile = await locals.getProfile();
+  if (!profile) return false;
+  return locals.flags.isEnabled('use_play_graph', {
+    id: profile.id,
+    isAdmin: can(profile, 'admin:access'),
+  });
+}

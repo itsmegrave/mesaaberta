@@ -24,6 +24,12 @@
       },
       {
         "kind": "new",
+        "title": "Quem já jogou comigo",
+        "description": "Em Minhas combinações, uma lista de quem já dividiu uma mesa com você aqui, mesas antigas incluídas, com o botão Jogar de novo. Quem jogou com você nos últimos seis meses não aparece no baralho, quem tem gente em comum com você aparece antes, e se vocês combinaram e ainda não jogaram, um aviso no sino lembra depois de um mês.",
+        "href": "/matches/played"
+      },
+      {
+        "kind": "new",
         "title": "Regras da comunidade",
         "description": "Uma página com como a gente convive na Mesa Aberta: nas mesas, nas mensagens e no Combinar.",
         "href": "/community"

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { createDb, DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import { createDb as openDb } from '@mesaaberta/core/server/db/client';
 import { pageNumber } from '@mesaaberta/core/admin/catalog';
-import { supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { matchAnswerSchema, matchCardSchema } from '@mesaaberta/core/matches/schema';
 import {
   answerMatch,
@@ -15,6 +15,7 @@ import {
   saveMatchCard,
   undoLastAnswer,
 } from '@mesaaberta/core/server/matches/service';
+import { listPlayedWith } from '@mesaaberta/core/server/matches/graph';
 import { refusal } from './refusal';
 import { userGuard, type UserVariables } from './user-guard';
 
@@ -61,9 +62,34 @@ export function matchRoutes(open: Open = openDb) {
   });
 
   // The next cards, best fit first, or why there is no deck (no card, off, not an adult).
+  // `?graph=1` when web has `use_play_graph` on for the actor: recent table-mates stay out and
+  // people in common come first.
   app.get('/deck', async (c) =>
-    c.json(await matchDeck(c.get('db'), c.get('actorId'), { supabaseUrl: supabaseUrlOf(c.env) })),
+    c.json(
+      await matchDeck(c.get('db'), c.get('actorId'), {
+        supabaseUrl: supabaseUrlOf(c.env),
+        graph: c.req.query('graph') === '1',
+      }),
+    ),
   );
+
+  // Quem já jogou comigo: a page of the people the actor shared a played table with.
+  app.get('/played', async (c) => {
+    const list = await listPlayedWith(
+      c.get('db'),
+      c.get('actorId'),
+      pageNumber(c.req.query('page') ?? null),
+    );
+    if (!list) return c.json({ error: 'not_found' }, 404);
+    const supabaseUrl = supabaseUrlOf(c.env);
+    return c.json({
+      ...list,
+      items: list.items.map(({ avatarPath, avatarUrl, ...person }) => ({
+        ...person,
+        avatarUrl: pictureOf(supabaseUrl, { avatarPath, avatarUrl }),
+      })),
+    });
+  });
 
   // Quero jogar junto or Agora não. A yes that meets theirs answers the match.
   app.post('/answers', async (c) => {

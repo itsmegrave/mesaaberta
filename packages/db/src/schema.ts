@@ -2086,6 +2086,10 @@ export const matches = pgTable(
     endedAt: timestamp('ended_at', { withTimezone: true }),
     // Who undid it. Not a foreign key: it is one of the two.
     endedBy: uuid('ended_by'),
+    // "Vocês combinaram e ainda não jogaram" bell reminders sent so far, and when the last went
+    // (`remindUnplayedMatches`). Set to the maximum once the two play together.
+    reminders: smallint('reminders').notNull().default(0),
+    remindedAt: timestamp('reminded_at', { withTimezone: true }),
   },
   (match) => [
     uniqueIndex('matches_pair_unique').on(match.profileA, match.profileB),

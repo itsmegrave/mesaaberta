@@ -38,6 +38,10 @@
         : null,
       person.bothOnline ? { icon: 'globe' as const, text: m.match_common_online() } : null,
       person.sameCity && person.city ? { icon: 'map-pin' as const, text: person.city } : null,
+      // Never who: only that the two share people they matched or played with.
+      person.commonPeople > 0
+        ? { icon: 'game-icons:tabletop-players' as const, text: m.match_common_people() }
+        : null,
     ].filter((chip) => chip !== null),
   );
 </script>

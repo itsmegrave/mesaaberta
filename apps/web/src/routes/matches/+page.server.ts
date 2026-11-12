@@ -1,5 +1,5 @@
 import { requireUser } from '#lib/server/auth/guard.js';
-import { requireDirectory } from '#lib/server/directories/flags.js';
+import { playGraphEnabled, requireDirectory } from '#lib/server/directories/flags.js';
 import { readFromApi } from '#lib/server/api-read.js';
 import { writeViaApi } from '#lib/server/api-write.js';
 import { failFrom } from '#lib/server/fail-from.js';
@@ -17,12 +17,13 @@ import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ locals, url }) => {
   const user = await requireUser(locals, url);
   await requireDirectory(locals, 'matches');
+  const graph = await playGraphEnabled(locals);
   const [deck, mine] = await Promise.all([
-    readFromApi<MatchDeck>(locals, user.id, '/v1/matches/deck'),
+    readFromApi<MatchDeck>(locals, user.id, `/v1/matches/deck${graph ? '?graph=1' : ''}`),
     readFromApi<MatchCardState>(locals, user.id, '/v1/matches/card'),
   ]);
   // The viewer's own marks, for Ver mais.
-  return { deck, mine: mine.card?.axes ?? null };
+  return { deck, mine: mine.card?.axes ?? null, graph };
 };
 
 export const actions: Actions = {
