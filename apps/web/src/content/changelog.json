@@ -51,6 +51,11 @@
       },
       {
         "kind": "fixed",
+        "title": "Cards do Overdrive no celular",
+        "description": "No celular, os cards inclinados do Overdrive passavam da borda da tela e a sombra rosa parecia torta. Agora a inclinação e a sombra são menores e o card cabe inteiro na tela."
+      },
+      {
+        "kind": "fixed",
         "title": "Botões do Overdrive no iPhone",
         "description": "No Safari, os botões do Overdrive saíam com a sombra cortada e o botão de contorno sumia no modo Neon. Agora a sombra aparece inteira e o contorno fica visível."
       },

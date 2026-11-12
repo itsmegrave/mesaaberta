@@ -180,6 +180,22 @@
 [data-theme='overdrive'] :is(ul, ol, div).grid > li > article:hover {
   rotate: 0deg;
 }
+/* On a phone the cards fill the column, so a full tilt plus the 6px shadow ran past the page's
+   right gutter and the shadow read as skewed. Smaller tilt and shadow, and a 4px inset each side,
+   keep the sticker look inside the gutter. */
+@media (width < 48rem) {
+  [data-theme='overdrive'] :is(ul, ol, div).grid > li > article {
+    margin-inline: 0.25rem;
+    box-shadow: 4px 4px 0 var(--comic-shadow);
+    rotate: -0.75deg;
+  }
+  [data-theme='overdrive'] :is(ul, ol, div).grid > li:nth-child(3n + 2) > article {
+    rotate: 0.5deg;
+  }
+  [data-theme='overdrive'] :is(ul, ol, div).grid > li:nth-child(3n) > article {
+    rotate: -0.4deg;
+  }
+}
 
 /* Menus, popovers and dialogs drawn as cards. */
 [data-theme='overdrive'] .card {
