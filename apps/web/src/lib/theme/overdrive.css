@@ -124,6 +124,10 @@
   box-shadow: 4px 4px 0 var(--comic-button-shadow);
   transform: rotate(-1.5deg) skewX(-4deg);
 }
+/* The outlined sticker: ink on paper, but in the night ink would vanish, so a pale violet line. */
+[data-theme='overdrive'] .btn.btn-secondary {
+  border-color: light-dark(var(--color-surface-950), var(--color-surface-300));
+}
 [data-theme='overdrive'] :nth-child(even) > .btn:is(.preset-filled-primary-500, .btn-secondary),
 [data-theme='overdrive'] .btn:is(.preset-filled-primary-500, .btn-secondary):nth-child(even) {
   transform: rotate(1.5deg) skewX(4deg);
@@ -245,11 +249,4 @@
 }
 [data-theme='overdrive'] [data-status-badge]:has(> .bg-error-500) {
   background-color: var(--color-error-300);
-}
-
-/* Letters that wobble: sticker buttons pass through a small, still displacement (the filter is drawn
-   once by the root layout), kept subtle so the label stays easy to read. */
-[data-theme='overdrive']
-  .btn:is(.preset-filled-primary-500, .btn-secondary, .preset-filled-error-700) {
-  filter: url('#comic-wobble');
 }

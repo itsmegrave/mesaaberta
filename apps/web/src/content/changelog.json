@@ -45,6 +45,11 @@
         "description": "Com o pedal ligado, os ícones do menu viram adesivos, o logo e o ícone da aba ganham versão de gibi, quem joga aparece com contorno de tinta, quem mestra ganha listras e os status viram adesivos coloridos."
       },
       {
+        "kind": "fixed",
+        "title": "Botões do Overdrive no iPhone",
+        "description": "No Safari, os botões do Overdrive saíam com a sombra cortada e o botão de contorno sumia no modo Neon. Agora a sombra aparece inteira e o contorno fica visível."
+      },
+      {
         "kind": "improved",
         "title": "Avisos pelo conector do Claude",
         "description": "Para a administração: o conector do Claude agora manda avisos para o sino, como Admin › Notificações. Ele conta antes quantas pessoas vão receber e só envia depois de confirmar."
