@@ -53,6 +53,7 @@ export const load: LayoutServerLoad = async (event) => {
       accountRead: null,
       directories: NO_DIRECTORIES,
       beginners: false,
+      overdrive: false,
     };
   }
   // An admin still uses the site while it is down, with a banner saying so.
@@ -77,6 +78,11 @@ export const load: LayoutServerLoad = async (event) => {
       directories: await directoryFlags(locals),
       // Iniciantes: the mark on table cards and pages, and the guide's links.
       beginners: await beginnersEnabled(locals),
+      // The Overdrive pedal (`use_overdrive_theme`), for the person reading or for visitors.
+      overdrive: await locals.flags.isEnabled(
+        'use_overdrive_theme',
+        profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},
+      ),
       maintenance: false,
       maintenanceBypass,
       // Every time on the site is shown in this zone.
@@ -114,6 +120,7 @@ export const load: LayoutServerLoad = async (event) => {
       accountRead: null,
       directories: NO_DIRECTORIES,
       beginners: false,
+      overdrive: false,
     };
   }
 };

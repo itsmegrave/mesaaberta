@@ -25,6 +25,7 @@ const shell = {
   maintenanceBypass: false,
   directories: { systems: false, gms: false, places: false, players: false },
   beginners: false,
+  overdrive: false,
   viewer,
   site: {
     APP_ORIGIN: 'https://mesaaberta.app',

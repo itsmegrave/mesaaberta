@@ -15,6 +15,11 @@
         "title": "Mesa em casa sem expor o endereço",
         "description": "Ao criar uma mesa presencial, a opção Outro lugar agora se chama Em casa ou outro lugar. Com ela, só o bairro e a cidade aparecem.",
         "href": "/tables/new"
+      },
+      {
+        "kind": "new",
+        "title": "Pedal Overdrive",
+        "description": "Ao lado de Claro e Escuro, um pedal liga o Overdrive, um tema de gibi com letras de quadrinho, cards tortos e cores fortes: Gibi no modo claro e Neon no escuro. O navegador lembra a sua escolha."
       }
     ]
   },

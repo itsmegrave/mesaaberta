@@ -11,7 +11,9 @@ export type RequestEventName =
   | 'gm_onboarding_started'
   | 'systems_directory_viewed'
   | 'gm_directory_viewed'
-  | 'places_directory_viewed';
+  | 'places_directory_viewed'
+  | 'theme_in_use'
+  | 'theme_changed';
 
 export type RequestEventProperties = Record<string, string | number>;
 
@@ -19,10 +21,16 @@ export type RequestEventProperties = Record<string, string | number>;
 export type RequestEventInput =
   RequestEventProperties | (() => Promise<RequestEventProperties | null>);
 
+export type TrackOptions = {
+  /** Fixed labels to set on the person's profile too, where the provider keeps profiles. */
+  profile?: Record<string, string>;
+};
+
 export type Track = (
   name: RequestEventName,
   distinctId: string | null | undefined,
   properties: RequestEventInput,
+  options?: TrackOptions,
 ) => void;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -51,7 +59,7 @@ export function createTracker(options: {
   now?: () => Date;
 }): Track {
   const { env, afterResponse, log, factories, now = () => new Date() } = options;
-  return (name, distinctId, properties) => {
+  return (name, distinctId, properties, { profile } = {}) => {
     if (!distinctId || !UUID.test(distinctId)) return;
     const providers = analyticsProviders(env, factories);
     if (providers.length === 0) return;
@@ -66,7 +74,12 @@ export function createTracker(options: {
         time,
         properties: { ...resolved, timestamp_utc: time.toISOString() },
       };
-      const results = await Promise.allSettled(providers.map((provider) => provider.send(event)));
+      const results = await Promise.allSettled(
+        providers.map(async (provider) => {
+          await provider.send(event);
+          if (profile && provider.setProfile) await provider.setProfile(distinctId, profile);
+        }),
+      );
       results.forEach((result, index) => {
         if (result.status === 'rejected')
           log.warn('analytics.track.failed', {

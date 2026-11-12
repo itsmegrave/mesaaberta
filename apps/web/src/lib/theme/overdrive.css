@@ -1,0 +1,173 @@
+/* The Overdrive look on top of its colours (overdrive-theme.css): comic lettering, ink outlines,
+   hard offset shadows, halftone dots and slightly tilted cards and buttons. Everything here is scoped
+   to [data-theme='overdrive'] except the pedal's own pieces, which the classic theme draws too.
+   Offsets, tilts and dot sizes are illustration geometry, so they are plain px/deg values. */
+@import '@fontsource/bangers';
+
+@theme {
+  /* Overdrive's titles, buttons and stickers. Loaded only when the theme paints it. */
+  --font-comic: 'Bangers', Impact, sans-serif;
+  /* The pedal's one-time "Pise aqui!": a stomp, three LED blinks and the sticker. */
+  --animate-pedal-stomp: pedal-stomp 1.6s ease-out 1;
+  --animate-pedal-led: pedal-led 1.6s linear 1;
+  --animate-pedal-bubble: pedal-bubble 3.2s ease-out 1 forwards;
+
+  @keyframes pedal-stomp {
+    0%,
+    60%,
+    100% {
+      transform: rotate(0) translateY(0);
+    }
+    10% {
+      transform: rotate(-6deg) translateY(-6px);
+    }
+    20% {
+      transform: rotate(5deg) translateY(2px);
+    }
+    30% {
+      transform: rotate(-4deg) translateY(-3px);
+    }
+    40% {
+      transform: rotate(3deg);
+    }
+    50% {
+      transform: rotate(-1deg);
+    }
+  }
+  @keyframes pedal-led {
+    0%,
+    30%,
+    60%,
+    90%,
+    100% {
+      background-color: var(--color-surface-400);
+      box-shadow: none;
+    }
+    15%,
+    45%,
+    75% {
+      background-color: #ff2e88;
+      box-shadow: 0 0 10px #ff2e88;
+    }
+  }
+  @keyframes pedal-bubble {
+    0% {
+      opacity: 0;
+      transform: scale(0.4) rotate(-12deg);
+    }
+    12% {
+      opacity: 1;
+      transform: scale(1.1) rotate(-6deg);
+    }
+    20%,
+    80% {
+      opacity: 1;
+      transform: scale(1) rotate(-6deg);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(0.9) rotate(-6deg);
+    }
+  }
+}
+
+/* The pedal: off it is a grey stomp box in either theme, on it is Overdrive's yellow with a pink LED. */
+@utility shadow-pedal {
+  box-shadow: 0 2px 0 var(--color-surface-600);
+}
+@utility shadow-pedal-on {
+  box-shadow: 3px 3px 0 var(--color-primary-500);
+}
+@utility pedal-led-on {
+  background-color: var(--color-primary-500);
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--color-primary-500) 35%, transparent),
+    0 0 10px var(--color-primary-500);
+}
+
+[data-theme='overdrive'] {
+  /* Links, as layout.css does for Cerberus: primary-600 on paper (6.6:1), primary-300 on night (7.4:1). */
+  --typo-anchor--color-light: var(--color-primary-600);
+  --typo-anchor--color-dark: var(--color-primary-300);
+  /* Outlines and shadows: ink on paper; in the night a violet line with a pink shadow. */
+  --comic-line: light-dark(var(--color-surface-950), var(--color-surface-700));
+  --comic-shadow: light-dark(var(--color-surface-950), var(--color-primary-500));
+  --comic-button-shadow: light-dark(var(--color-surface-950), var(--color-tertiary-400));
+}
+
+/* Halftone dots on the page, never behind running text in a panel. */
+[data-theme='overdrive'] body {
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--color-primary-500) 24%, transparent) 1.5px,
+    transparent 1.6px
+  );
+  background-size: 12px 12px;
+}
+
+[data-theme='overdrive'] :is(h1, h2) {
+  font-family: var(--font-comic);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+[data-theme='overdrive'] h1 {
+  text-shadow: 3px 3px 0 var(--comic-shadow);
+}
+
+/* Filled buttons become comic stickers, each leaning its own way. */
+[data-theme='overdrive']
+  .btn:is(.preset-filled-primary-500, .btn-secondary, .preset-filled-error-700) {
+  font-family: var(--font-comic);
+  font-weight: 400;
+  font-size: 1.125rem;
+  letter-spacing: 0.05em;
+  border: 3px solid var(--color-surface-950);
+  box-shadow: 4px 4px 0 var(--comic-button-shadow);
+  transform: rotate(-1.5deg) skewX(-4deg);
+}
+[data-theme='overdrive'] :nth-child(even) > .btn:is(.preset-filled-primary-500, .btn-secondary),
+[data-theme='overdrive'] .btn:is(.preset-filled-primary-500, .btn-secondary):nth-child(even) {
+  transform: rotate(1.5deg) skewX(4deg);
+}
+[data-theme='overdrive']
+  .btn:is(.preset-filled-primary-500, .btn-secondary, .preset-filled-error-700):active {
+  box-shadow: 1px 1px 0 var(--comic-button-shadow);
+  translate: 3px 3px;
+}
+
+/* Cards in the lists: ink outline, hard shadow and a small tilt that changes from card to card. */
+[data-theme='overdrive'] :is(ul, ol, div).grid > li > article {
+  border: 3px solid var(--comic-line);
+  box-shadow: 6px 6px 0 var(--comic-shadow);
+  rotate: -1.5deg;
+}
+[data-theme='overdrive'] :is(ul, ol, div).grid > li:nth-child(3n + 2) > article {
+  rotate: 1deg;
+}
+[data-theme='overdrive'] :is(ul, ol, div).grid > li:nth-child(3n) > article {
+  rotate: -0.75deg;
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme='overdrive'] :is(ul, ol, div).grid > li > article {
+    transition: rotate 150ms ease-out;
+  }
+}
+[data-theme='overdrive'] :is(ul, ol, div).grid > li > article:hover {
+  rotate: 0deg;
+}
+
+/* Menus, popovers and dialogs drawn as cards. */
+[data-theme='overdrive'] .card {
+  border: 2px solid var(--comic-line);
+  box-shadow: 4px 4px 0 var(--comic-shadow);
+}
+
+/* Chips and status pills become small stickers. */
+[data-theme='overdrive'] .chip {
+  border: 2px solid var(--color-surface-950);
+  font-weight: 800;
+  rotate: -2deg;
+}
+
+[data-theme='overdrive'] :is(.input, .select, .textarea) {
+  border-width: 2px;
+}

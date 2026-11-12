@@ -1,9 +1,17 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { MODE_COLOURS, applyChoice, readChoice } from './theme';
+import {
+  MODE_COLOURS,
+  OVERDRIVE_COLOURS,
+  applyChoice,
+  applyStyle,
+  readChoice,
+  readStyle,
+} from './theme';
 
 afterEach(() => {
   localStorage.clear();
   document.documentElement.removeAttribute('data-mode');
+  document.documentElement.dataset.theme = 'cerberus';
   for (const meta of document.querySelectorAll('meta[name="theme-color"]')) meta.remove();
 });
 
@@ -37,5 +45,25 @@ describe('applyChoice', () => {
     applyChoice('dark');
 
     expect(metas().slice(-2)).toEqual([MODE_COLOURS.dark, MODE_COLOURS.dark]);
+  });
+});
+
+describe('applyStyle', () => {
+  it('puts Overdrive on <html>, remembers it and paints the chrome in its colours', () => {
+    document.head.insertAdjacentHTML(
+      'beforeend',
+      '<meta name="theme-color" content="x" media="(prefers-color-scheme: light)"><meta name="theme-color" content="y" media="(prefers-color-scheme: dark)">',
+    );
+    applyChoice('dark');
+    applyStyle('overdrive');
+    expect(document.documentElement.dataset.theme).toBe('overdrive');
+    expect(readStyle()).toBe('overdrive');
+    expect(metas().slice(-2)).toEqual([OVERDRIVE_COLOURS.dark, OVERDRIVE_COLOURS.dark]);
+
+    applyStyle('classic', false);
+    expect(document.documentElement.dataset.theme).toBe('cerberus');
+    expect(readStyle()).toBe('overdrive');
+    applyStyle('classic');
+    expect(readStyle()).toBe('classic');
   });
 });

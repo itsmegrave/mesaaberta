@@ -166,6 +166,11 @@ export const flagDefaults = {
   // person's year at the tables, private unless they make it public. Off: the pages are a 404 and
   // the profile has no link. Targeted by the person whose year it is.
   use_year_review: false,
+  // The Overdrive theme, a new feature (created on for everyone): a pedal beside the light/dark
+  // switch turns the comic look on (Gibi in light, Neon in dark), remembered in the browser. Off:
+  // no pedal, and a pedal already pressed is ignored, so everyone sees the classic theme. Targeted
+  // by the viewer's id, or anonymously.
+  use_overdrive_theme: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;
