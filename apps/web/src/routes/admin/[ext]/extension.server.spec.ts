@@ -191,6 +191,7 @@ describe('an extension’s public asset', () => {
 
     expect(found).toHaveBeenCalledWith(expect.anything(), 'k');
     expect(response.headers.get('content-type')).toBe('image/png');
+    expect(response.headers.get('content-length')).toBe('3');
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(response.headers.get('x-robots-tag')).toBe('noindex');
     expect([...new Uint8Array(await response.arrayBuffer())]).toEqual([1, 2, 3]);

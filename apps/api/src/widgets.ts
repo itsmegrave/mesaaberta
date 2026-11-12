@@ -26,7 +26,10 @@ export function widgetRoutes(open: Open = openDb, installed: readonly Extension[
     const asset = extensionById(c.req.param('ext'), installed)?.asset;
     const found = asset && (await asset(c.get('db'), c.req.param('key')));
     if (!found) return c.json({ error: 'not_found' }, 404);
-    return c.body(found.body, 200, { 'content-type': found.type });
+    return c.body(found.body, 200, {
+      'content-type': found.type,
+      'content-length': String(found.body.byteLength),
+    });
   });
 
   // A widget on its own page, for anyone (a poll's public results).

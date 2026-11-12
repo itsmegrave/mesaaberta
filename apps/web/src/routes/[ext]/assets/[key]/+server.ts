@@ -12,9 +12,12 @@ export const GET: RequestHandler = async ({ locals, params }) => {
   );
   if (answer?.status === 404) error(404);
   if (!answer?.ok) error(503, 'API unavailable');
+  const length = answer.headers.get('content-length');
   return new Response(answer.body, {
     headers: {
       'content-type': answer.headers.get('content-type') ?? 'application/octet-stream',
+      // Meta downloads a Reel's video from here: say how large it is rather than chunk it.
+      ...(length ? { 'content-length': length } : {}),
       'cache-control': 'no-store',
       'x-robots-tag': 'noindex',
     },
