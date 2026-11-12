@@ -1,5 +1,5 @@
 <script lang="ts">
-  // One tool of Ferramentas: its logo (or its initial) on the tile, the name, the kind and a line
+  // One tool of Ferramentas: its logo (or its initial) on the tile, the name, its kinds and a line
   // about it, then its site (a new tab, said for a screen reader) and, for a table platform, the
   // open tables that play on it. A suggestion still waiting wears "Em análise".
   import Icon from '#lib/components/ui/Icon.svelte';
@@ -11,7 +11,8 @@
 
   type Tool = {
     name: string;
-    kind: ToolKind | '';
+    /** Every section it shows in; none yet in the form's preview. */
+    kinds: readonly ToolKind[];
     siteUrl: string;
     description: string;
     logoUrl: string | null;
@@ -53,7 +54,13 @@
 
   <div>
     <h3 class="text-lg leading-snug font-semibold text-balance">{tool.name}</h3>
-    {#if tool.kind}<Pill tone="muted" class="mt-2">{toolKindLabels[tool.kind]()}</Pill>{/if}
+    {#if tool.kinds.length > 0}
+      <ul class="mt-2 flex flex-wrap gap-2">
+        {#each tool.kinds as kind (kind)}
+          <li><Pill tone="muted">{toolKindLabels[kind]()}</Pill></li>
+        {/each}
+      </ul>
+    {/if}
   </div>
   {#if tool.description}<p class="text-sm text-muted">{tool.description}</p>{/if}
 

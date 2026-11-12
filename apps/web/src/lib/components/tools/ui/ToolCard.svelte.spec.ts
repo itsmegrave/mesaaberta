@@ -5,7 +5,7 @@ import ToolCard from './ToolCard.svelte';
 
 const base = {
   name: 'Owlbear Rodeo',
-  kind: 'vtt' as const,
+  kinds: ['vtt'] as const,
   siteUrl: 'https://www.owlbear.rodeo',
   description: 'Mesa virtual leve no navegador.',
   logoUrl: '/tools/owlbear-rodeo.png',
@@ -24,6 +24,13 @@ describe('ToolCard', () => {
     await expect.element(link).toHaveAttribute('rel', 'noopener noreferrer');
     await expect.element(link).toHaveAccessibleName(/abre o site em nova aba/);
     await expect.element(page.getByText('Mesa virtual', { exact: true })).toBeVisible();
+  });
+
+  it('names every kind it has', async () => {
+    render(ToolCard, { tool: { ...base, kinds: ['vtt', 'helper'] } });
+
+    await expect.element(page.getByText('Mesa virtual', { exact: true })).toBeVisible();
+    await expect.element(page.getByText('Fichas e apoio', { exact: true })).toBeVisible();
   });
 
   it('links a table platform to its open tables', async () => {

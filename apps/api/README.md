@@ -202,7 +202,7 @@ The extension panels (`/admin/[ext]`) still run in web until the api can read th
 
 `/v1/tools` (`tools.ts`); suggesting a tool is `POST /v1/submissions/tools` (`{ input, logoPath }`) and an admin's edit `POST /v1/submissions/tools/:id`; approving and removing are the `tool.approve` and `tool.remove` moderation decisions:
 
-- `GET /v1/tools?q=`: the approved tools grouped by kind, with the open tables on each table platform, plus the viewer's own suggestions that still wait.
+- `GET /v1/tools?q=`: the approved tools grouped by kind (a tool with several kinds is in each group), with the open tables on each table platform, plus the viewer's own suggestions that still wait.
 
 ## CEP, health and suspended accounts
 
