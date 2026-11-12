@@ -331,3 +331,71 @@ describe('add_tool', () => {
     expect(seen.slice(before).every((request) => request.method === 'GET')).toBe(true);
   });
 });
+
+describe('send_announcement', () => {
+  const news = {
+    title: 'Ligue o Overdrive',
+    body: 'Tem tema novo!\n\nPise no pedal <Overdrive>.',
+    link: '/changelog',
+  };
+  const sent = {
+    title: news.title,
+    body: '<p>Tem tema novo!</p><p>Pise no pedal &lt;Overdrive&gt;.</p>',
+    link: '/changelog',
+    tone: 'info',
+    icon: '',
+    audience: 'all_active_users',
+    recipient: '',
+  };
+
+  it('only counts the audience until it is confirmed', async () => {
+    const { call, seen } = setUp({
+      answers: {
+        '/v1/admin/announcements': { body: { step: 'confirm', count: 42, recipient: null } },
+      },
+    });
+    expect(await call('send_announcement', news)).toEqual({
+      isError: false,
+      body: { step: 'confirm', count: 42, recipient: null },
+    });
+    expect(seen.filter((request) => request.method === 'POST')).toEqual([
+      {
+        path: '/v1/admin/announcements',
+        actor: USER,
+        method: 'POST',
+        body: { ...sent, confirmed: false },
+      },
+    ]);
+  });
+
+  it('sends when confirmed and leaves the event ids to the sweep', async () => {
+    const { call, seen } = setUp({
+      answers: {
+        '/v1/admin/announcements': { body: { step: 'sent', count: 42, eventIds: ['e1'] } },
+      },
+    });
+    expect(await call('send_announcement', { ...news, confirmed: true })).toEqual({
+      isError: false,
+      body: { step: 'sent', count: 42 },
+    });
+    expect(seen.find((request) => request.method === 'POST')?.body).toEqual({
+      ...sent,
+      confirmed: true,
+    });
+  });
+
+  it('passes on a refusal and refuses a link off the site before reaching the api', async () => {
+    const { call, seen } = setUp({
+      answers: { '/v1/admin/announcements': { status: 403, body: { error: 'forbidden' } } },
+    });
+    expect(await call('send_announcement', news)).toEqual({
+      isError: true,
+      body: { error: 'forbidden' },
+    });
+    const before = seen.length;
+    expect(
+      (await call('send_announcement', { ...news, link: 'https://example.com' })).isError,
+    ).toBe(true);
+    expect(seen.slice(before).every((request) => request.method === 'GET')).toBe(true);
+  });
+});
