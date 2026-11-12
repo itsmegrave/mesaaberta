@@ -21,6 +21,7 @@ const staticPaths = [
   '/blog',
   '/privacy',
   '/terms',
+  '/community',
 ];
 // The public directories, each listed while its flag is on for visitors (no one signed in).
 const directories = [

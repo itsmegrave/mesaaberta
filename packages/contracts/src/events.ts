@@ -277,6 +277,12 @@ export type DomainEvent =
   | { type: 'ProfileUpdated'; payload: { profileId: string; changes: Changes } }
   // "Estou procurando mesa" turned on (or on again) or off, in Procuro mesa. The note is not kept.
   | { type: 'PlayerLookingChanged'; payload: { profileId: string; looking: boolean } }
+  // Combinar: a person switched their card on (or saved it again) or off. The card is not kept.
+  | { type: 'MatchCardChanged'; payload: { profileId: string; enabled: boolean } }
+  // Two people both said yes on Combinar (the actor gave the second yes). The pair is in order.
+  | { type: 'MatchCreated'; payload: { matchId: string; profileIds: [string, string] } }
+  // One of the two undid a Combinar match (the actor). The other is not told.
+  | { type: 'MatchEnded'; payload: { matchId: string } }
   // The calendar feed got a new secret (`on`; the old address stops working) or was turned off.
   // The secret itself is never in the log.
   | { type: 'CalendarFeedChanged'; payload: { profileId: string; on: boolean } }

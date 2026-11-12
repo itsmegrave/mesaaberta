@@ -33,6 +33,12 @@ describe('notificationText', () => {
     );
   });
 
+  it('tells each side of a Combinar match who else wants to play', () => {
+    expect(notificationText(shown({ type: 'match_created', actor: 'ana', metadata: {} }))).toBe(
+      'Bora jogar! @ana também quer jogar com você.',
+    );
+  });
+
   it('tells the submitter an admin approved or turned down their place, and why', () => {
     const notice = (metadata: Record<string, string>) =>
       notificationText(shown({ type: 'moderation_notice', metadata }));

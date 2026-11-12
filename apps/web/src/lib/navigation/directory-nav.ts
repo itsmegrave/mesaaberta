@@ -8,6 +8,7 @@ export type DirectorySwitches = {
   gms: boolean;
   places: boolean;
   players?: boolean;
+  matches?: boolean;
 };
 
 export interface DirectoryLink {
@@ -23,7 +24,7 @@ export interface DirectoryLink {
   current: (pathname: string) => boolean;
 }
 
-// In the menus' order: Sistemas, Onde jogar, Quem mestra, Procuro mesa, then Financiamentos and
+// In the menus' order: Sistemas, Onde jogar, Quem mestra, Procuro mesa, Combinar, then Financiamentos and
 // Ferramentas.
 // A link with no `key` has no flag and is always listed.
 const DIRECTORY_NAV: readonly (DirectoryLink & { key?: keyof DirectorySwitches })[] = [
@@ -63,6 +64,15 @@ const DIRECTORY_NAV: readonly (DirectoryLink & { key?: keyof DirectorySwitches }
     shortLabel: m.nav_directory_players_short,
     description: m.nav_directory_players_description,
     current: (pathname) => isUnder(pathname, '/players'),
+  },
+  {
+    key: 'matches',
+    href: '/matches',
+    icon: 'game-icons:card-play',
+    label: m.nav_matches,
+    shortLabel: m.nav_matches,
+    description: m.nav_matches_description,
+    current: (pathname) => isUnder(pathname, '/matches'),
   },
   {
     href: '/crowdfunding',

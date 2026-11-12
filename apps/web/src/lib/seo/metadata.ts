@@ -69,6 +69,7 @@ export function publicMetadata(path: string, data: PublicData, origin: string) {
     '/blog': [m.blog_feed_title(), m.blog_description()],
     '/privacy': [`${m.privacy_title()} · Mesa Aberta`, m.privacy_description()],
     '/terms': [`${m.terms_title()} · Mesa Aberta`, m.terms_description()],
+    '/community': [`${m.community_title()} · Mesa Aberta`, m.community_description()],
   };
   if (listings[path]) {
     const [title, description] = listings[path];

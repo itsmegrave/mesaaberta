@@ -22,6 +22,7 @@ export function indexingPolicy(
       '/blog',
       '/privacy',
       '/terms',
+      '/community',
     ].includes(path) ||
     /^\/blog\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(path) ||
     /^\/t\/(?!new$)[a-z0-9]+(?:-[a-z0-9]+)*$/.test(path) ||

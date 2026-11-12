@@ -8,6 +8,7 @@ export const DIRECTORY_FLAGS = {
   gms: 'api_directory_gms',
   places: 'api_directory_places',
   players: 'use_players_directory',
+  matches: 'use_matchmaking',
 } as const satisfies Record<string, FlagName>;
 export type Directory = keyof typeof DIRECTORY_FLAGS;
 export type DirectoryFlags = Record<Directory, boolean>;
@@ -17,6 +18,7 @@ export const NO_DIRECTORIES: DirectoryFlags = {
   gms: false,
   places: false,
   players: false,
+  matches: false,
 };
 
 /** Whether a directory is on for the person reading (targeted by id), or for visitors. */
@@ -25,8 +27,8 @@ export async function directoryEnabled(
   directory: Directory,
 ): Promise<boolean> {
   const profile = await locals.getProfile();
-  // Procuro mesa lists people, so it is for signed-in people only.
-  if (directory === 'players' && !profile) return false;
+  // Procuro mesa and Combinar are about people, so they are for signed-in people only.
+  if ((directory === 'players' || directory === 'matches') && !profile) return false;
   return locals.flags.isEnabled(
     DIRECTORY_FLAGS[directory],
     profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},

@@ -1,5 +1,30 @@
 [
   {
+    "date": "2026-11-12",
+    "title": "Combinar: encontre gente para jogar",
+    "summary": "Em Explorar, Combinar mostra uma carta por vez com quem quer jogar como você. Se os dois disserem sim, vocês combinam.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Combinar",
+        "description": "Monte seu cartão com o que você procura (gente para a sua mesa, alguém para mestrar ou um grupo), como joga e o seu estilo. Depois é só responder as cartas: Quero jogar junto ou Agora não. Um sim fica em segredo até ser mútuo. Só para maiores de 18 anos.",
+        "href": "/matches"
+      },
+      {
+        "kind": "new",
+        "title": "Minhas combinações",
+        "description": "Quem disse sim para você também aparece em Minhas combinações, com o que vocês têm em comum e o botão para mandar mensagem. Você recebe um aviso no sino a cada combinação.",
+        "href": "/matches/list"
+      },
+      {
+        "kind": "new",
+        "title": "Regras da comunidade",
+        "description": "Uma página com como a gente convive na Mesa Aberta: nas mesas, nas mensagens e no Combinar.",
+        "href": "/community"
+      }
+    ]
+  },
+  {
     "date": "2026-11-07",
     "title": "Ferramentas para jogar",
     "summary": "Explorar ganha Ferramentas: as plataformas e apps que as mesas usam para jogar, com o link e uma linha sobre cada uma.",

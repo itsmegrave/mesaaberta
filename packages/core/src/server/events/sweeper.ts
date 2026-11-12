@@ -10,6 +10,7 @@ import { pruneMailDeliveries } from '../mail/once';
 import { pruneAuthAttempts } from '../auth/attempt-limit';
 import { flagsFromEnv } from '../flags/env';
 import { pruneTableChats } from '../messages/retention';
+import { pruneMatchAnswers } from '../matches/service';
 import { pollOutbox } from '@mesaaberta/events';
 import { pruneEvents, sweepEvents } from './dispatcher';
 import { reportDelay } from './delay';
@@ -107,6 +108,8 @@ export async function runSweeper(
     if (expired > 0) log.info('sweep.notifications_pruned', { expired });
     const chats = await pruneTableChats(db);
     if (chats > 0) log.info('sweep.table_chats_pruned', { chats });
+    const answers = await pruneMatchAnswers(db);
+    if (answers > 0) log.info('sweep.match_answers_pruned', { pruned: answers });
     const deliveries = await pruneMailDeliveries(db);
     if (deliveries > 0) log.info('sweep.mail_deliveries_pruned', { deliveries });
     const attempts = await pruneAuthAttempts(db);

@@ -7,6 +7,7 @@
       "dependencies": {
         "@cf-wasm/resvg": "^0.4.0",
         "@fontsource-variable/cinzel": "^5.3.0",
+        "@fontsource/bangers": "^5.3.0",
         "@growthbook/growthbook": "^1.7.0",
         "@iconify-svelte/game-icons": "^1.0.3",
         "@iconify-svelte/reicon": "^1.0.3",
@@ -416,6 +417,8 @@
     "@floating-ui/utils": ["@floating-ui/utils@0.2.12", "", {}, "sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww=="],
 
     "@fontsource-variable/cinzel": ["@fontsource-variable/cinzel@5.3.0", "", {}, "sha512-eFcU0TwaAP5QESF2pV8VoOPJJXJ6sSGm/6mXMwqTdMBPAJMaLhfa6oISHuOtFeddsoHP9RYm4Io0j1j3mNEz2Q=="],
+
+    "@fontsource/bangers": ["@fontsource/bangers@5.3.0", "", {}, "sha512-tSRpmWwkqrO9PCqo9wjA/99/5sLOIWm5cf51G3ooEHd8qZus8sVSSJoWp/7EvM5rIgZMjKRG6XtY9yeisKxE7g=="],
 
     "@growthbook/growthbook": ["@growthbook/growthbook@1.7.0", "", { "dependencies": { "dom-mutator": "0.6.0" } }, "sha512-Vmad3fWRh1XaFH4q+AS62ofX6Q3IxSTD7sBGuhEHCaad8VyZerxrVdojucjzlnJDUocfrnZFUSpEkR6R/wCV+A=="],
 
