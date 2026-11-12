@@ -1992,3 +1992,93 @@ export const widgetDismissals = pgTable(
     index('widget_dismissals_profile_idx').on(dismissal.profileId),
   ],
 ).enableRLS();
+
+// Combinar (`/matches`), the "RPG tinder": a person's opt-in card, their answers about other cards,
+// and the matches two yeses make. Systems, availability, city and role stay on the profile.
+
+// What a person is after on Combinar. `players`: people for their table (they run it); `gm`:
+// someone to run a game for them; `group`: forming a group and deciding the rest together. Mirror
+// MATCH_SEEKING in `@mesaaberta/core/matches/schema`.
+export const matchSeeking = pgEnum('match_seeking', ['players', 'gm', 'group']);
+
+// A person's Combinar card. No row: never set up. `enabledAt` null: switched off, out of every deck
+// (the answers they gave are deleted when they switch off). Adults only: `adultConfirmedAt` is when
+// they confirmed being 18 or older, besides an adult `profiles.age_range`.
+export const matchCards = pgTable(
+  'match_cards',
+  {
+    profileId: uuid('profile_id')
+      .primaryKey()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    enabledAt: timestamp('enabled_at', { withTimezone: true }),
+    adultConfirmedAt: timestamp('adult_confirmed_at', { withTimezone: true }).notNull(),
+    seeking: matchSeeking('seeking').array().notNull(),
+    online: boolean('online').notNull().default(true),
+    inPerson: boolean('in_person').notNull().default(false),
+    // The four play-style axes ("naipes"), 0 to 100 towards the first pole: Combate (vs
+    // Interpretação), Regras (vs Narrativa), Campanha (vs One-shot), Sombrio (vs Leve). 50 is the
+    // middle. Mirror MATCH_AXES in `@mesaaberta/core/matches/schema`.
+    axisCombat: smallint('axis_combat').notNull().default(50),
+    axisRules: smallint('axis_rules').notNull().default(50),
+    axisLength: smallint('axis_length').notNull().default(50),
+    axisTone: smallint('axis_tone').notNull().default(50),
+    ...timestamps,
+  },
+  (card) => [
+    index('match_cards_enabled_idx').on(card.enabledAt),
+    check('match_cards_seeking_some', sql`cardinality(${card.seeking}) BETWEEN 1 AND 3`),
+    check('match_cards_format_some', sql`${card.online} OR ${card.inPerson}`),
+    check(
+      'match_cards_axes_range',
+      sql`${card.axisCombat} BETWEEN 0 AND 100 AND ${card.axisRules} BETWEEN 0 AND 100 AND ${card.axisLength} BETWEEN 0 AND 100 AND ${card.axisTone} BETWEEN 0 AND 100`,
+    ),
+  ],
+).enableRLS();
+
+// One person's answer about another's card: `yes` (Quero jogar junto) or not (Agora não). Never
+// shown to the person answered about. A no hides them for MATCH_PASS_DAYS; a yes stays until it
+// makes a match or is undone. Deleted after MATCH_ANSWER_DAYS (the sweep) and when the person
+// switches their card off.
+export const matchAnswers = pgTable(
+  'match_answers',
+  {
+    fromId: uuid('from_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    toId: uuid('to_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    yes: boolean('yes').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (answer) => [
+    primaryKey({ columns: [answer.fromId, answer.toId] }),
+    index('match_answers_to_idx').on(answer.toId),
+    index('match_answers_from_created_idx').on(answer.fromId, answer.createdAt),
+    check('match_answers_not_self', sql`${answer.fromId} <> ${answer.toId}`),
+  ],
+).enableRLS();
+
+// Two people who both said yes. The pair is stored in order (`profileA` < `profileB`), once: an
+// undone match (`endedAt`) is never made again, and neither sees the other in the deck.
+export const matches = pgTable(
+  'matches',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    profileA: uuid('profile_a')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    profileB: uuid('profile_b')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    endedAt: timestamp('ended_at', { withTimezone: true }),
+    // Who undid it. Not a foreign key: it is one of the two.
+    endedBy: uuid('ended_by'),
+  },
+  (match) => [
+    uniqueIndex('matches_pair_unique').on(match.profileA, match.profileB),
+    index('matches_b_idx').on(match.profileB),
+    check('matches_ordered_pair', sql`${match.profileA} < ${match.profileB}`),
+  ],
+).enableRLS();

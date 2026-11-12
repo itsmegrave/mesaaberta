@@ -85,7 +85,17 @@ export default defineConfig(
       'tailwindcss/important-modifier-suffix': 'error',
       'tailwindcss/no-custom-classname': [
         'error',
-        { whitelist: ['legal', 'table-top', 'rich-text', 'lamp-stop', 'lamp-stop-brand'] },
+        {
+          // punk-*: the Combinar card's illustration geometry, in its component's <style>.
+          whitelist: [
+            'legal',
+            'table-top',
+            'rich-text',
+            'lamp-stop',
+            'lamp-stop-brand',
+            'punk-[a-z0-9-]+',
+          ],
+        },
       ],
       'tailwindcss/no-contradicting-classname': 'error',
       // The v4 plugin currently rewrites valid fractional line-heights to invalid dynamic utilities.

@@ -1,5 +1,6 @@
 import { and, asc, eq, inArray, isNotNull, or } from 'drizzle-orm';
 import { eraseMessagesOf } from '@mesaaberta/core/server/messages/service';
+import { eraseMatchesOf } from '@mesaaberta/core/server/matches/service';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {
   conversations,
@@ -344,6 +345,7 @@ export async function closeAccount(
         ),
       );
     await eraseMessagesOf(t, userId);
+    await eraseMatchesOf(t, userId);
     // What extensions keep about the person (a poll's votes): the profile row stays, so no cascade.
     for (const extension of installed) await extension.onAccountClosed?.(t, userId);
     return ids;

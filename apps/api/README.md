@@ -113,6 +113,13 @@ Pictures stay paths: the web Worker turns them into URLs.
 - `GET /v1/follows/gm/:slug`: the Seguir button on a table's GM row, for visitors too (`{ profileId, following }`; a table the viewer cannot see is a 404). The table read keeps the GM's id out.
 - `GET /v1/follows?page=N` ("Seguindo" and the follower count) and `POST /v1/follows/notices` (its bell switches).
 
+`/v1/matches` (Combinar, the "RPG tinder") is API-owned, without a flag or web database fallback; web checks `use_matchmaking` before it calls these. Always about the actor:
+
+- `GET /v1/matches/card` and `POST /v1/matches/card` (`{ enabled, adult, seeking, online, inPerson, combat, rules, length, tone }`): the card and the profile facts the setup shows; switching on needs an adult age range and `adult: true`, presencial a city; switching off deletes the actor's answers. Records `MatchCardChanged`.
+- `GET /v1/matches/deck`: up to 20 cards, best fit first (systems, free times and the four axes), or `{ state }` when there is no deck (`not_adult`, `no_card`, `off`).
+- `POST /v1/matches/answers` (`{ username, yes }`, 50 a day, then 429) and `POST /v1/matches/answers/undo` (Voltar a última). A yes that meets theirs makes the match (`MatchCreated`, the `matches-v1` bell for both) and answers it.
+- `GET /v1/matches?page=N` (the matches, 404 past the last page) and `POST /v1/matches/:id/end` (Desfazer, records `MatchEnded`).
+
 ## Table forms
 
 The new-table and edit forms read no database in web either:

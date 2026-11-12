@@ -94,6 +94,7 @@ import GamePodiumIcon from '@iconify-svelte/game-icons/podium';
 import EyeOffIcon from '@iconify-svelte/reicon/eye-off-filled';
 import GameOpenTreasureChestIcon from '@iconify-svelte/game-icons/open-treasure-chest';
 import GameToolboxIcon from '@iconify-svelte/game-icons/toolbox';
+import GameCardPlayIcon from '@iconify-svelte/game-icons/card-play';
 import GameBookCoverIcon from '@iconify-svelte/game-icons/book-cover';
 import GamePositionMarkerIcon from '@iconify-svelte/game-icons/position-marker';
 import GamePointyHatIcon from '@iconify-svelte/game-icons/pointy-hat';
@@ -207,6 +208,7 @@ export const ICONS = {
   'game-icons:dice-twenty-faces-twenty': GameDiceTwentyFacesTwentyIcon,
   'game-icons:open-treasure-chest': GameOpenTreasureChestIcon,
   'game-icons:toolbox': GameToolboxIcon,
+  'game-icons:card-play': GameCardPlayIcon,
   'game-icons:book-cover': GameBookCoverIcon,
   'game-icons:position-marker': GamePositionMarkerIcon,
   'game-icons:pointy-hat': GamePointyHatIcon,

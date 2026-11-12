@@ -6,6 +6,7 @@
 @import '../lib/theme/overdrive-theme.css';
 @import '../lib/theme/overdrive.css';
 @import '@fontsource-variable/cinzel';
+@import '@fontsource/bangers/latin-400.css';
 /* The private package (packages/privy, installed at build) draws its own components; Tailwind
    does not scan workspace packages on its own. Nothing is there in the open-source build. */
 @source '../../../../packages/privy/src';
@@ -59,6 +60,15 @@ body {
   --color-classind-14: #f58220;
   --color-classind-16: #ec1d25;
   --color-classind-18: #000000;
+  /* Combinar's punk card (Sunset Overdrive-inspired, shared with the Overdrive themes): fixed
+     colours, the same in both themes, since the card is a paper sticker on any page. Bright fills
+     always carry punk-ink text and a punk-ink outline (ink on pink is 5.3:1). Combinar only. */
+  --font-comic: 'Bangers', 'Impact', system-ui, sans-serif;
+  --color-punk-ink: #1a0b2e;
+  --color-punk-paper: #fff8ec;
+  --color-punk-pink: #ff2e88;
+  --color-punk-yellow: #ffd23f;
+  --color-punk-orange: #ff6b1a;
   /* Display sizes on the 4px grid (Tailwind's 30, 36, 60 and 72px are off it, and too big for the
      density we want). Line heights land on the grid too. */
   --text-3xl: 1.75rem;

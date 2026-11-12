@@ -186,6 +186,8 @@ export function notificationText(item: Shown, timeZone = 'America/Sao_Paulo'): s
       return m.notification_waitlist_requested({ table });
     case 'follow_started':
       return m.notification_follow_started({ player });
+    case 'match_created':
+      return m.notification_match_created({ player });
     case 'catalog_suggestion_approved':
       // A table that waited for its system can be published now.
       if (item.metadata.kind === 'system')

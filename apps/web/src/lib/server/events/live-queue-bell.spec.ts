@@ -64,6 +64,7 @@ describe('the bell on the queue', () => {
       'badges-v1',
       'badge-notice-v1',
       'follows-v1',
+      'matches-v1',
     ]);
   });
 

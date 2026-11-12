@@ -23,7 +23,7 @@ const shell = {
   },
   maintenance: false,
   maintenanceBypass: false,
-  directories: { systems: false, gms: false, places: false, players: false },
+  directories: { systems: false, gms: false, places: false, players: false, matches: false },
   beginners: false,
   overdrive: false,
   viewer,
@@ -188,7 +188,7 @@ describe('+layout.svelte', () => {
   describe('directories in the menu', () => {
     const withSystems = {
       ...signedOut,
-      directories: { systems: true, gms: false, places: false, players: false },
+      directories: { systems: true, gms: false, places: false, players: false, matches: false },
     };
     const nav = () => page.getByRole('navigation', { name: 'Navegação principal' });
 
