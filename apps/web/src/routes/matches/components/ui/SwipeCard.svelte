@@ -6,6 +6,7 @@
   import { cornersOf } from '../suits';
   import { cardLine, seatOf } from '../person';
   import SuitBadge from './SuitBadge.svelte';
+  import { slap } from '../motion';
 
   let {
     person,
@@ -76,6 +77,7 @@
     {/if}
     {#if stamp}
       <span
+        in:slap
         aria-hidden="true"
         class="absolute top-16 z-20 rounded-md border-4 border-punk-ink px-3.5 font-comic text-4xl text-punk-ink {stamp ===
         'yes'

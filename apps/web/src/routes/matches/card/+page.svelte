@@ -19,6 +19,7 @@
   import { toast } from '#lib/toaster.js';
   import { matchCardSchema } from '@mesaaberta/core/matches/schema';
   import AxisSlider from '../components/ui/AxisSlider.svelte';
+  import SwipeCard from '../components/ui/SwipeCard.svelte';
 
   let { data, form = null } = $props();
 
@@ -74,6 +75,23 @@
       }[value](),
     })),
   );
+  // The preview follows the answers as they change: format, city and the four axes.
+  const preview = $derived(
+    data.preview
+      ? {
+          ...data.preview,
+          online: $draft.online,
+          inPerson: $draft.inPerson,
+          city: $draft.inPerson ? data.state.city : null,
+          axes: {
+            combat: Number($draft.combat),
+            rules: Number($draft.rules),
+            length: Number($draft.length),
+            tone: Number($draft.tone),
+          },
+        }
+      : null,
+  );
   const formatError = $derived(err('online') ?? err('inPerson'));
 </script>
 
@@ -91,120 +109,138 @@
     {m.match_card_lede()}
   </p>
 
-  {#if data.hasCard && !data.enabled}
-    <p class="mt-6 max-w-2xl rounded-lg bg-surface-wash p-4 font-semibold" role="status">
-      {m.match_card_paused_note()}
-    </p>
-  {/if}
-
-  <MAForm
-    action="?/save"
-    onsubmit={controller.submit}
-    onfocusout={controller.blur}
-    class="mt-8 grid max-w-2xl gap-8"
-  >
-    <ErrorSummary errors={problems} />
-    <FormBanner text={banner} />
-
-    <FormSection step={1} title={m.match_card_seeking()} hint={m.match_card_seeking_hint()}>
-      <CheckboxPills
-        name="seeking"
-        legend={m.match_card_seeking_legend()}
-        options={seeking}
-        bind:group={$draft.seeking}
-        error={err('seeking')}
-      />
-    </FormSection>
-
-    <FormSection step={2} title={m.match_card_format()} hint={m.match_card_format_hint()}>
-      <fieldset class="grid gap-1" aria-describedby={formatError ? 'online-error' : undefined}>
-        <legend class="sr-only">{m.match_card_format()}</legend>
-        <MACheckbox name="online" value="true" bind:checked={$draft.online}>
-          {m.match_format_online()}
-        </MACheckbox>
-        <MACheckbox
-          name="inPerson"
-          value="true"
-          bind:checked={$draft.inPerson}
-          aria-describedby="inPerson-hint"
-        >
-          {m.match_format_in_person()}
-        </MACheckbox>
-        <p id="inPerson-hint" class="text-sm text-muted">
-          {data.state.city ? m.match_card_city({ city: data.state.city }) : m.match_card_no_city()}
-          <a class="anchor" href={routes.editProfile}>{m.match_card_edit_profile()}</a>
+  <div class="mt-2 grid gap-10 lg:grid-cols-3 lg:gap-12">
+    <div class="min-w-0 lg:col-span-2">
+      {#if data.hasCard && !data.enabled}
+        <p class="mt-6 max-w-2xl rounded-lg bg-surface-wash p-4 font-semibold" role="status">
+          {m.match_card_paused_note()}
         </p>
-        <FieldError id="online" class="" message={formatError} />
-      </fieldset>
-    </FormSection>
+      {/if}
 
-    <FormSection step={3} title={m.match_card_style()} hint={m.match_card_style_hint()}>
-      <div class="grid gap-6">
-        {#each MATCH_AXES as { key } (key)}
-          <AxisSlider axis={key} bind:value={$draft[key]} />
-        {/each}
-      </div>
-    </FormSection>
-
-    <FormSection step={4} title={m.match_card_adult_title()}>
-      <div class="grid gap-3">
-        <p class="text-sm text-muted">
-          {m.match_card_rules_note()}
-          <a class="anchor" href={routes.community}>{m.match_card_rules_link()}</a>
-        </p>
-        <MACheckbox
-          name="adult"
-          value="true"
-          align="start"
-          bind:checked={$draft.adult}
-          aria-invalid={err('adult') ? 'true' : undefined}
-          aria-describedby={err('adult') ? 'adult-error' : undefined}
-        >
-          {m.match_card_adult()}
-        </MACheckbox>
-        <FieldError id="adult" class="" message={err('adult')} />
-      </div>
-    </FormSection>
-
-    <p class="text-sm text-muted">
-      {m.match_card_profile_facts({
-        systems: data.state.favoriteSystems,
-        slots: data.state.availabilitySlots,
-      })}
-    </p>
-
-    <div class="flex flex-wrap items-center gap-5">
-      <MAButton type="submit" variant="primary" {controller}>
-        {data.hasCard && data.enabled ? m.match_card_save() : m.match_card_start()}
-      </MAButton>
-      <a href={routes.matches} class="{buttonClass('secondary', 'md')} font-semibold"
-        >{m.form_cancel()}</a
+      <MAForm
+        action="?/save"
+        onsubmit={controller.submit}
+        onfocusout={controller.blur}
+        class="mt-8 grid max-w-2xl gap-8"
       >
-    </div>
-  </MAForm>
+        <ErrorSummary errors={problems} />
+        <FormBanner text={banner} />
 
-  {#if data.hasCard && data.enabled}
-    <MAForm
-      action="?/pause"
-      onsubmit={pausing.submit}
-      class="mt-10 grid max-w-2xl gap-3 border-t border-surface-200-800 pt-6"
-    >
-      <h2 class="text-lg font-semibold">{m.match_card_pause_title()}</h2>
-      <p class="text-sm text-muted">{m.match_card_pause_hint()}</p>
-      {#each saved.seeking as value (value)}
-        <input type="hidden" name="seeking" {value} />
-      {/each}
-      <input type="hidden" name="online" value={String(saved.online)} />
-      <input type="hidden" name="inPerson" value={String(saved.inPerson)} />
-      <input type="hidden" name="adult" value="true" />
-      {#each MATCH_AXES as { key } (key)}
-        <input type="hidden" name={key} value={saved[key]} />
-      {/each}
-      <div>
-        <MAButton type="submit" variant="danger" controller={pausing}>
-          {m.match_card_pause()}
-        </MAButton>
-      </div>
-    </MAForm>
-  {/if}
+        <FormSection step={1} title={m.match_card_seeking()} hint={m.match_card_seeking_hint()}>
+          <CheckboxPills
+            name="seeking"
+            legend={m.match_card_seeking_legend()}
+            options={seeking}
+            bind:group={$draft.seeking}
+            error={err('seeking')}
+          />
+        </FormSection>
+
+        <FormSection step={2} title={m.match_card_format()} hint={m.match_card_format_hint()}>
+          <fieldset class="grid gap-1" aria-describedby={formatError ? 'online-error' : undefined}>
+            <legend class="sr-only">{m.match_card_format()}</legend>
+            <MACheckbox name="online" value="true" bind:checked={$draft.online}>
+              {m.match_format_online()}
+            </MACheckbox>
+            <MACheckbox
+              name="inPerson"
+              value="true"
+              bind:checked={$draft.inPerson}
+              aria-describedby="inPerson-hint"
+            >
+              {m.match_format_in_person()}
+            </MACheckbox>
+            <p id="inPerson-hint" class="text-sm text-muted">
+              {data.state.city
+                ? m.match_card_city({ city: data.state.city })
+                : m.match_card_no_city()}
+              <a class="anchor" href={routes.editProfile}>{m.match_card_edit_profile()}</a>
+            </p>
+            <FieldError id="online" class="" message={formatError} />
+          </fieldset>
+        </FormSection>
+
+        <FormSection step={3} title={m.match_card_style()} hint={m.match_card_style_hint()}>
+          <div class="grid gap-6">
+            {#each MATCH_AXES as { key } (key)}
+              <AxisSlider axis={key} bind:value={$draft[key]} />
+            {/each}
+          </div>
+        </FormSection>
+
+        <FormSection step={4} title={m.match_card_adult_title()}>
+          <div class="grid gap-3">
+            <p class="text-sm text-muted">
+              {m.match_card_rules_note()}
+              <a class="anchor" href={routes.community}>{m.match_card_rules_link()}</a>
+            </p>
+            <MACheckbox
+              name="adult"
+              value="true"
+              align="start"
+              bind:checked={$draft.adult}
+              aria-invalid={err('adult') ? 'true' : undefined}
+              aria-describedby={err('adult') ? 'adult-error' : undefined}
+            >
+              {m.match_card_adult()}
+            </MACheckbox>
+            <FieldError id="adult" class="" message={err('adult')} />
+          </div>
+        </FormSection>
+
+        <p class="text-sm text-muted">
+          {m.match_card_profile_facts({
+            systems: data.state.favoriteSystems,
+            slots: data.state.availabilitySlots,
+          })}
+        </p>
+
+        <div class="flex flex-wrap items-center gap-5">
+          <MAButton type="submit" variant="primary" {controller}>
+            {data.hasCard && data.enabled ? m.match_card_save() : m.match_card_start()}
+          </MAButton>
+          <a href={routes.matches} class="{buttonClass('secondary', 'md')} font-semibold"
+            >{m.form_cancel()}</a
+          >
+        </div>
+      </MAForm>
+
+      {#if data.hasCard && data.enabled}
+        <MAForm
+          action="?/pause"
+          onsubmit={pausing.submit}
+          class="mt-10 grid max-w-2xl gap-3 border-t border-surface-200-800 pt-6"
+        >
+          <h2 class="text-lg font-semibold">{m.match_card_pause_title()}</h2>
+          <p class="text-sm text-muted">{m.match_card_pause_hint()}</p>
+          {#each saved.seeking as value (value)}
+            <input type="hidden" name="seeking" {value} />
+          {/each}
+          <input type="hidden" name="online" value={String(saved.online)} />
+          <input type="hidden" name="inPerson" value={String(saved.inPerson)} />
+          <input type="hidden" name="adult" value="true" />
+          {#each MATCH_AXES as { key } (key)}
+            <input type="hidden" name={key} value={saved[key]} />
+          {/each}
+          <div>
+            <MAButton type="submit" variant="danger" controller={pausing}>
+              {m.match_card_pause()}
+            </MAButton>
+          </div>
+        </MAForm>
+      {/if}
+    </div>
+    {#if preview}
+      <aside aria-labelledby="match-preview-title" class="lg:sticky lg:top-6 lg:self-start">
+        <p id="match-preview-title" class="text-sm font-bold tracking-wider text-muted uppercase">
+          {m.match_card_preview()}
+        </p>
+        <!-- A preview, not the card itself: kept out of the tab order and the reading order. -->
+        <div class="relative mx-auto mt-3 h-136 w-full max-w-sm" inert>
+          <SwipeCard person={preview} compact />
+        </div>
+        <p class="mt-4 text-sm text-muted">{m.match_card_preview_hint()}</p>
+      </aside>
+    {/if}
+  </div>
 </section>

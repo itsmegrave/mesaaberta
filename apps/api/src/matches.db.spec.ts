@@ -88,6 +88,13 @@ describe('api Combinar routes over a database', () => {
       city: 'Curitiba',
       favoriteSystems: 2,
       availabilitySlots: 3,
+      // Ana's own card as others would see it: her two systems, nothing "em comum".
+      preview: expect.objectContaining({
+        username: 'ana',
+        tableRole: 'gm',
+        commonSystems: [],
+        fit: null,
+      }),
     });
     expect(await (await call('/deck', ana)).json()).toEqual({ state: 'no_card' });
   });

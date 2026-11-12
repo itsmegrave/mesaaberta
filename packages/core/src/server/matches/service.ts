@@ -445,6 +445,59 @@ async function present(
   });
 }
 
+/** Nobody's id: seen from it, every favorite system is "theirs", none "em comum". */
+const NOBODY = '00000000-0000-4000-8000-000000000000';
+
+/**
+ * The person's own card as others see it, for the preview on Meu cartão: their name, photo,
+ * systems and ratings, with nothing "em comum". The setup draws its own answers over it as they
+ * change. Null without a @usuário.
+ */
+export async function matchPreviewOf(
+  db: AnyDb,
+  profileId: string,
+  { now = new Date(), supabaseUrl }: { now?: Date; supabaseUrl?: string } = {},
+): Promise<MatchPerson | null> {
+  const [row] = await db
+    .select({
+      id: profiles.id,
+      username: profiles.username,
+      name: profiles.name,
+      showName: profiles.showName,
+      avatarPath: profiles.avatarPath,
+      avatarUrl: profiles.avatarUrl,
+      tableRole: profiles.tableRole,
+      city: profiles.city,
+      showFavoriteSystems: profiles.showFavoriteSystems,
+      card: matchCards,
+    })
+    .from(profiles)
+    .leftJoin(matchCards, eq(matchCards.profileId, profiles.id))
+    .where(eq(profiles.id, profileId));
+  if (!row?.username) return null;
+  const card: Card = row.card ?? {
+    profileId,
+    enabledAt: null,
+    adultConfirmedAt: now,
+    seeking: [],
+    online: true,
+    inPerson: false,
+    axisCombat: 50,
+    axisRules: 50,
+    axisLength: 50,
+    axisTone: 50,
+    createdAt: now,
+    updatedAt: now,
+  };
+  const [person] = await present(
+    db,
+    { id: NOBODY, card: { ...card, online: false, inPerson: false }, city: null },
+    [{ ...row, card, commonSlots: 0, score: 0 }],
+    { now, supabaseUrl },
+  );
+  return { ...person, fit: null };
+}
+
 export type MatchAnswerResult = {
   eventIds: string[];
   /** Set when this yes made a match: who with, for "Bora jogar!". */

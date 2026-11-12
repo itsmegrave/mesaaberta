@@ -22,6 +22,17 @@ describe('directoryNav', () => {
     ).toEqual(['/systems', '/places', '/gamemasters', '/crowdfunding', '/tools']);
   });
 
+  it('lists Combinar in place of Procuro mesa while it is on', () => {
+    const hrefs = (switches: Parameters<typeof directoryNav>[0]) =>
+      directoryNav(switches).map((link) => link.href);
+    expect(hrefs({ ...off, players: true })).toEqual(['/players', '/crowdfunding', '/tools']);
+    expect(hrefs({ ...off, players: true, matches: true })).toEqual([
+      '/matches',
+      '/crowdfunding',
+      '/tools',
+    ]);
+  });
+
   it('marks Financiamentos current on its list and its pages', () => {
     const crowdfunding = directoryNav(off).at(-2)!;
     expect(crowdfunding.current('/crowdfunding')).toBe(true);

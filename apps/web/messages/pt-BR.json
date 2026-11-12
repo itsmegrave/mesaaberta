@@ -4203,5 +4203,7 @@
   "match_list_end": "Desfazer",
   "match_end_title": "Desfazer a combinação com {user}?",
   "match_end_text": "Vocês saem da lista e do baralho um do outro, para sempre. A outra pessoa não é avisada.",
-  "match_end_done": "Combinação desfeita."
+  "match_end_done": "Combinação desfeita.",
+  "match_card_preview": "Como os outros veem seu cartão",
+  "match_card_preview_hint": "Foto, sistemas favoritos e avaliações vêm do seu perfil. O resto muda enquanto você responde."
 }

@@ -92,7 +92,17 @@ const DIRECTORY_NAV: readonly (DirectoryLink & { key?: keyof DirectorySwitches }
   },
 ];
 
+/** Whether Procuro mesa is listed: Combinar takes its place in the menus while it is on (the page stays). */
+export const listsPlayers = (switches: DirectorySwitches) =>
+  switches.players === true && switches.matches !== true;
+
 /** The Explorar links to draw, in order: the directories whose flag is on, Financiamentos and Ferramentas. */
 export function directoryNav(switches: DirectorySwitches): DirectoryLink[] {
-  return DIRECTORY_NAV.filter((link) => link.key === undefined || switches[link.key] === true);
+  return DIRECTORY_NAV.filter((link) =>
+    link.key === undefined
+      ? true
+      : link.key === 'players'
+        ? listsPlayers(switches)
+        : switches[link.key] === true,
+  );
 }

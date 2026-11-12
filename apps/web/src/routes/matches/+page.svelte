@@ -10,6 +10,7 @@
   import MoreSheet from './components/ui/MoreSheet.svelte';
   import RoundButton from './components/ui/RoundButton.svelte';
   import SwipeCard from './components/ui/SwipeCard.svelte';
+  import { riseCard, throwCard } from './components/motion';
 
   let { data } = $props();
 
@@ -98,6 +99,8 @@
           {#key top.username}
             <div
               {@attach attach}
+              in:riseCard
+              out:throwCard={{ side: deck.exit }}
               class="absolute inset-0 cursor-grab touch-none active:cursor-grabbing"
             >
               <SwipeCard person={top} compact {stamp} />

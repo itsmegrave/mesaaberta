@@ -17,6 +17,12 @@
         "href": "/matches/list"
       },
       {
+        "kind": "improved",
+        "title": "Prévia do seu cartão e mais movimento",
+        "description": "Em Meu cartão, você vê o seu cartão como os outros vão ver, mudando enquanto responde. No baralho, a carta voa para o lado da resposta, o carimbo cai na carta e o Bora jogar! chega com os raios girando. Com o Combinar no menu, Procuro mesa sai de Explorar.",
+        "href": "/matches/card"
+      },
+      {
         "kind": "new",
         "title": "Regras da comunidade",
         "description": "Uma página com como a gente convive na Mesa Aberta: nas mesas, nas mensagens e no Combinar.",

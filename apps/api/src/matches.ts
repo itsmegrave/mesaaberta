@@ -10,6 +10,7 @@ import {
   endMatch,
   listMatches,
   matchCardOf,
+  matchPreviewOf,
   matchDeck,
   saveMatchCard,
   undoLastAnswer,
@@ -38,7 +39,13 @@ export function matchRoutes(open: Open = openDb) {
   const app = new Hono<{ Bindings: Env; Variables: UserVariables }>();
   app.use('*', userGuard(open));
 
-  app.get('/card', async (c) => c.json(await matchCardOf(c.get('db'), c.get('actorId'))));
+  app.get('/card', async (c) => {
+    const [state, preview] = await Promise.all([
+      matchCardOf(c.get('db'), c.get('actorId')),
+      matchPreviewOf(c.get('db'), c.get('actorId'), { supabaseUrl: supabaseUrlOf(c.env) }),
+    ]);
+    return c.json({ ...state, preview });
+  });
 
   // Save and switch on (adults only, with the confirmation), or switch off.
   app.post('/card', async (c) => {
