@@ -18,6 +18,7 @@ const fields = {
   postalCode: '51020-000',
   street: 'Av. Boa Viagem, 100',
   tags: 'accessible',
+  publicVenue: 'true',
 };
 
 function event(
@@ -88,6 +89,17 @@ describe('"Cadastrar lugar"', () => {
       tags: ['accessible'],
     });
     expect(after).toHaveLength(0);
+    // The "aberto ao público" box is the form's own: the api never gets it.
+    expect(vi.mocked(submitPlace).mock.lastCall?.[2]).not.toHaveProperty('publicVenue');
+  });
+
+  it('refuses a place whose sender did not say it is open to the public', async () => {
+    const { publicVenue: _publicVenue, ...unticked } = fields;
+    const { result } = await send(event(unticked).event);
+    expect(result.status).toBe(400);
+    expect(result.data.form.errors.publicVenue).toEqual(['public_venue']);
+    expect(result.data.form.data.name).toBe('Taverna do Dado');
+    expect(submitPlace).not.toHaveBeenCalled();
   });
 
   it('suggests a new tag only while use_place_tags is on', async () => {

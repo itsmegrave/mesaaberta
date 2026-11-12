@@ -1,7 +1,12 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { validateFormData } from '#lib/forms/contract.js';
 import { formMessage, refuse, responseForm } from '#lib/forms/server.js';
-import { NEW_PLACE_VALUES, placeSchema, type PlaceFormInput } from '@mesaaberta/core/places/schema';
+import {
+  NEW_PLACE_VALUES,
+  newPlaceSchema,
+  placeSchema,
+  type PlaceFormInput,
+} from '@mesaaberta/core/places/schema';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
 import { IMAGE_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
 import { isInside, serverStorage } from '@mesaaberta/core/server/storage';
@@ -31,8 +36,10 @@ export async function handlePlaceForm(
   // Files are allowed so the schema can check the photo; every failure below strips them.
   // A new form has no kind yet; the schema narrows it once it is picked.
   const empty = NEW_PLACE_VALUES as unknown as Partial<PlaceFormInput>;
-  const form = validateFormData(data, placeSchema, empty, {
+  // A new place also needs the "aberto ao público" box ticked; an edit has no such box.
+  const form = validateFormData(data, editing ? placeSchema : newPlaceSchema, empty, {
     arrays: ['tags', 'linkNetwork', 'linkUrl'],
+    booleans: ['publicVenue'],
     files: ['image'],
   });
   if (!form.valid) return fail(400, { form: responseForm(form) });
@@ -41,7 +48,14 @@ export async function handlePlaceForm(
   let replacedImage: string | null = null;
   try {
     const actor = await locals.getProfile();
-    const { image, ...input } = form.data;
+    // The "aberto ao público" box is the form's: the api takes the place without it.
+    const {
+      image,
+      publicVenue: _publicVenue,
+      ...input
+    } = form.data as PlaceFormInput & {
+      publicVenue?: boolean;
+    };
     // Suggesting a new tag is part of the catalog (`use_place_tags`); off, only picks are kept.
     if (!(await placeTagsEnabled(locals)))
       input.tags = input.tags.filter((pick) => !pick.startsWith(NEW_CATALOG_PREFIX));

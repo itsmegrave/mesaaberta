@@ -502,9 +502,11 @@
           onchange={(chosen) => ($draft.placeSlug = chosen[0] ?? '')}
         />
         <FieldError id="placeSlug" message={err('placeSlug')} />
+        <!-- Homes are not places: point a home game at "Em casa ou outro lugar" first. -->
         <p class="mt-2 text-sm text-muted">
           {m.table_form_place_missing()}
-          <a class="anchor" href="/pp/new">{m.table_form_place_register()}</a>
+          <a class="anchor" href="/pp/new">{m.table_form_place_register()}</a>.
+          {m.table_form_place_home()}
         </p>
       </div>
     {:else if $draft.modality === 'in_person'}

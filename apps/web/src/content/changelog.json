@@ -2,7 +2,7 @@
   {
     "date": "2026-11-12",
     "title": "Combinar: encontre gente para jogar",
-    "summary": "Em Explorar, Combinar mostra uma carta por vez com quem quer jogar como você. Se os dois disserem sim, vocês combinam.",
+    "summary": "Em Explorar, Combinar mostra uma carta por vez com quem quer jogar como você. Se os dois disserem sim, vocês combinam. E o cadastro de Onde jogar deixa claro que é só para lugares abertos ao público.",
     "changes": [
       {
         "kind": "new",
@@ -21,6 +21,18 @@
         "title": "Regras da comunidade",
         "description": "Uma página com como a gente convive na Mesa Aberta: nas mesas, nas mensagens e no Combinar.",
         "href": "/community"
+      },
+      {
+        "kind": "improved",
+        "title": "Cadastrar lugar explica para que serve",
+        "description": "O cadastro avisa logo no começo que Onde jogar mostra o endereço completo e não aceita a casa de ninguém, avisa quando o endereço parece de uma casa ou apartamento e pede para confirmar que o lugar é aberto ao público.",
+        "href": "/pp/new"
+      },
+      {
+        "kind": "improved",
+        "title": "Mesa em casa sem expor o endereço",
+        "description": "Ao criar uma mesa presencial, a opção Outro lugar agora se chama Em casa ou outro lugar. Com ela, só o bairro e a cidade aparecem.",
+        "href": "/tables/new"
       }
     ]
   },
