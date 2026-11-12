@@ -11,6 +11,7 @@ import {
 import { ANNOUNCEMENT_LIMITS } from '@mesaaberta/core/notifications/announcement';
 import { plainToHtml } from '@mesaaberta/core/text/rich';
 import { z } from 'zod';
+import { SOCIAL_CAPTION_MAX } from '@mesaaberta/core/server/social/port';
 import { queryOf, type ApiAnswer, type ApiReader, type ApiWriter } from './api';
 
 /** What a tool needs: the api as the caller, and the caller's flags. */
@@ -484,6 +485,62 @@ export function registerTools(server: McpServer, context: ToolContext) {
         },
       ),
   );
+
+  server.registerTool(
+    'post_on_social',
+    {
+      title: "Post on Mesa Aberta's social account",
+      description:
+        "Posts an image or a video (a Reel on Instagram) on the site's own social account, " +
+        'through its connector. Admins only. `media_url` is a public https address of the file ' +
+        '(a JPEG image, or an MP4 video: H.264, 9:16, 3 s to 15 min; up to 25 MB). Two steps: ' +
+        'without `confirmed` it posts nothing and answers `{ step: "confirm", network, account, ' +
+        'kind, bytes }` after reading the file; show the person the caption, the file and the ' +
+        'account, and call again with `confirmed: true` only after they say to post. It is public ' +
+        'and cannot be taken back here. Then it is queued: the background job publishes it within ' +
+        'minutes; get_social_post tells where it stands. Write the caption in Brazilian Portuguese.',
+      inputSchema: {
+        caption: z.string().trim().min(1).max(SOCIAL_CAPTION_MAX),
+        media_url: z
+          .string()
+          .trim()
+          .max(2048)
+          .regex(/^https:\/\/\S+$/)
+          .describe('A public https address that answers the file itself.'),
+        confirmed: z.boolean().optional(),
+      },
+      annotations: { ...WRITE, openWorldHint: true },
+    },
+    async ({ caption, media_url, confirmed }) =>
+      answer(
+        'post_on_social',
+        () =>
+          write('/v1/admin/social/posts', {
+            caption,
+            mediaUrl: media_url,
+            confirmed: confirmed ?? false,
+          }),
+        (answered) => {
+          const { eventIds: _eventIds, ...rest } = (answered ?? {}) as Record<string, unknown>;
+          return rest;
+        },
+      ),
+  );
+
+  server.registerTool(
+    'get_social_post',
+    {
+      title: 'Read a social post',
+      description:
+        'Where a post made with post_on_social stands: queued, processing, published (with ' +
+        '`permalink`), failed (with `lastError`) or uncertain (it may have gone out; an admin ' +
+        'checks the account). Admins only.',
+      inputSchema: { id: z.string().uuid() },
+      annotations: READ,
+    },
+    async ({ id }) =>
+      answer('get_social_post', () => read(`/v1/admin/social/posts/${encodeURIComponent(id)}`)),
+  );
 }
 
 /** The tool names, for the README and the specs. */
@@ -504,10 +561,13 @@ export const TOOL_NAMES = [
   'list_tools',
   'add_tool',
   'send_announcement',
+  'post_on_social',
+  'get_social_post',
 ] as const;
 
 /** The tools that change something on the site; every other one only reads. */
 export const WRITE_TOOL_NAMES = [
   'add_tool',
   'send_announcement',
+  'post_on_social',
 ] as const satisfies readonly (typeof TOOL_NAMES)[number][];

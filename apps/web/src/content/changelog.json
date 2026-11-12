@@ -58,6 +58,11 @@
         "kind": "improved",
         "title": "Avisos pelo conector do Claude",
         "description": "Para a administração: o conector do Claude agora manda avisos para o sino, como Admin › Notificações. Ele conta antes quantas pessoas vão receber e só envia depois de confirmar."
+      },
+      {
+        "kind": "improved",
+        "title": "Posts no Instagram pelo conector do Claude",
+        "description": "Para a administração: o conector do Claude agora publica uma imagem ou um vídeo (Reel) no Instagram da Mesa Aberta. Ele mostra a conta e o arquivo antes e só publica depois de confirmar."
       }
     ]
   },

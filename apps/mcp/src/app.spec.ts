@@ -399,3 +399,69 @@ describe('send_announcement', () => {
     expect(seen.slice(before).every((request) => request.method === 'GET')).toBe(true);
   });
 });
+
+describe('post_on_social', () => {
+  const reel = {
+    caption: 'Procurando gente pra jogar?',
+    media_url: 'https://example.com/combinar.mp4',
+  };
+  const sent = { caption: reel.caption, mediaUrl: reel.media_url };
+
+  it('reads the media and asks to confirm before it posts', async () => {
+    const preview = { step: 'confirm', network: 'Instagram', account: 'mesa', kind: 'video' };
+    const { call, seen } = setUp({
+      answers: { '/v1/admin/social/posts': { body: { eventIds: [], ...preview } } },
+    });
+    expect(await call('post_on_social', reel)).toEqual({ isError: false, body: preview });
+    expect(seen.filter((request) => request.method === 'POST')).toEqual([
+      {
+        path: '/v1/admin/social/posts',
+        actor: USER,
+        method: 'POST',
+        body: { ...sent, confirmed: false },
+      },
+    ]);
+  });
+
+  it('queues once confirmed, and reads where the post stands', async () => {
+    const id = '00000000-0000-4000-8000-0000000000c1';
+    const { call, seen } = setUp({
+      answers: {
+        '/v1/admin/social/posts': { body: { eventIds: [], status: 'queued', id, kind: 'video' } },
+        [`/v1/admin/social/posts/${id}`]: { body: { post: { id, status: 'published' } } },
+      },
+    });
+    expect(await call('post_on_social', { ...reel, confirmed: true })).toEqual({
+      isError: false,
+      body: { status: 'queued', id, kind: 'video' },
+    });
+    expect(seen.find((request) => request.method === 'POST')?.body).toEqual({
+      ...sent,
+      confirmed: true,
+    });
+    expect(await call('get_social_post', { id })).toEqual({
+      isError: false,
+      body: { post: { id, status: 'published' } },
+    });
+  });
+
+  it('passes on what the connector refused and refuses an http address itself', async () => {
+    const { call, seen } = setUp({
+      answers: {
+        '/v1/admin/social/posts': {
+          status: 400,
+          body: { error: 'invalid', field: 'media', message: 'too_large' },
+        },
+      },
+    });
+    expect(await call('post_on_social', reel)).toEqual({
+      isError: true,
+      body: { error: 'invalid', field: 'media', code: 'too_large' },
+    });
+    const before = seen.length;
+    expect(
+      (await call('post_on_social', { ...reel, media_url: 'http://example.com/a.mp4' })).isError,
+    ).toBe(true);
+    expect(seen.slice(before).every((request) => request.method === 'GET')).toBe(true);
+  });
+});

@@ -4,9 +4,10 @@ The [MCP](https://modelcontextprotocol.io) server of Mesa Aberta: Claude (claude
 the desktop app) and other MCP clients read the site as the person who connected them. It is a door
 to the api and nothing more: no database, no business rule, no store and no secret.
 
-**Status: phase 1 (reads) plus two writes, admins only (kill switch `use_mcp`).** Every tool
-reads except `add_tool`, which adds and approves a tool in Ferramentas, and `send_announcement`,
-which sends a notification as Admin > Notificações does. Other writes (asking for a
+**Status: phase 1 (reads) plus three writes, admins only (kill switch `use_mcp`).** Every tool
+reads except `add_tool`, which adds and approves a tool in Ferramentas, `send_announcement`,
+which sends a notification as Admin > Notificações does, and `post_on_social`, which posts an
+image or a video on the site's social account through the installed connector. Other writes (asking for a
 seat, the GM's answers, messages) come in a later phase, each one confirmed by the person before it
 runs.
 
@@ -51,6 +52,8 @@ ends access. A "Connected apps" screen in the account is a later phase.
 | `list_tools`                              | `GET /v1/tools`                                                             |
 | `add_tool` (writes)                       | `POST /v1/submissions/tools`, then `POST /v1/admin/moderation/tool.approve` |
 | `send_announcement` (writes)              | `POST /v1/admin/announcements`                                              |
+| `post_on_social` (writes)                 | `POST /v1/admin/social/posts`                                               |
+| `get_social_post`                         | `GET /v1/admin/social/posts/:id`                                            |
 
 Each tool answers the api's JSON as text, or `{ "error": code }` (`not_found`, `forbidden`,
 `rate_limited`, `unavailable`, or `invalid` with the `field` and `code` the api named) with
@@ -66,6 +69,14 @@ through the worker's sweep, since the MCP does not dispatch them itself.
 two steps: unconfirmed it only answers `{ step: "confirm", count }`, and the client must show that
 count to the person and call again with `confirmed: true` once they say to send. The sweep
 delivers it, as for `add_tool`.
+
+`post_on_social` takes a caption and the public https address of a JPEG or an MP4 (25 MB at
+most). The connector reads the file itself: unconfirmed it saves nothing and answers
+`{ step: "confirm", network, account, kind, bytes }`, which the client shows the person with the
+caption before calling again with `confirmed: true`. Then it answers `{ status: "queued", id }` and
+the worker's cron publishes it; `get_social_post` answers where it stands (`published` with its
+`permalink`, `failed`, or `uncertain` when the outcome is unknown and an admin checks the account).
+A build without a connector answers `unavailable`.
 
 ## Settings
 
