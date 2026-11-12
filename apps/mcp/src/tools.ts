@@ -3,6 +3,13 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { AnyFlagName } from '@mesaaberta/core/server/flags/flags';
 import { logger } from '@mesaaberta/core/server/logger';
 import { TOOL_KINDS, TOOL_LIMITS } from '@mesaaberta/core/tools/schema';
+import {
+  ANNOUNCEMENT_AUDIENCES,
+  ANNOUNCEMENT_ICONS,
+  ANNOUNCEMENT_TONES,
+} from '@mesaaberta/contracts';
+import { ANNOUNCEMENT_LIMITS } from '@mesaaberta/core/notifications/announcement';
+import { plainToHtml } from '@mesaaberta/core/text/rich';
 import { z } from 'zod';
 import { queryOf, type ApiAnswer, type ApiReader, type ApiWriter } from './api';
 
@@ -411,6 +418,72 @@ export function registerTools(server: McpServer, context: ToolContext) {
       return result({ id, listed: true });
     },
   );
+
+  server.registerTool(
+    'send_announcement',
+    {
+      title: 'Send a notification (Admin > Notificações)',
+      description:
+        "Puts an announcement in people's bell, as Admin > Notificações does. Admins only. Two " +
+        'steps: without `confirmed` it sends nothing and answers `{ step: "confirm", count }`, ' +
+        'how many people it would reach; tell the person that number and call again with ' +
+        '`confirmed: true` only after they say to send. Write it in Brazilian Portuguese. It ' +
+        'cannot be taken back once sent.',
+      inputSchema: {
+        title: z.string().trim().min(1).max(ANNOUNCEMENT_LIMITS.title),
+        body: z
+          .string()
+          .trim()
+          .min(1)
+          .max(ANNOUNCEMENT_LIMITS.body)
+          .describe('Plain text; a blank line starts a new paragraph.'),
+        link: z
+          .string()
+          .trim()
+          .max(ANNOUNCEMENT_LIMITS.link)
+          .regex(/^\/(?!\/)\S*$/)
+          .optional()
+          .describe('A path on the site, such as "/changelog".'),
+        tone: z
+          .enum(ANNOUNCEMENT_TONES)
+          .optional()
+          .describe('info (default), warning, announcement.'),
+        icon: z.enum(ANNOUNCEMENT_ICONS).optional().describe("Empty: the tone's icon."),
+        audience: z
+          .enum(ANNOUNCEMENT_AUDIENCES)
+          .optional()
+          .describe('all_active_users (default), game_masters, active_players, specific_user.'),
+        recipient: z
+          .string()
+          .trim()
+          .max(ANNOUNCEMENT_LIMITS.recipient)
+          .optional()
+          .describe('A username, only for specific_user.'),
+        confirmed: z.boolean().optional(),
+      },
+      annotations: WRITE,
+    },
+    async ({ title, body, link, tone, icon, audience, recipient, confirmed }) =>
+      answer(
+        'send_announcement',
+        () =>
+          write('/v1/admin/announcements', {
+            title,
+            body: plainToHtml(body),
+            link: link ?? '',
+            tone: tone ?? 'info',
+            icon: icon ?? '',
+            audience: audience ?? 'all_active_users',
+            recipient: recipient ?? '',
+            confirmed: confirmed ?? false,
+          }),
+        // The api's event ids are for the dispatcher; the worker's sweep delivers them.
+        (answered) => {
+          const { eventIds: _eventIds, ...rest } = (answered ?? {}) as Record<string, unknown>;
+          return rest;
+        },
+      ),
+  );
 }
 
 /** The tool names, for the README and the specs. */
@@ -430,9 +503,11 @@ export const TOOL_NAMES = [
   'read_conversation',
   'list_tools',
   'add_tool',
+  'send_announcement',
 ] as const;
 
 /** The tools that change something on the site; every other one only reads. */
 export const WRITE_TOOL_NAMES = [
   'add_tool',
+  'send_announcement',
 ] as const satisfies readonly (typeof TOOL_NAMES)[number][];
