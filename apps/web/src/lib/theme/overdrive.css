@@ -124,7 +124,15 @@
    sections: a title inside a card, a dialog or a side panel stays plain. */
 [data-theme='overdrive']
   main
-  h2:not(.sr-only, :is(.card, article, dialog, [role='dialog'], aside) h2) {
+  h2:not(
+    .sr-only,
+    :is(.card, article, dialog, [role='dialog'], aside) h2,
+    :has([data-section-title])
+  ),
+[data-theme='overdrive']
+  main
+  h2:not(:is(.card, article, dialog, [role='dialog'], aside) h2)
+  [data-section-title] {
   width: fit-content;
   max-width: 100%;
   padding: 0.375rem 0.875rem 0.25rem;
@@ -133,6 +141,12 @@
   border: 3px solid var(--color-surface-950);
   box-shadow: 5px 5px 0 light-dark(var(--color-tertiary-400), var(--color-primary-500));
   rotate: -2deg;
+}
+/* A folding section's heading holds its whole button: the box goes on the title alone, and the
+   line under it ("8 mesas encontradas") stays in the running text's font. */
+[data-theme='overdrive'] h2 [data-section-summary] {
+  font-family: var(--typo-base--font-family);
+  letter-spacing: normal;
 }
 
 /* Filled buttons become comic stickers, each leaning its own way. */
