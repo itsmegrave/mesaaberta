@@ -53,7 +53,7 @@
         <li>
           <button
             type="button"
-            class="flex min-h-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-surface-300-700 p-6 font-semibold text-link hover:preset-tonal focus-visible:ring-2 focus-visible:ring-warning-500 size-full"
+            class="flex size-full min-h-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-surface-300-700 p-6 font-semibold text-link hover:preset-tonal focus-visible:ring-2 focus-visible:ring-warning-500"
             onclick={showAll}
           >
             <Icon name="game-icons:dice-twenty-faces-twenty" size={32} />
