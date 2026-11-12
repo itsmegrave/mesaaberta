@@ -32,6 +32,7 @@
       items: undefined,
       label: m.nav_crowdfunding_label,
     },
+    { route: '/tools', path: '/tools', items: undefined, label: m.nav_tools },
   ] as const;
 
   const pages = $derived([

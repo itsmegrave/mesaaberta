@@ -273,6 +273,15 @@ export function notificationText(item: Shown, timeZone = 'America/Sao_Paulo'): s
           ? m.notification_place_removed_note({ place, reason, note: item.metadata.note })
           : m.notification_place_removed({ place, reason });
       }
+      if (item.metadata.toolApproved)
+        return m.notification_tool_approved({ tool: item.metadata.toolApproved });
+      if (item.metadata.toolRemoved) {
+        const tool = item.metadata.toolRemoved;
+        const reason = reasonLabel(item.metadata.reason as ReportReason, 'place');
+        return item.metadata.note
+          ? m.notification_tool_removed_note({ tool, reason, note: item.metadata.note })
+          : m.notification_tool_removed({ tool, reason });
+      }
       if (item.metadata.partnerApproved)
         return m.notification_partner_approved({ partner: item.metadata.partnerApproved });
       if (item.metadata.partnerRemoved) {

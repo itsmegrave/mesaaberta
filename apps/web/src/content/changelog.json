@@ -1,6 +1,6 @@
 [
   {
-    "date": "2026-11-10",
+    "date": "2026-11-12",
     "title": "Onde jogar é só para lugares abertos ao público",
     "summary": "O cadastro de lugares deixa claro que Onde jogar é para lojas, luderias, clubes e outros lugares abertos ao público, e mostra onde fica a mesa na casa de alguém.",
     "changes": [
@@ -15,6 +15,30 @@
         "title": "Mesa em casa sem expor o endereço",
         "description": "Ao criar uma mesa presencial, a opção Outro lugar agora se chama Em casa ou outro lugar. Com ela, só o bairro e a cidade aparecem.",
         "href": "/tables/new"
+      }
+    ]
+  },
+  {
+    "date": "2026-11-07",
+    "title": "Ferramentas para jogar",
+    "summary": "Explorar ganha Ferramentas: as plataformas e apps que as mesas usam para jogar, com o link e uma linha sobre cada uma.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Página Ferramentas",
+        "description": "Em Explorar, Ferramentas reúne mesas virtuais, chat, chamadas e fichas, como Foundry VTT, Roll20, Owlbear Rodeo e Discord. Cada card abre o site da ferramenta e mostra quantas mesas abertas jogam nela.",
+        "href": "/tools"
+      },
+      {
+        "kind": "new",
+        "title": "Sugira uma ferramenta",
+        "description": "Conhece outra plataforma ou app que ajuda a jogar? Em Sugerir ferramenta, você manda o nome, o site, o tipo e o logo. A administração confere e você recebe um aviso no sino quando ela entrar.",
+        "href": "/tools/new"
+      },
+      {
+        "kind": "improved",
+        "title": "Ferramentas pelo conector do Claude",
+        "description": "Para a administração: o conector do Mesa Aberta no Claude agora lista as ferramentas e adiciona uma nova já aprovada."
       }
     ]
   },

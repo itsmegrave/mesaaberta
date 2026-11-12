@@ -69,6 +69,14 @@ export const PLACE_LIMIT = {
   windowSeconds: 86_400,
 } as const satisfies RateLimit;
 
+// A tool waits for an admin, so a flood costs the review queue. Someone who knows a few apps sends
+// them together; more than a handful a day is someone filling the queue.
+export const TOOL_LIMIT = {
+  events: ['ToolSuggested'],
+  max: 5,
+  windowSeconds: 86_400,
+} as const satisfies RateLimit;
+
 // A claim waits for an admin too. Someone who runs a few places claims them together; more than a
 // handful a day is not a store.
 export const PLACE_CLAIM_LIMIT = {

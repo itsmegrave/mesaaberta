@@ -47,6 +47,20 @@ describe('notificationText', () => {
     );
   });
 
+  it('tells whoever suggested a tool an admin approved or turned it down, and why', () => {
+    const notice = (metadata: Record<string, string>) =>
+      notificationText(shown({ type: 'moderation_notice', metadata }));
+    expect(notice({ toolApproved: 'Owlbear Rodeo' })).toBe(
+      'Sua sugestão “Owlbear Rodeo” foi aprovada e já aparece em Ferramentas.',
+    );
+    expect(notice({ toolRemoved: 'Site X', reason: 'off_topic' })).toBe(
+      'Sua sugestão “Site X” não está em Ferramentas. Motivo: Não é de RPG ou jogo de mesa.',
+    );
+    expect(notice({ toolRemoved: 'Site X', reason: 'other', note: 'Já está na lista' })).toMatch(
+      /Recado: Já está na lista$/,
+    );
+  });
+
   it('raises the alert when reports hide a place, and tells its keepers neutrally', () => {
     expect(
       notificationText(shown({ type: 'place_hidden_alert', metadata: { place: 'Taverna' } })),

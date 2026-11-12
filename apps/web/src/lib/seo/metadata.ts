@@ -61,6 +61,7 @@ export function publicMetadata(path: string, data: PublicData, origin: string) {
     '/tables': [m.seo_tables_title(), m.tables_description()],
     '/partners': [m.seo_partners_title(), m.partner_description()],
     '/crowdfunding': [m.seo_crowdfunding_title(), m.crowdfunding_description()],
+    '/tools': [m.seo_tools_title(), m.tool_description()],
     '/systems': [m.seo_systems_title(), m.systems_description()],
     '/gamemasters': [m.seo_gms_title(), m.gms_description()],
     '/places': [m.seo_places_title(), m.places_description()],

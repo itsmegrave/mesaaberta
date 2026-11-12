@@ -35,6 +35,7 @@ import { CATALOG_KINDS, pageNumber, type CatalogKind } from '@mesaaberta/core/ad
 import { pageSizeOf, sortOf, type Sort } from '@mesaaberta/core/admin/list';
 import { listAdminCrowdfundings } from '@mesaaberta/core/server/crowdfunding/admin';
 import { listAdminPartners } from '@mesaaberta/core/server/partners/admin';
+import { findToolForAdmin, listAdminTools } from '@mesaaberta/core/server/tools/service';
 import { listAdminPlaces } from '@mesaaberta/core/server/places/admin';
 import { listClaims } from '@mesaaberta/core/server/places/claims';
 import { listPartnerLinks } from '@mesaaberta/core/server/places/partner-links';
@@ -133,12 +134,20 @@ export function adminReadRoutes(open: Open = createDb) {
     links: listPartnerLinks,
     crowdfundings: listAdminCrowdfundings,
     partners: listAdminPartners,
+    tools: listAdminTools,
   };
   for (const [name, list] of Object.entries(lists))
     app.get(`/${name}`, async (c) => {
       const found = await list(c.get('db'), c.get('actor'), new URL(c.req.url).searchParams);
       return found ? c.json(found) : c.json({ error: 'not_found' }, 404);
     });
+
+  // One tool for the admin's edit form (`/admin/tools/[id]`).
+  app.get('/tools/:id', async (c) => {
+    const id = c.req.param('id');
+    if (!uuid.safeParse(id).success) return c.json({ error: 'not_found' }, 404);
+    return c.json(await findToolForAdmin(c.get('db'), c.get('actor'), id));
+  });
 
   // The catalog console for the kind and filters in the query string, with the approved entries
   // of that kind (a page past the last is a 404; the first page always exists).

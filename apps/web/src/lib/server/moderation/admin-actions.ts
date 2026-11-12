@@ -56,6 +56,12 @@ export const partnerActions = {
   setTypes: decide('partner.setTypes', ['id', 'types']),
 };
 
+/** Approving, turning down and removing tools from `/admin/tools`. */
+export const toolActions = {
+  approve: decide('tool.approve', ['id']),
+  remove: decide('tool.remove', ['id', 'reason', 'note']),
+};
+
 /** Approving, rejecting and removing places from the "Onde jogar" queue, `/admin/places`. */
 export const placeActions = {
   approve: decide('place.approve', ['id']),

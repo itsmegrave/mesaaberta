@@ -10,6 +10,7 @@ const counts = {
   connections: 1,
   events: 0,
   partners: 0,
+  tools: 0,
   places: 0,
   hiddenPlaces: 0,
 };

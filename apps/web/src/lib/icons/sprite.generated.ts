@@ -80,6 +80,7 @@ export const ICON_NAMES: ReadonlySet<string> = new Set([
   'mail',
   'game-icons:dice-twenty-faces-twenty',
   'game-icons:open-treasure-chest',
+  'game-icons:toolbox',
   'game-icons:book-cover',
   'game-icons:position-marker',
   'game-icons:pointy-hat',

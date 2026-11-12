@@ -12,34 +12,48 @@ export type ApiAnswer = { status: number; body: unknown };
 /** Reads the api as one person. */
 export type ApiReader = (path: string) => Promise<ApiAnswer>;
 
+/** Sends a write (a JSON POST) to the api as one person. */
+export type ApiWriter = (path: string, body: unknown) => Promise<ApiAnswer>;
+
 /**
- * A reader that calls the api as `actorId`, the way the web Worker does (`sendToApi`): the api
- * trusts `x-actor-id` only over the binding or with the shared secret, and checks that person's
- * account again on every route. Throws when neither way in is configured or the call fails.
+ * The api as `actorId`, the way the web Worker calls it (`sendToApi`): the api trusts
+ * `x-actor-id` only over the binding or with the shared secret, and checks that person's account
+ * and permissions again on every route. Throws when neither way in is configured; each call throws
+ * when the request fails.
  */
-export function apiReader(env: ApiEnv, actorId: string): ApiReader {
+export function apiClient(env: ApiEnv, actorId: string): { read: ApiReader; write: ApiWriter } {
   const binding = env.API;
   const remote = !binding && env.API_URL && env.API_INTERNAL_TOKEN ? env : null;
   if (!binding && !remote) throw new Error('api_unconfigured');
   const send = binding ? binding.fetch.bind(binding) : (request: Request) => fetch(request);
   // With a Service Binding the host is never resolved: it routes by binding, not by name.
   const origin = binding ? 'https://api.internal' : remote!.API_URL!.replace(/\/$/, '');
-  return async (path) => {
+  const call = async (path: string, init: { method?: string; body?: unknown } = {}) => {
     const requestId = currentRequestId();
     const response = await send(
       new Request(`${origin}${path}`, {
+        method: init.method ?? 'GET',
         headers: {
           'x-actor-id': actorId,
           ...(remote ? { 'x-internal-token': remote.API_INTERNAL_TOKEN! } : {}),
           ...(requestId ? { [REQUEST_ID_HEADER]: requestId } : {}),
+          ...(init.body === undefined ? {} : { 'content-type': 'application/json' }),
         },
+        ...(init.body === undefined ? {} : { body: JSON.stringify(init.body) }),
         signal: AbortSignal.timeout(25_000),
       }),
     );
     const body = await response.json().catch(() => null);
     return { status: response.status, body };
   };
+  return {
+    read: (path) => call(path),
+    write: (path, body) => call(path, { method: 'POST', body }),
+  };
 }
+
+/** Only the reads of {@link apiClient}. */
+export const apiReader = (env: ApiEnv, actorId: string): ApiReader => apiClient(env, actorId).read;
 
 /** The query string for `params`, empty values left out and arrays as a repeated key. */
 export function queryOf(params: Record<string, string | number | boolean | string[] | undefined>) {

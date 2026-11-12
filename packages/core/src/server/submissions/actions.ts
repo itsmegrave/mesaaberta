@@ -6,6 +6,8 @@ import type { Actor } from '../auth/policy';
 import type { AnyDb } from '../db/client';
 import { addCrowdfunding } from '../crowdfunding/service';
 import { addPartner, updatePartner } from '../partners/service';
+import { toolInputSchema, type ToolInput } from '../../tools/schema';
+import { suggestTool, updateTool } from '../tools/service';
 
 /** A file the web Worker already stored, as a path in the bucket (never a URL, never a file). */
 const storedPath = z
@@ -44,6 +46,32 @@ export const submissionActions = {
       { input, logoPath }: { input: PartnerInput; logoPath: string | null },
     ) => {
       const { eventId, replacedLogo } = await updatePartner(db, actor, id, input, { logoPath });
+      return { eventIds: [eventId], replacedLogo };
+    },
+  },
+  // "Sugerir ferramenta": the logo is optional.
+  toolSuggest: {
+    schema: z.object({ input: toolInputSchema, logoPath: storedPath.nullable().default(null) }),
+    apply: async (
+      db: AnyDb,
+      actor: Actor | null,
+      _id: string,
+      { input, logoPath }: { input: ToolInput; logoPath: string | null },
+    ) => {
+      const { id, eventId } = await suggestTool(db, actor, input, { logoPath });
+      return { eventIds: [eventId], id };
+    },
+  },
+  // An admin's "Editar" on a tool (the service checks the admin).
+  toolUpdate: {
+    schema: z.object({ input: toolInputSchema, logoPath: storedPath.nullable().default(null) }),
+    apply: async (
+      db: AnyDb,
+      actor: Actor | null,
+      id: string,
+      { input, logoPath }: { input: ToolInput; logoPath: string | null },
+    ) => {
+      const { eventId, replacedLogo } = await updateTool(db, actor, id, input, { logoPath });
       return { eventIds: [eventId], replacedLogo };
     },
   },

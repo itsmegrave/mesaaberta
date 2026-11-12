@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { and, asc, desc, eq } from 'drizzle-orm';
 import {
   events,
@@ -39,9 +39,10 @@ const bia = person(3);
 const caio = person(4);
 const davi = person(5);
 const stranger = person(6);
-// Fridays at 20:00 in São Paulo (23:00 UTC), from 6 November 2026.
-const first = new Date('2026-11-06T23:00:00Z');
-const now = new Date('2026-11-01T12:00:00Z');
+// Fridays at 20:00 in São Paulo (23:00 UTC), from 7 November 2036. Far ahead on purpose: leaving
+// or being removed from a table frees the sessions after the real clock, which takes no `now`.
+const first = new Date('2036-11-07T23:00:00Z');
+const now = new Date('2036-11-02T12:00:00Z');
 let counter = 0;
 
 beforeAll(async () => {
@@ -239,11 +240,6 @@ describe('a campanha aberta’s places per session', () => {
   });
 
   it('leaving the table, or being removed from it, frees every session ahead for whoever waited', async () => {
-    // Leaving and removing free the sessions after the real clock's now: pin it before the first
-    // session (6 November 2026), or the test stops passing once that date goes by.
-    vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(now);
-    onTestFinished(() => void vi.useRealTimers());
     const { table, session, later } = await openCampaign();
     for (const [i, p] of [ana, bia, caio, davi].entries()) {
       await signUpForSession(test.db, p, table.slug, { sessionId: session }, at(i));

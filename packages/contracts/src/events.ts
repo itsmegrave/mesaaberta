@@ -212,6 +212,17 @@ export type DomainEvent =
   // An account stopped looking after a partner: taken off by another owner (who tells them), or
   // it left (the actor is `profileId`, so nobody is told).
   | { type: 'PartnerOwnerRemoved'; payload: PartnerFact & { profileId: string } }
+  // A member suggested a tool for "Ferramentas": it waits for an admin. Nobody is told.
+  | { type: 'ToolSuggested'; payload: ToolFact }
+  // An admin edited a tool. It stays as it was (on the page or waiting).
+  | { type: 'ToolUpdated'; payload: ToolFact & { changes: Changes } }
+  // An admin approved a suggestion: it is on /tools and whoever suggested it is told.
+  | { type: 'ToolApproved'; payload: ToolFact & { submitterId: string | null } }
+  // An admin turned a suggestion down or took a tool off. Whoever suggested it is told why.
+  | {
+      type: 'ToolRemoved';
+      payload: ToolFact & { submitterId: string | null; reason: ReportFiled['reason'] };
+    }
   // A member sent an "Onde jogar" place, or its submitter edited it (which clears its approval):
   // it waits for an admin. An admin's edit keeps it up. Nobody is told.
   | { type: 'PlaceSubmitted'; payload: PlaceFact }
@@ -342,6 +353,8 @@ export type PartnerRemoval = PartnerFact & {
   reason: ReportFiled['reason'] | null;
   reportId: string | null;
 };
+
+export type ToolFact = { toolId: string; name: string };
 
 export type PlaceFact = { placeId: string; slug: string; name: string };
 

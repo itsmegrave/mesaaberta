@@ -23,6 +23,7 @@
       counts.queue +
       counts.connections +
       counts.partners +
+      counts.tools +
       counts.places +
       counts.hiddenPlaces,
   );
