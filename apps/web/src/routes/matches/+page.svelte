@@ -2,11 +2,13 @@
   import { routes } from '@mesaaberta/core/routes';
   import { MATCH_DAILY_ANSWERS } from '@mesaaberta/core/matches/schema';
   import DirectoryEmpty from '#lib/components/directory/ui/DirectoryEmpty.svelte';
-  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
+  import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import PageHead from '#lib/components/ui/PageHead.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { SWIPE_AT, deckState, swipe } from './components/deck.svelte';
   import MatchIt from './components/ui/MatchIt.svelte';
+  import TutorialDialog from './components/ui/TutorialDialog.svelte';
+  import { tutorialState } from './components/tutorial.svelte';
   import MoreSheet from './components/ui/MoreSheet.svelte';
   import RoundButton from './components/ui/RoundButton.svelte';
   import SwipeCard from './components/ui/SwipeCard.svelte';
@@ -23,6 +25,7 @@
   const left = $derived(Math.max(0, (ready?.answersLeft ?? 0) - deck.used));
   let dx = $state(0);
   let more = $state(false);
+  const tutorial = tutorialState();
   const stamp = $derived(
     dx >= SWIPE_AT / 2 ? ('yes' as const) : dx <= -SWIPE_AT / 2 ? ('no' as const) : null,
   );
@@ -36,7 +39,16 @@
   // ← Agora não, → Quero jogar junto, ↑ Ver mais, Backspace Voltar a última; not while typing
   // or with a dialog open.
   function onkeydown(event: KeyboardEvent) {
-    if (!top || more || deck.matched || event.altKey || event.ctrlKey || event.metaKey) return;
+    if (
+      !top ||
+      more ||
+      deck.matched ||
+      tutorial.open ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey
+    )
+      return;
     const target = event.target as HTMLElement | null;
     if (target?.closest('input, textarea, select, [contenteditable], [role="dialog"]')) return;
     const action = {
@@ -60,6 +72,7 @@
       <div class="flex flex-wrap gap-2">
         <a href={routes.matchList} class={buttonClass('secondary')}>{m.match_list_link()}</a>
         <a href={routes.matchCard} class={buttonClass('ghost')}>{m.match_card_link()}</a>
+        <MAButton onclick={tutorial.show}>{m.match_tutorial_open()}</MAButton>
       </div>
     {/snippet}
   </PageHead>
@@ -118,7 +131,7 @@
           />
           <RoundButton
             kind="no"
-            icon="xmark"
+            d20={1}
             label={m.match_no()}
             big
             disabled={deck.busy}
@@ -126,7 +139,7 @@
           />
           <RoundButton
             kind="yes"
-            icon="game-icons:hearts"
+            d20={20}
             label={m.match_yes()}
             big
             disabled={deck.busy}
@@ -157,6 +170,10 @@
     {/if}
   </div>
 </section>
+
+{#if data.deck.state !== 'not_adult'}
+  <TutorialDialog bind:open={tutorial.open} bind:hide={tutorial.hide} />
+{/if}
 
 {#if deck.matched}
   <MatchIt person={deck.matched} onclose={deck.closeMatch} />

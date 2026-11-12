@@ -44,8 +44,11 @@ export function leaning(axis: MatchAxis, value: number): { pole: MatchPole; perc
 
 /** How many answers a person gives a day: a cap on sweeping through everyone. */
 export const MATCH_DAILY_ANSWERS = 50;
-/** A no hides the person for this long; then they may come back if both cards still fit. */
-export const MATCH_PASS_DAYS = 90;
+/**
+ * An answer, yes or no, takes the person out of the deck for this long; then they come back (a
+ * reminder) if both cards still fit and no match was made. A yes keeps counting towards a match.
+ */
+export const MATCH_PASS_DAYS = 30;
 /** Answers are deleted after this many days (the sweep); a match that came of one stays. */
 export const MATCH_ANSWER_DAYS = 180;
 /** How many cards one deck read brings. */

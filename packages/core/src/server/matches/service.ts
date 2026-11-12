@@ -286,7 +286,7 @@ async function answersToday(db: AnyDb, profileId: string, now: Date) {
 
 /**
  * The next cards of the person's deck, best fit first: up to MATCH_DECK_SIZE people whose cards fit
- * theirs and whom they have not answered (a no hides for MATCH_PASS_DAYS), nor who passed on them in
+ * theirs and whom they have not answered in MATCH_PASS_DAYS (yes or no), nor who passed on them in
  * that time. The score is systems in common, free times in common and how close the four axes are.
  */
 export async function matchDeck(
@@ -343,8 +343,8 @@ export async function matchDeck(
     .where(
       and(
         fits(me),
-        // Not answered by them lately: a yes waits for its match, a no hides them for a while.
-        sql`not exists (select 1 from ${matchAnswers} where ${matchAnswers.fromId} = ${me.id} and ${matchAnswers.toId} = ${profiles.id} and (${matchAnswers.yes} or ${matchAnswers.createdAt} > ${passSince}::timestamptz))`,
+        // Not answered by them in the last MATCH_PASS_DAYS: then the card comes back as a reminder.
+        sql`not exists (select 1 from ${matchAnswers} where ${matchAnswers.fromId} = ${me.id} and ${matchAnswers.toId} = ${profiles.id} and ${matchAnswers.createdAt} > ${passSince}::timestamptz)`,
         // Nor passed on them in that time: nobody is told, the card just never comes.
         sql`not exists (select 1 from ${matchAnswers} where ${matchAnswers.fromId} = ${profiles.id} and ${matchAnswers.toId} = ${me.id} and not ${matchAnswers.yes} and ${matchAnswers.createdAt} > ${passSince}::timestamptz)`,
       ),

@@ -2036,9 +2036,9 @@ export const matchCards = pgTable(
 ).enableRLS();
 
 // One person's answer about another's card: `yes` (Quero jogar junto) or not (Agora não). Never
-// shown to the person answered about. A no hides them for MATCH_PASS_DAYS; a yes stays until it
-// makes a match or is undone. Deleted after MATCH_ANSWER_DAYS (the sweep) and when the person
-// switches their card off.
+// shown to the person answered about. An answer hides them for MATCH_PASS_DAYS (a month), then
+// they come back; a yes keeps counting towards a match until it is pruned. Deleted after
+// MATCH_ANSWER_DAYS (the sweep) and when the person switches their card off.
 export const matchAnswers = pgTable(
   'match_answers',
   {

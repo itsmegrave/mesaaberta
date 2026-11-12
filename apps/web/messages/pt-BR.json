@@ -4067,8 +4067,8 @@
   "match_message_failed": "Não deu para abrir a conversa agora. Tente de novo.",
   "match_limit_reached": "Você chegou ao limite de respostas de hoje.",
   "match_undo": "Voltar a última",
-  "match_no": "Agora não",
-  "match_yes": "Quero jogar junto",
+  "match_no": "Agora não (d20 no 1)",
+  "match_yes": "Quero jogar junto (d20 no 20)",
   "match_more": "Ver mais",
   "match_keys": "Atalhos: ← agora não, → quero jogar junto, ↑ ver mais, Backspace voltar a última.",
   "match_left": [
@@ -4205,5 +4205,11 @@
   "match_end_text": "Vocês saem da lista e do baralho um do outro, para sempre. A outra pessoa não é avisada.",
   "match_end_done": "Combinação desfeita.",
   "match_card_preview": "Como os outros veem seu cartão",
-  "match_card_preview_hint": "Foto, sistemas favoritos e avaliações vêm do seu perfil. O resto muda enquanto você responde."
+  "match_card_preview_hint": "Foto, sistemas favoritos e avaliações vêm do seu perfil. O resto muda enquanto você responde.",
+  "match_tutorial_open": "Como funciona",
+  "match_tutorial_title": "Como funciona o Combinar",
+  "match_tutorial_lede": "Monte seu cartão, arraste as cartas e combine. Leva 30 segundos.",
+  "match_tutorial_video": "Vídeo: passo a passo do Combinar, sem som",
+  "match_tutorial_hide": "Não mostrar de novo",
+  "match_tutorial_go": "Bora!"
 }
