@@ -10,6 +10,7 @@
   import RailTip from '#lib/components/shell/RailTip.svelte';
   import TableLogo from '#lib/components/ui/TableLogo.svelte';
   import ThemeToggle from '#lib/components/shell/ThemeToggle.svelte';
+  import OverdrivePedal from '#lib/components/shell/OverdrivePedal.svelte';
   import type { DirectoryLink } from '#lib/navigation/directory-nav.js';
   import { mainNav } from '#lib/navigation/main-nav.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -237,6 +238,8 @@
           {#if !account}
             <ThemeToggle labelled={expanded} rail={!expanded} />
           {/if}
+          <!-- The Overdrive pedal sits right under the theme switch, for members too. -->
+          <OverdrivePedal variant={expanded ? 'labelled' : 'rail'} />
           {#if account}
             <!-- The bell sits right above the account block, with no group label of its own. -->
             <RailTip label={m.notifications_title()} enabled={!expanded}>

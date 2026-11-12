@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { MODE_COLOURS, resolveMode } from './theme';
+import { MODE_COLOURS, OVERDRIVE_COLOURS, resolveMode } from './theme';
 
 describe('resolveMode', () => {
   it.each([
@@ -35,6 +35,9 @@ describe('browser chrome colours', () => {
     );
     expect(html).toContain(
       `var colours = { light: '${MODE_COLOURS.light}', dark: '${MODE_COLOURS.dark}' }`,
+    );
+    expect(html).toContain(
+      `var overdrive = { light: '${OVERDRIVE_COLOURS.light}', dark: '${OVERDRIVE_COLOURS.dark}' }`,
     );
     expect(manifest.theme_color).toBe(MODE_COLOURS.light);
     expect(manifest.background_color).toBe(MODE_COLOURS.light);

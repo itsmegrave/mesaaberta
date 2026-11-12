@@ -32,8 +32,10 @@ test('a table form refuses an image that is too big before sending anything', as
   const { page, context } = await asUser(browser, await createUser('Mestra Bia'));
   await page.goto('/tables/new');
   let posted = false;
+  // The form's own POST; the layout's background calls (the theme count) are not the form.
   page.on('request', (request) => {
-    if (request.method() === 'POST') posted = true;
+    if (request.method() === 'POST' && new URL(request.url()).pathname === '/tables/new')
+      posted = true;
   });
 
   await pickImage(page, {

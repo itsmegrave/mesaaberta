@@ -58,6 +58,22 @@ describe('request event tracking', () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it('also sets profile labels where the provider keeps profiles', async () => {
+    const setProfile = vi.fn(async () => {});
+    const send = vi.fn(async () => {});
+    const queued: (() => Promise<unknown>)[] = [];
+    const track = createTracker({
+      env: undefined,
+      afterResponse: (task) => void queued.push(task),
+      log: { warn: vi.fn() } as never,
+      factories: [() => ({ name: 'acme', send, setProfile })],
+    });
+    track('theme_in_use', user, { theme: 'overdrive' }, { profile: { theme: 'overdrive' } });
+    await Promise.all(queued.map((task) => task()));
+    expect(send).toHaveBeenCalledOnce();
+    expect(setProfile).toHaveBeenCalledWith(user, { theme: 'overdrive' });
+  });
+
   it('logs a failing provider without throwing, and without the response text', async () => {
     const { track, flush, log } = setup(vi.fn(async () => Promise.reject(new Error('HTTP 503'))));
     track('gm_onboarding_started', user, { onboarding_step: 'profile_setup' });

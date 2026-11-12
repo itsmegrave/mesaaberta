@@ -4,7 +4,7 @@
   import Icon from '#lib/components/ui/Icon.svelte';
   import RailTip from '#lib/components/shell/RailTip.svelte';
   import { m } from '#lib/paraglide/messages.js';
-  import { applyChoice, readChoice, type ThemeChoice } from '#lib/theme/theme.js';
+  import { applyChoice, readChoice, reportTheme, type ThemeChoice } from '#lib/theme/theme.js';
   import { originOf, revealTheme } from '#lib/theme/theme-transition.js';
 
   let {
@@ -69,7 +69,7 @@
           applyChoice(choice);
         }),
       originOf(control),
-    );
+    ).then(() => reportTheme('changed'));
   }
 </script>
 

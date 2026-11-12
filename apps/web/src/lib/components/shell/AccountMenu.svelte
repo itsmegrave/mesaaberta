@@ -8,6 +8,7 @@
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import ThemeToggle from '#lib/components/shell/ThemeToggle.svelte';
+  import OverdrivePedal from '#lib/components/shell/OverdrivePedal.svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   let {
@@ -137,6 +138,8 @@
       <span id="{uid}-theme" class="text-base font-semibold">{m.theme_label()}</span>
       <ThemeToggle segmented labelledby="{uid}-theme" />
     </div>
+    <!-- The Overdrive pedal, right under Claro | Escuro (`use_overdrive_theme`). -->
+    <OverdrivePedal variant="menu" />
     <div role="separator" class="my-1 h-px bg-surface-200-800"></div>
 
     <MAForm method="POST" action="/logout" class="m-0" onsubmit={() => (signingOut = true)}>

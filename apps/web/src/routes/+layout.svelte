@@ -24,6 +24,9 @@
   import SiteFooter from '#lib/components/shell/SiteFooter.svelte';
   import TableLogo from '#lib/components/ui/TableLogo.svelte';
   import ThemeToggle from '#lib/components/shell/ThemeToggle.svelte';
+  import OverdrivePedal from '#lib/components/shell/OverdrivePedal.svelte';
+  import { initOverdrive } from '#lib/theme/overdrive.svelte.js';
+  import { reportTheme } from '#lib/theme/theme.js';
   import MAToaster from '#lib/components/shell/MAToaster.svelte';
   import UnsavedChangesDialog from '#lib/components/shell/UnsavedChangesDialog.svelte';
   import { Progress } from '@skeletonlabs/skeleton-svelte';
@@ -86,6 +89,14 @@
   // cookie; the first page, rendered in the default zone, then loads again in the right one.
   onMount(() => {
     if (syncBrowserTimezone(data.viewer)) refreshAll();
+  });
+
+  // The Overdrive pedal follows its flag; a signed-in person's theme is counted once a day.
+  $effect(() => {
+    initOverdrive(layoutData.overdrive);
+  });
+  onMount(() => {
+    if (layoutData.account) reportTheme('in_use');
   });
 
   // Loading shows only after 150 ms, so a quick navigation does not flash the bar or a skeleton.
@@ -176,6 +187,7 @@
             {:else}
               <!-- Members pick the theme in the account menu; visitors have none. -->
               <ThemeToggle />
+              <OverdrivePedal />
             {/if}
             {#if !data.account && data.authEnabled}
               <a

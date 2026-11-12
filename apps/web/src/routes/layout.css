@@ -2,6 +2,9 @@
 @import '@skeletonlabs/skeleton';
 @import '@skeletonlabs/skeleton-svelte';
 @import '@skeletonlabs/skeleton/themes/cerberus';
+/* Overdrive, behind `use_overdrive_theme`: its colours, then its comic look. */
+@import '../lib/theme/overdrive-theme.css';
+@import '../lib/theme/overdrive.css';
 @import '@fontsource-variable/cinzel';
 /* The private package (packages/privy, installed at build) draws its own components; Tailwind
    does not scan workspace packages on its own. Nothing is there in the open-source build. */
