@@ -1328,8 +1328,15 @@ export const tools = pgTable(
     // Made from the name and kept; also the logo file name of a seeded tool.
     slug: text('slug').notNull(),
     name: text('name').notNull(),
-    // Mirror TOOL_KINDS in `@mesaaberta/core/tools/schema`.
+    // The first of `kinds`, kept while code that reads only it may still run (expand, then
+    // contract: a later migration drops it). Mirror TOOL_KINDS in `@mesaaberta/core/tools/schema`.
     kind: text('kind').notNull(),
+    // Every section of the page it shows in ("Mesa virtual" and "Fichas e apoio"), in TOOL_KINDS
+    // order. Empty only for a row an older build wrote: read it as `[kind]`.
+    kinds: text('kinds')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     siteUrl: text('site_url').notNull(),
     description: text('description').notNull(),
     // A path in the avatar bucket (`tools/<submitter id>/...`), a site path for a seeded tool
@@ -1359,6 +1366,10 @@ export const tools = pgTable(
     check('tools_slug_format', sql`${tool.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
     // Mirror TOOL_KINDS and TOOL_LIMITS in `@mesaaberta/core/tools/schema`.
     check('tools_kind_known', sql`${tool.kind} IN ('vtt', 'chat', 'call', 'helper')`),
+    check(
+      'tools_kinds_known',
+      sql`${tool.kinds} <@ ARRAY['vtt', 'chat', 'call', 'helper']::text[]`,
+    ),
     check('tools_name_length', sql`char_length(${tool.name}) BETWEEN 1 AND 60`),
     check('tools_description_length', sql`char_length(${tool.description}) BETWEEN 1 AND 140`),
     check('tools_site_url_length', sql`char_length(${tool.siteUrl}) <= 300`),

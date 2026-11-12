@@ -3,6 +3,7 @@
   import { Accordion } from '@skeletonlabs/skeleton-svelte';
   import CountBadge from './CountBadge.svelte';
   import Icon from './Icon.svelte';
+  import type { IconName } from '#lib/icons/names.js';
   import { accordionMode } from './MAAccordion.svelte';
 
   // One section of an MAAccordion: a heading whose button opens the content, with a line under the
@@ -18,6 +19,7 @@
     summaryOnWide = false,
     class: className = '',
     aside,
+    icon,
     children,
   }: {
     value: string;
@@ -38,6 +40,8 @@
      * open on a wide screen, at the top of the content when it can fold (a button cannot sit inside
      * the header button). */
     aside?: Snippet;
+    /** An icon before the title (a section's symbol, such as the hourglass of "Começa já"). */
+    icon?: IconName;
     children: Snippet;
   } = $props();
 
@@ -50,7 +54,10 @@
   <section aria-labelledby={id} class="py-4 first:pt-0 last:pb-0">
     <div class="flex flex-wrap items-baseline justify-between gap-3">
       <svelte:element this={heading} {id} class="flex items-center gap-2 {titleClass}">
-        {title}<CountBadge {count} aria-label={countLabel} />
+        {#if icon}<Icon name={icon} size={20} />{/if}{title}<CountBadge
+          {count}
+          aria-label={countLabel}
+        />
       </svelte:element>
       {#if summary && summaryOnWide}
         <span class="font-semibold text-muted">{summary}</span>
@@ -69,11 +76,16 @@
           : ''}"
       >
         <span class="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span class="flex items-center gap-2 {titleClass}"
-            >{title}<CountBadge {count} aria-label={countLabel} /></span
+          <span data-section-title class="flex items-center gap-2 {titleClass}"
+            >{#if icon}<Icon name={icon} size={20} />{/if}{title}<CountBadge
+              {count}
+              aria-label={countLabel}
+            /></span
           >
           {#if summary}
-            <span class="text-sm text-muted {mode.collapse === 'phone' ? 'md:hidden' : ''}"
+            <span
+              data-section-summary
+              class="text-sm text-muted {mode.collapse === 'phone' ? 'md:hidden' : ''}"
               >{summary}</span
             >
           {/if}

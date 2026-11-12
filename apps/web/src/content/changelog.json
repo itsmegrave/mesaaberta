@@ -52,8 +52,34 @@
       },
       {
         "kind": "improved",
+        "title": "Títulos com tinta no Overdrive",
+        "description": "No Overdrive, o título da página ganhou contorno de nanquim e sombra colorida, os títulos de seção viraram caixas de legenda amarelas, como num gibi, e o nome Mesa Aberta no topo tem uma pincelada embaixo."
+      },
+      {
+        "kind": "improved",
+        "title": "Lista de mesas em seções",
+        "description": "A lista de mesas agora tem o título Todas as mesas, e cada seção abre e fecha. Começa já mostra até 3 mesas, e um card Ver mais traz as outras."
+      },
+      {
+        "kind": "fixed",
+        "title": "Cards do Overdrive no celular",
+        "description": "No celular, os cards inclinados do Overdrive passavam da borda da tela e a sombra rosa parecia torta. Agora a inclinação e a sombra são menores e o card cabe inteiro na tela."
+      },
+      {
+        "kind": "fixed",
+        "title": "Botões do Overdrive no iPhone",
+        "description": "No Safari, os botões do Overdrive saíam com a sombra cortada e o botão de contorno sumia no modo Neon. Agora a sombra aparece inteira e o contorno fica visível."
+      },
+      {
+        "kind": "improved",
         "title": "Avisos pelo conector do Claude",
         "description": "Para a administração: o conector do Claude agora manda avisos para o sino, como Admin › Notificações. Ele conta antes quantas pessoas vão receber e só envia depois de confirmar."
+      },
+      {
+        "kind": "improved",
+        "title": "Ferramentas em mais de uma seção",
+        "description": "Uma ferramenta pode estar em mais de uma seção, as seções recolhem com um toque e, no celular, dá para passar de uma seção para a outra.",
+        "href": "/tools"
       }
     ]
   },

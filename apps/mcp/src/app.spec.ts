@@ -268,7 +268,7 @@ describe('add_tool', () => {
   const breu = {
     name: 'Breu: gerador de atributos',
     siteUrl: 'https://gerador-breu.mesaaberta.app',
-    kind: 'helper',
+    kinds: ['helper'],
     description: 'Rola os seis atributos de um personagem de Breu.',
   };
 
@@ -324,10 +324,11 @@ describe('add_tool', () => {
     });
   });
 
-  it('refuses a kind the page does not group before reaching the api', async () => {
+  it('refuses a kind the page does not group, or none, before reaching the api', async () => {
     const { call, seen } = setUp();
     const before = seen.length;
-    expect((await call('add_tool', { ...breu, kind: 'game' })).isError).toBe(true);
+    expect((await call('add_tool', { ...breu, kinds: ['helper', 'game'] })).isError).toBe(true);
+    expect((await call('add_tool', { ...breu, kinds: [] })).isError).toBe(true);
     expect(seen.slice(before).every((request) => request.method === 'GET')).toBe(true);
   });
 });

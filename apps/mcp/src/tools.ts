@@ -386,9 +386,13 @@ export function registerTools(server: McpServer, context: ToolContext) {
       inputSchema: {
         name: z.string().trim().min(1).max(TOOL_LIMITS.name),
         siteUrl: z.string().trim().min(1).max(2048).describe('The address, such as "https://…".'),
-        kind: z
-          .enum(TOOL_KINDS)
-          .describe('vtt (virtual tabletop), chat, call (voice/video) or helper (anything else).'),
+        kinds: z
+          .array(z.enum(TOOL_KINDS))
+          .min(1)
+          .describe(
+            'The sections it shows in, one or more: vtt (virtual tabletop), chat, call ' +
+              '(voice/video), helper (character sheets and anything else).',
+          ),
         description: z
           .string()
           .trim()
