@@ -24,28 +24,20 @@
   const comic = $derived(COMIC_ICONS[name]);
 </script>
 
-<!-- Decorative: the text next to an icon says what it means. -->
-<svg
-  xmlns="http://www.w3.org/2000/svg"
-  width={size}
-  height={size}
-  data-icon={name}
-  aria-hidden="true"
-  data-look={comic ? 'plain' : undefined}
-  class="shrink-0 {className}"><use {href} /></svg
->
+<!-- Decorative: the text next to an icon says what it means. One <svg> either way; an icon with a
+     sticker holds both drawings as groups on a 24-unit grid. -->
 {#if comic}
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width={size}
     height={size}
     viewBox="0 0 24 24"
-    data-comic-icon={name}
+    data-icon={name}
     aria-hidden="true"
-    data-look="comic"
     class="shrink-0 overflow-visible {className}"
   >
-    <g transform="rotate({comic.tilt} 12 12)" stroke-linejoin="round">
+    <g data-look="plain"><use {href} width="24" height="24" /></g>
+    <g data-look="comic" transform="rotate({comic.tilt} 12 12)" stroke-linejoin="round">
       <path d={comic.shape} transform="translate(1.4 1.4)" data-ink-shadow />
       <path d={comic.shape} data-ink class={comic.fill} stroke-width="1.8" />
       {#if comic.detail}
@@ -53,4 +45,13 @@
       {/if}
     </g>
   </svg>
+{:else}
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    data-icon={name}
+    aria-hidden="true"
+    class="shrink-0 {className}"><use {href} /></svg
+  >
 {/if}
