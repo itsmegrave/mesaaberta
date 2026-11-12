@@ -2,7 +2,7 @@
   import Icon from '#lib/components/ui/Icon.svelte';
   import QueryStatus from '#lib/components/ui/QueryStatus.svelte';
   import { pageQuery } from '#lib/query/page.svelte.js';
-  import CardGrid from '#lib/components/ui/CardGrid.svelte';
+  import MAAccordion from '#lib/components/ui/MAAccordion.svelte';
   import EmptyState from '#lib/components/ui/EmptyState.svelte';
   import PageHead from '#lib/components/ui/PageHead.svelte';
   import { navigating, page } from '$app/state';
@@ -10,7 +10,7 @@
   import ListSkeleton from '#lib/components/ui/ListSkeleton.svelte';
   import { Slow } from '#lib/navigation/slow.svelte.js';
   import TablesFilters from '../components/TablesFilters.svelte';
-  import TableCard from '#lib/components/ui/TableCard.svelte';
+  import TableCardSection from '../components/TableCardSection.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import { STARTING_SOON_HOURS } from '#lib/tables/starting-soon.js';
 
@@ -26,6 +26,8 @@
   }, 150);
 
   const listHref = '/tables';
+  // Both sections start open; each folds on its own.
+  let open = $state(['starting-soon', 'all']);
 
   const count = $derived(data.tables.length);
   // The same filters with the 18+ tables shown or hidden again.
@@ -81,31 +83,14 @@
     {count}
   />
 
-  {#if !filtering.current && data.startingSoon?.length}
-    <section aria-labelledby="starting-soon" class="mt-6">
-      <h2 id="starting-soon" class="flex items-center gap-2 text-xl font-semibold">
-        <Icon name="game-icons:hourglass" size={20} />
-        {m.tables_starting_soon()}
-      </h2>
-      <p class="mt-1 text-sm text-muted">
-        {m.tables_starting_soon_hint({ hours: STARTING_SOON_HOURS })}
-      </p>
-      <CardGrid class="mt-3">
-        {#each data.startingSoon as table (table.slug)}
-          <li><TableCard {table} markBeginners={page.data.beginners} level="h3" /></li>
-        {/each}
-      </CardGrid>
-    </section>
-  {/if}
-
   {#if filtering.current}
     <ListSkeleton kind="cards" />
-  {:else if data.tables.length > 0}
-    <p role="status" class="mt-6 text-sm font-semibold text-muted">
-      {m.tables_found({ count })}
-    </p>
-    {#if data.adult.count > 0}
-      <p class="mt-1 text-sm text-muted">
+  {:else}
+    {#if data.tables.length > 0}
+      <p role="status" class="sr-only">{m.tables_found({ count })}</p>
+    {/if}
+    {#if data.tables.length > 0 && data.adult.count > 0}
+      <p class="mt-6 text-sm text-muted">
         {data.adult.shown
           ? m.tables_adult_shown({ count: data.adult.count })
           : m.tables_adult_hidden({ count: data.adult.count })}
@@ -114,12 +99,29 @@
         >
       </p>
     {/if}
-    <CardGrid class="mt-5 md:mt-3">
-      {#each data.tables as table (table.slug)}
-        <li><TableCard {table} markBeginners={page.data.beginners} level="h2" /></li>
-      {/each}
-    </CardGrid>
-  {:else}
+    {#if data.startingSoon?.length || data.tables.length > 0}
+      <MAAccordion bind:value={open} class="mt-4">
+        {#if data.startingSoon?.length}
+          <TableCardSection
+            value="starting-soon"
+            icon="game-icons:hourglass"
+            title={m.tables_starting_soon()}
+            summary={m.tables_starting_soon_hint({ hours: STARTING_SOON_HOURS })}
+            tables={data.startingSoon}
+          />
+        {/if}
+        {#if data.tables.length > 0}
+          <TableCardSection
+            value="all"
+            title={m.tables_all_title()}
+            summary={m.tables_found({ count })}
+            tables={data.tables}
+          />
+        {/if}
+      </MAAccordion>
+    {/if}
+  {/if}
+  {#if !filtering.current && data.tables.length === 0}
     <EmptyState
       text={anyFilter ? m.tables_empty_filtered() : m.tables_empty()}
       clearHref={anyFilter ? listHref : undefined}
