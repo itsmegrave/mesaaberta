@@ -16,6 +16,6 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders }) => {
     await readFromApi<{
       table: NonNullable<Awaited<ReturnType<typeof adminTable>>>;
       history: Awaited<ReturnType<typeof tableHistory>>;
-    }>(locals, admin.id, `/v1/admin-reads/tables/${params.id}`),
+    }>(locals, admin.id, `/v1/admin-reads/tables/${encodeURIComponent(params.id)}`),
   );
 };

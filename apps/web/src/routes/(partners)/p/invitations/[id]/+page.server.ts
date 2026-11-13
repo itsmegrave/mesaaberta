@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ locals, url, params }) => {
     await readFromApi<Awaited<ReturnType<typeof loadPartnerInvitation>>>(
       locals,
       user.id,
-      `/v1/partners/invitations/${params.id}`,
+      `/v1/partners/invitations/${encodeURIComponent(params.id)}`,
     ),
   );
   const { logoPath, ...partner } = invitation.partner;
@@ -38,7 +38,7 @@ const answer = (decision: 'accept' | 'decline') =>
   ownerAction(
     z.object({}),
     [],
-    (_data, params) => [`/v1/partners/invitations/${params.id}/${decision}`, {}],
+    (_data, params) => [`/v1/partners/invitations/${encodeURIComponent(params.id)}/${decision}`, {}],
     { flagged: false },
   );
 
