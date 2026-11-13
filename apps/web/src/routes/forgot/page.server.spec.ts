@@ -53,6 +53,7 @@ describe('the forgot-password page', () => {
     expect(await (load as (e: RequestEvent) => Promise<unknown>)(url(''))).toEqual({
       linkExpired: false,
       form: expect.any(Object),
+      captchaSiteKey: null,
     });
     expect(
       await (load as (e: RequestEvent) => Promise<unknown>)(url('?error=<script>')),
@@ -108,5 +109,29 @@ describe('the forgot-password page', () => {
         data: { form: { message: { code: 'failed' } } },
       });
     }
+  });
+
+  it('shows the CAPTCHA once a site key is set, and hands its answer to the api', async () => {
+    const withKey = {
+      url: new URL('https://x.test/forgot'),
+      locals: { env: { TURNSTILE_SITE_KEY: '0x4AAA' } },
+    } as unknown as RequestEvent;
+    expect(await (load as (e: RequestEvent) => Promise<unknown>)(withKey)).toMatchObject({
+      captchaSiteKey: '0x4AAA',
+    });
+
+    const { fetch, env } = api({ status: 200, body: { result: 'sent' } });
+    const { event } = setup(env);
+    await submit(event({ email: 'ana@example.com', captchaToken: 'turnstile-answer' }));
+    expect(await fetch.mock.calls[0][0].json()).toMatchObject({ captchaToken: 'turnstile-answer' });
+  });
+
+  it('asks the visitor to do the check again when Supabase refused the CAPTCHA', async () => {
+    const { env } = api({ status: 400, body: { result: 'captcha_failed' } });
+    const { event } = setup(env);
+    expect(await submit(event({ email: 'ana@example.com' }))).toMatchObject({
+      status: 400,
+      data: { form: { message: { code: 'captcha_failed' } } },
+    });
   });
 });

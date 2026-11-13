@@ -14,9 +14,17 @@ type Deps = { supabase: SupabaseClient; db: AnyDb | null; log: Logger; ip: strin
 
 /** What the sign-up form should say. `check_email` is also the answer for an address that already has an account. */
 export type SignUpResult =
-  'signed_in' | 'check_email' | 'weak_password' | 'rate_limited' | 'failed';
+  'signed_in' | 'check_email' | 'weak_password' | 'captcha_failed' | 'rate_limited' | 'failed';
 export type SignInResult =
-  'ok' | 'invalid' | 'unconfirmed' | 'suspended' | 'rate_limited' | 'failed';
+  'ok' | 'invalid' | 'unconfirmed' | 'suspended' | 'captcha_failed' | 'rate_limited' | 'failed';
+
+/**
+ * The Turnstile answer the form sent, for Supabase to check. Supabase ignores it while CAPTCHA
+ * protection is off in the dashboard; once it is on, a request without a valid one is refused with
+ * `captcha_failed`, which the forms show as "confirm you are not a robot".
+ */
+export const captchaOptions = (captchaToken?: string | null) =>
+  captchaToken ? { captchaToken } : {};
 
 const RATE_LIMITED = new Set([
   'over_email_send_rate_limit',
@@ -65,7 +73,14 @@ export async function signUpForSession(
     password,
     origin,
     next,
-  }: { email: string; password: string; origin: string; next: string | null },
+    captchaToken,
+  }: {
+    email: string;
+    password: string;
+    origin: string;
+    next: string | null;
+    captchaToken?: string | null;
+  },
 ): Promise<{ result: SignUpResult; session: SessionTokens | null }> {
   const { data, error } = await deps.supabase.auth.signUp({
     email,
@@ -73,6 +88,7 @@ export async function signUpForSession(
     // The link in the confirmation email comes back to our callback.
     options: {
       emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(safeNext(next))}`,
+      ...captchaOptions(captchaToken),
     },
   });
 
@@ -82,6 +98,7 @@ export async function signUpForSession(
     // with a look-alike success (found by the e2e tests against a real Auth). Saying so would tell
     // anyone who is registered, so it gets the same answer as a first sign-up.
     if (error.code === 'user_already_exists') return { result: 'check_email', session: null };
+    if (error.code === 'captcha_failed') return { result: 'captcha_failed', session: null };
     if (error.code && RATE_LIMITED.has(error.code))
       return { result: 'rate_limited', session: null };
     // The code and status only: the message can quote the address.
@@ -107,7 +124,7 @@ export async function signUpForSession(
 
 export async function signUpWithEmail(
   deps: Deps,
-  details: { email: string; password: string; origin: string; next: string | null },
+  details: Parameters<typeof signUpForSession>[1],
 ): Promise<SignUpResult> {
   return (await signUpForSession(deps, details)).result;
 }
@@ -118,14 +135,23 @@ export async function signUpWithEmail(
  */
 export async function signInForSession(
   deps: Deps,
-  { email, password }: { email: string; password: string },
+  {
+    email,
+    password,
+    captchaToken,
+  }: { email: string; password: string; captchaToken?: string | null },
 ): Promise<{ result: SignInResult; session: SessionTokens | null }> {
-  const { data, error } = await deps.supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await deps.supabase.auth.signInWithPassword({
+    email,
+    password,
+    options: captchaOptions(captchaToken),
+  });
 
   if (error) {
     // A wrong password and an unknown address get the same code, so the form cannot tell them apart.
     if (error.code === 'invalid_credentials') return { result: 'invalid', session: null };
     if (error.code === 'email_not_confirmed') return { result: 'unconfirmed', session: null };
+    if (error.code === 'captcha_failed') return { result: 'captcha_failed', session: null };
     if (error.code && RATE_LIMITED.has(error.code))
       return { result: 'rate_limited', session: null };
     deps.log.warn('auth.email_sign_in_refused', { code: error.code, status: error.status });

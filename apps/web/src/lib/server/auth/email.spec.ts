@@ -59,6 +59,14 @@ describe('signUpWithEmail', () => {
     });
   });
 
+  it('hands the CAPTCHA answer to Supabase when the form sent one', async () => {
+    const { deps, call } = await setup('signUp', { data: { user, session: null }, error: null });
+
+    await signUpWithEmail(deps, { ...input, captchaToken: 'turnstile' });
+
+    expect(call.mock.calls[0][0].options).toMatchObject({ captchaToken: 'turnstile' });
+  });
+
   it('does not let next point at another site', async () => {
     const { deps, call } = await setup('signUp', { data: { user, session: null }, error: null });
 
@@ -193,6 +201,7 @@ describe('signInWithEmail', () => {
   it.each([
     ['invalid_credentials', 'invalid'],
     ['email_not_confirmed', 'unconfirmed'],
+    ['captcha_failed', 'captcha_failed'],
     ['over_request_rate_limit', 'rate_limited'],
     ['something_unexpected', 'failed'],
   ])('turns the Supabase error %s into %s', async (code, result) => {

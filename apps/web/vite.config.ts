@@ -62,7 +62,13 @@ export default defineConfig({
         mode: 'nonce',
         directives: {
           'default-src': ['self'],
-          'script-src': ['self', 'https://static.cloudflareinsights.com'],
+          // Turnstile (the CAPTCHA on the email forms) loads its script and its frame from Cloudflare.
+          'script-src': [
+            'self',
+            'https://static.cloudflareinsights.com',
+            'https://challenges.cloudflare.com',
+          ],
+          'frame-src': ['https://challenges.cloudflare.com'],
           'style-src': ['self'],
           // Svelte server-renders `onload="this.__e=event"` / `onerror=…` on an <img> that has load or
           // error handlers (Skeleton's Avatar.Image), so it can replay an event that fired before

@@ -1017,6 +1017,8 @@
   "auth_error_invalid": "Email ou senha incorretos.",
   "auth_error_unconfirmed": "Confirme seu email pelo link que enviamos e tente de novo.",
   "auth_error_weak": "Escolha uma senha mais forte.",
+  "auth_error_captcha": "Não deu para confirmar que você não é um robô. Faça a verificação e tente de novo.",
+  "auth_captcha_unavailable": "A verificação contra robôs não carregou. Recarregue a página e tente de novo.",
   "auth_error_rate_limited": "Muitas tentativas. Espere um pouco e tente de novo.",
   "auth_error_failed": "Não foi possível agora. Tente de novo em instantes.",
   "login_forgot": "Esqueci minha senha",

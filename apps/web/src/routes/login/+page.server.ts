@@ -8,6 +8,7 @@ import type { SignInResult } from '@mesaaberta/core/server/auth/email';
 import { callApiRaw } from '#lib/server/api-client.js';
 import { afterSignIn } from '@mesaaberta/core/server/auth/onboarding';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
+import { captchaField, captchaSiteKey } from '#lib/server/auth/captcha.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -21,12 +22,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     confirmHint: url.searchParams.get('error') === 'exchange_failed',
     suspended: url.searchParams.get('error') === 'suspended',
     form: initialForm({ email: '', password: '', next }),
+    captchaSiteKey: captchaSiteKey(locals?.env),
   };
 };
 
 const STATUS = {
   invalid: 400,
   unconfirmed: 400,
+  captcha_failed: 400,
   suspended: 403,
   failed: 500,
   rate_limited: 429,
@@ -41,7 +44,7 @@ const STATUS = {
 async function signInViaApi(
   locals: App.Locals,
   ip: string,
-  credentials: { email: string; password: string },
+  credentials: { email: string; password: string; captchaToken?: string },
 ): Promise<{ result: SignInResult; retryAfter?: number }> {
   if (!locals.supabase) return { result: 'failed' };
   const answer = await callApiRaw(locals.env, '/v1/auth/sign-in', null, locals.log, credentials, {
@@ -74,18 +77,19 @@ export const actions: Actions = {
   email: async ({ request, locals, getClientAddress, setHeaders }) => {
     if (!locals.supabase) redirect(303, '/login?error=unavailable');
 
-    const form = validateStringForm(await request.formData(), credentialsSchema, [
-      'email',
-      'password',
-      'next',
-    ]);
+    const data = await request.formData();
+    const form = validateStringForm(data, credentialsSchema, ['email', 'password', 'next']);
     const next = safeNext(form.data.next);
     const { email, password } = form.data;
     // Only the email is handed back to refill the form, never the password.
     withoutSecrets(form, ['password']);
     if (!form.valid) return fail(400, { form });
 
-    const viaApi = await signInViaApi(locals, getClientAddress(), { email, password });
+    const viaApi = await signInViaApi(locals, getClientAddress(), {
+      email,
+      password,
+      ...captchaField(data),
+    });
     if (viaApi.result === 'ok') redirect(303, await afterSignIn(locals, next));
     if (viaApi.result === 'rate_limited') {
       const retryAfter = viaApi.retryAfter ?? 60;

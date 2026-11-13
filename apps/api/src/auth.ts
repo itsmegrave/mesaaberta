@@ -99,10 +99,20 @@ const statelessClient: MakeSupabase = (url, key, flow) =>
 /** The verifier the last PKCE flow stored (as auth-js stored it), or null when none was made. */
 const verifierOf = (flow: FlowStore) => flow.get(`${PKCE_STORAGE_KEY}-code-verifier`) ?? null;
 
+/**
+ * The Turnstile answer the form sent (`captchaToken`), handed on to Supabase, which checks it once
+ * CAPTCHA protection is on. Anything that is not a short string is no answer at all.
+ */
+const captchaTokenOf = (body: { captchaToken?: unknown } | null) =>
+  typeof body?.captchaToken === 'string' && body.captchaToken.length <= 4096
+    ? body.captchaToken
+    : null;
+
 /** The status the sign-in form shows for each refusal; the same as the web action's. */
 const SIGN_IN_STATUS = {
   invalid: 400,
   unconfirmed: 400,
+  captcha_failed: 400,
   suspended: 403,
   failed: 500,
   rate_limited: 429,
@@ -120,6 +130,7 @@ const NEW_PASSWORD_STATUS = {
 /** The status the sign-up form shows for each refusal; the same as the web action's. */
 const SIGN_UP_STATUS = {
   weak_password: 400,
+  captcha_failed: 400,
   failed: 500,
   rate_limited: 429,
 } as const satisfies Record<Exclude<SignUpResult, 'signed_in' | 'check_email'>, number>;
@@ -139,6 +150,7 @@ export function authRoutes(
     const body = (await c.req.json().catch(() => null)) as {
       email?: unknown;
       origin?: unknown;
+      captchaToken?: unknown;
     } | null;
     const parsed = emailSchema.safeParse({ email: body?.email });
     const origin = typeof body?.origin === 'string' ? body.origin : '';
@@ -158,10 +170,13 @@ export function authRoutes(
       const flow: FlowStore = new Map();
       const result = await requestPasswordReset(
         { supabase: makeSupabase(url, key, flow), log: logger },
-        { email: parsed.data.email, origin },
+        { email: parsed.data.email, origin, captchaToken: captchaTokenOf(body) },
       );
       if (result === 'sent') return c.json({ result, codeVerifier: verifierOf(flow) });
-      return c.json({ result }, result === 'rate_limited' ? 429 : 502);
+      return c.json(
+        { result },
+        result === 'rate_limited' ? 429 : result === 'captcha_failed' ? 400 : 502,
+      );
     } finally {
       await close();
     }
@@ -175,6 +190,7 @@ export function authRoutes(
     const body = (await c.req.json().catch(() => null)) as {
       email?: unknown;
       password?: unknown;
+      captchaToken?: unknown;
     } | null;
     const parsed = credentialsSchema.safeParse({ email: body?.email, password: body?.password });
     if (!parsed.success) return c.json({ error: 'invalid', message: 'invalid' }, 400);
@@ -188,7 +204,7 @@ export function authRoutes(
 
       const { result, session } = await signInForSession(
         { supabase: makeSupabase(url, key), db, log: logger, ip: ip || null },
-        parsed.data,
+        { ...parsed.data, captchaToken: captchaTokenOf(body) },
       );
       if (result !== 'ok') return c.json({ result }, SIGN_IN_STATUS[result]);
       return c.json({ result, session });
@@ -207,6 +223,7 @@ export function authRoutes(
       password?: unknown;
       origin?: unknown;
       next?: unknown;
+      captchaToken?: unknown;
     } | null;
     const parsed = credentialsSchema.safeParse({ email: body?.email, password: body?.password });
     const origin = typeof body?.origin === 'string' ? body.origin : '';
@@ -223,7 +240,13 @@ export function authRoutes(
       const flow: FlowStore = new Map();
       const { result, session } = await signUpForSession(
         { supabase: makeSupabase(url, key, flow), db, log: logger, ip: ip || null },
-        { email: parsed.data.email, password: parsed.data.password, origin, next },
+        {
+          email: parsed.data.email,
+          password: parsed.data.password,
+          origin,
+          next,
+          captchaToken: captchaTokenOf(body),
+        },
       );
       if (result === 'signed_in') return c.json({ result, session });
       if (result === 'check_email') return c.json({ result, codeVerifier: verifierOf(flow) });
