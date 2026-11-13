@@ -38,7 +38,10 @@ const answer = (decision: 'accept' | 'decline') =>
   ownerAction(
     z.object({}),
     [],
-    (_data, params) => [`/v1/partners/invitations/${encodeURIComponent(params.id)}/${decision}`, {}],
+    (_data, params) => [
+      `/v1/partners/invitations/${encodeURIComponent(params.id)}/${decision}`,
+      {},
+    ],
     { flagged: false },
   );
 

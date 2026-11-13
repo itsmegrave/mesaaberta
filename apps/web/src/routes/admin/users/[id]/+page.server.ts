@@ -29,7 +29,11 @@ export const load: PageServerLoad = async ({ locals, params, setHeaders, url }) 
       history: Awaited<ReturnType<typeof profileHistory>>;
       moderation: NonNullable<Awaited<ReturnType<typeof moderationOf>>>;
       badges: Awaited<ReturnType<typeof adminBadgesOf>> | null;
-    }>(locals, viewer.id, `/v1/admin-reads/users/${encodeURIComponent(params.id)}${withBadges ? '?badges=1' : ''}`),
+    }>(
+      locals,
+      viewer.id,
+      `/v1/admin-reads/users/${encodeURIComponent(params.id)}${withBadges ? '?badges=1' : ''}`,
+    ),
   );
   const { avatarPath, avatarUrl, bannedAt, bannedUntil, ...user } = profile;
   const filters = profileFilters(url.searchParams);
