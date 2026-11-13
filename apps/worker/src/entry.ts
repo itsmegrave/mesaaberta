@@ -5,6 +5,8 @@ import {
   sentryOptionsForApp,
   sentryReleaseFor,
 } from '@mesaaberta/core/observability/sentry-options';
+import { querySpans } from '@mesaaberta/core/observability/query-spans';
+import { observeQueries } from '@mesaaberta/core/server/db/client';
 import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
 import { setAppName, setTelemetrySink } from '@mesaaberta/core/server/logger';
 import { createWorker, type WorkerEnv } from './index';
@@ -19,6 +21,8 @@ setAppName('worker');
 // Carries the request id to every log line and outbox write of a run (Trello #278).
 setRequestContextStore(new AsyncLocalStorage());
 logInstalled();
+// Every query of a cron run or queue batch becomes a `db` span, so the sweep's time shows up.
+observeQueries(querySpans(Sentry));
 
 export default Sentry.withSentry(
   (env: WorkerEnv) => ({

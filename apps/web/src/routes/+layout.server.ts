@@ -61,12 +61,25 @@ export const load: LayoutServerLoad = async (event) => {
 
   try {
     const profile = await locals.getProfile();
-    const cacheIdentity = (await locals.getUser())?.id ?? 'anonymous';
-    const accountRead = await loadRead(event, 'account');
-    // The bell: how many are unread, and the latest few for its menu.
-    const withAchievements = profile ? await badgesEnabled(locals, profile) : false;
-    // The bell, the messages link and an admin's waiting suggestions, from the api Worker.
-    const shell = profile ? await readShell(locals, profile.id, withAchievements) : null;
+    const viewerFlags = profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {};
+    // Everything below needs only the profile, so it is read at once instead of one after another.
+    const [cacheIdentity, accountRead, shell, directories, beginners, overdrive] =
+      await Promise.all([
+        locals.getUser().then((user) => user?.id ?? 'anonymous'),
+        loadRead(event, 'account'),
+        // The bell, the messages link and an admin's waiting suggestions, from the api Worker.
+        profile
+          ? badgesEnabled(locals, profile).then((withAchievements) =>
+              readShell(locals, profile.id, withAchievements),
+            )
+          : null,
+        // Which directories the menus and the footer link to.
+        directoryFlags(locals),
+        // Iniciantes: the mark on table cards and pages, and the guide's links.
+        beginnersEnabled(locals),
+        // The Overdrive pedal (`use_overdrive_theme`), for the person reading or for visitors.
+        locals.flags.isEnabled('use_overdrive_theme', viewerFlags),
+      ]);
 
     return {
       authEnabled,
@@ -74,15 +87,9 @@ export const load: LayoutServerLoad = async (event) => {
       blogLive,
       cacheIdentity,
       accountRead,
-      // Which directories the menus and the footer link to.
-      directories: await directoryFlags(locals),
-      // Iniciantes: the mark on table cards and pages, and the guide's links.
-      beginners: await beginnersEnabled(locals),
-      // The Overdrive pedal (`use_overdrive_theme`), for the person reading or for visitors.
-      overdrive: await locals.flags.isEnabled(
-        'use_overdrive_theme',
-        profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},
-      ),
+      directories,
+      beginners,
+      overdrive,
       maintenance: false,
       maintenanceBypass,
       // Every time on the site is shown in this zone.
