@@ -31,7 +31,7 @@ describe('api changelog notice', () => {
   it('announces the day once the flag is on, and closes the connection', async () => {
     const opened = open();
     const response = await post(day, opened);
-    expect(await response.json()).toEqual({ announced: true });
+    expect(await response.json()).toEqual({ announced: true, settled: true });
     expect(announce).toHaveBeenCalledWith({}, day);
     expect(enabled).toHaveBeenCalledWith('use_changelog_notices');
     expect(opened.close).toHaveBeenCalledOnce();
@@ -39,12 +39,12 @@ describe('api changelog notice', () => {
 
   it('says so when the day already went out', async () => {
     announce.mockResolvedValueOnce(null);
-    expect(await (await post(day)).json()).toEqual({ announced: false });
+    expect(await (await post(day)).json()).toEqual({ announced: false, settled: true });
   });
 
   it('does nothing while the flag is off', async () => {
     enabled.mockResolvedValueOnce(false);
-    expect(await (await post(day)).json()).toEqual({ announced: false });
+    expect(await (await post(day)).json()).toEqual({ announced: false, settled: false });
     expect(announce).not.toHaveBeenCalled();
   });
 
