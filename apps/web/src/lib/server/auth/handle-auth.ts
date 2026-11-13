@@ -60,7 +60,12 @@ export const createHandleAuth =
         const user =
           SESSION_CHECK === 'local'
             ? await claimedUser(supabase)
-            : await supabase.auth.getUser().then(({ data, error }) => (error ? null : data.user));
+            : await supabase.auth
+                .getUser()
+                .then(({ data, error }) => (error ? null : data.user))
+                .then(async (found) =>
+                  found && (await sessionIsForSite(supabase)) ? found : null,
+                );
         if (!user) return null;
 
         event.locals.userId = user.id;
@@ -92,7 +97,7 @@ async function claimedUser(supabase: {
 }): Promise<User | null> {
   const { data, error } = await supabase.auth.getClaims();
   const claims = data?.claims;
-  if (error || !claims?.sub) return null;
+  if (error || !claims?.sub || !isSiteSession(claims)) return null;
   return {
     id: claims.sub,
     email: claims.email,
@@ -103,4 +108,46 @@ async function claimedUser(supabase: {
     is_anonymous: claims.is_anonymous,
     created_at: '',
   } as User;
+}
+
+/**
+ * Whether verified claims belong to a sign-in on this site, not to a token Supabase's OAuth 2.1
+ * server issued to some client (the MCP, or any client a person approved on /oauth/consent). Those
+ * carry `client_id` and are signed by the same project keys, so without this check a token handed
+ * to a third-party app would also open the site as that person, admin area included. The MCP
+ * Worker checks the opposite (it requires `client_id`).
+ */
+export function isSiteSession(claims: { aud?: unknown; client_id?: unknown }): boolean {
+  if (claims.client_id !== undefined && claims.client_id !== null && claims.client_id !== '')
+    return false;
+  const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
+  return audiences.includes('authenticated');
+}
+
+/** The same check on the cookie session that `getUser` just verified with Supabase. */
+async function sessionIsForSite(supabase: {
+  auth: Pick<ReturnType<typeof createServerClient>['auth'], 'getSession'>;
+}): Promise<boolean> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  const payload = token ? decodePayload(token) : null;
+  return payload !== null && isSiteSession(payload);
+}
+
+/** The payload of a JWT, unverified (only for a token Supabase has just vouched for). */
+function decodePayload(token: string): Record<string, unknown> | null {
+  const part = token.split('.')[1];
+  if (!part) return null;
+  try {
+    const base64 = part.replace(/-/g, '+').replace(/_/g, '/');
+    const json = new TextDecoder().decode(
+      Uint8Array.from(atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, '=')), (c) =>
+        c.charCodeAt(0),
+      ),
+    );
+    const value: unknown = JSON.parse(json);
+    return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
 }

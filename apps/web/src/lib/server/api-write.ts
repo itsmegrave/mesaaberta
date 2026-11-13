@@ -1,5 +1,6 @@
 import { error } from '@sveltejs/kit';
 import {
+  AdultOnly,
   AlreadyRated,
   AlreadyRegistered,
   DirectMessagesOff,
@@ -25,6 +26,7 @@ export function refusalOf(status: number, body: Record<string, unknown>): Error 
       typeof body.message === 'string' ? body.message : 'invalid',
     );
   if (status === 403 && body.error === 'table_concluded') return new TableConcluded();
+  if (status === 403 && body.error === 'adult_only') return new AdultOnly();
   if (status === 403 && body.error === 'forbidden') return new Forbidden();
   if (status === 404 && body.error === 'not_found') return new NotFound();
   if (status === 409 && body.error === 'table_full') return new TableFull();

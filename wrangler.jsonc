@@ -49,6 +49,9 @@
     // Blank: login is off until a Supabase project is configured (see "Sign-in" in the README).
     "SUPABASE_PUBLISHABLE_KEY": "",
     "SUPABASE_URL": "",
+    // Cloudflare Turnstile's public site key: blank keeps the CAPTCHA off the email forms. Set it,
+    // release, then turn on "CAPTCHA protection" in Supabase with the secret key (never the reverse).
+    "TURNSTILE_SITE_KEY": "",
   },
   // The database, through Hyperdrive (see "Database" in the README). The id is a placeholder: use
   // your own Hyperdrive config id when deploying. `localConnectionString` is what `wrangler dev`,

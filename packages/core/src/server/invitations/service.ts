@@ -15,6 +15,7 @@ import { recordEvent } from '../events/outbox';
 import { addTableMember } from '../messages/service';
 import { enforceRateLimit } from '../rate-limit';
 import { seatAvailability } from './seats';
+import { isMinorAtAdultTable } from '../registrations/age-gate';
 
 export type InvitationStatus = typeof playerInvitations.$inferSelect.status;
 type Invitation = typeof playerInvitations.$inferSelect;
@@ -147,7 +148,8 @@ export async function invitePlayer(
       playerId === actor.id ||
       table.status !== 'active' ||
       table.startsAt <= now ||
-      !(await canReceive(t, actor.id, playerId))
+      !(await canReceive(t, actor.id, playerId)) ||
+      (await isMinorAtAdultTable(t, table, playerId))
     )
       throw unavailable();
     const previous = await t
@@ -233,7 +235,11 @@ export async function respondToInvitation(
         status: 'expired' as const,
         eventIds: await finish(t, i, table, 'expired', null, now),
       };
-    if (table.status !== 'active' || !(await canReceive(t, i.gmId, i.playerId)))
+    if (
+      table.status !== 'active' ||
+      !(await canReceive(t, i.gmId, i.playerId)) ||
+      (await isMinorAtAdultTable(t, table, i.playerId))
+    )
       return {
         status: 'cancelled' as const,
         eventIds: await finish(t, i, table, 'cancelled', null, now, 'unavailable'),

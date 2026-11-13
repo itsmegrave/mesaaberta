@@ -47,7 +47,7 @@
     </div>
   {:else}
     <div class="grid gap-5">
-      <CredentialsForm mode="signup" {controller} />
+      <CredentialsForm mode="signup" {controller} captchaSiteKey={data.captchaSiteKey} />
 
       <AuthDivider />
 

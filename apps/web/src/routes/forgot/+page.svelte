@@ -6,6 +6,7 @@
   import { fromResult } from '#lib/forms/contract.js';
   import MAForm from '#lib/components/ui/MAForm.svelte';
   import EmailField from '#lib/components/ui/EmailField.svelte';
+  import CaptchaField from '#lib/components/CaptchaField.svelte';
   import { resolve } from '$app/paths';
   import { emailSchema } from '#lib/auth/credentials.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -45,7 +46,9 @@
         text={controller.message
           ? controller.message.code === 'rate_limited'
             ? m.auth_error_rate_limited()
-            : m.auth_error_failed()
+            : controller.message.code === 'captcha_failed'
+              ? m.auth_error_captcha()
+              : m.auth_error_failed()
           : null}
       />
 
@@ -53,6 +56,10 @@
         bind:value={() => controller.values.email, (value) => controller.change('email', value)}
         error={controller.errors.email ? m.auth_error_email() : undefined}
       />
+
+      {#if data.captchaSiteKey}
+        <CaptchaField siteKey={data.captchaSiteKey} resetOn={controller.message} />
+      {/if}
 
       <div>
         <MAButton

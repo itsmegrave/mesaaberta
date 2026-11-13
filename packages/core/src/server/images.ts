@@ -1,6 +1,7 @@
 import { Invalid } from './errors';
 import { imageSize, MAX_PIXELS, optimizeImage, type OptimizeOptions } from './image-optimize';
 import type { Logger } from './logger';
+import { withoutMetadata } from './image-metadata';
 
 // One limit for the form's check and the server's.
 export { MAX_IMAGE_BYTES } from '../forms/files';
@@ -71,7 +72,8 @@ export const optimizeOptionsFor = (path: string): OptimizeOptions =>
 
 /**
  * The picture as a WebP no bigger than its place needs, under the same name with a `.webp` end.
- * Compression must never cost someone their upload: when it fails, the picture is stored as sent.
+ * Compression must never cost someone their upload: when it fails, the picture is stored as sent,
+ * minus its hidden data (EXIF, GPS position and the like; see `withoutMetadata`).
  */
 export async function compressed(
   image: PreparedImage,
@@ -83,7 +85,7 @@ export async function compressed(
       image.contentType,
       optimizeOptionsFor(image.path),
     );
-    if (!result) return image;
+    if (!result) return asSent(image);
     return {
       bytes: result.bytes,
       contentType: result.type,
@@ -96,9 +98,15 @@ export async function compressed(
       bytesBefore: image.bytes.length,
       error,
     });
-    return image;
+    return asSent(image);
   }
 }
+
+/** The picture as it was sent, without the metadata it carried. */
+const asSent = (image: PreparedImage): PreparedImage => ({
+  ...image,
+  bytes: withoutMetadata(image.bytes, image.contentType),
+});
 
 /**
  * How long browsers keep a stored picture. Replacements get a new UUID URL, so browsers can reuse

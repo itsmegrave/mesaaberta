@@ -13,7 +13,7 @@
     "@modelcontextprotocol/sdk": "^1.32.2",
     "@sentry/cloudflare": "*",
     "@sentry/core": "*",
-    "hono": "^4.13.13",
+    "hono": "^4.13.16",
     "jose": "^6.2.14",
     "zod": "*"
   }
