@@ -32,7 +32,7 @@ export const load: PageServerLoad = async ({ locals, url, params }) => {
 const answer = (decision: 'accept' | 'decline') =>
   moderationAction(z.object({}), [], {
     path: (event) =>
-      `/v1/places/hosts/invitations/${encodeURIComponent(event.params.id)}/${decision}`,
+      `/v1/places/hosts/invitations/${encodeURIComponent(event.params.id ?? '')}/${decision}`,
   });
 
 export const actions: Actions = {
