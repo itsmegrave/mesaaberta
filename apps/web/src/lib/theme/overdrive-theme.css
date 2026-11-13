@@ -7,7 +7,8 @@
 [data-theme='overdrive'] {
   --spacing: 0.25rem; /* 0.22rem; | 0.25rem; | 0.28rem; */
   --text-scaling: 1; /* 1.067 */
-  --typo-base--font-family: system-ui;
+  /* Grave's pick for Overdrive's running text: Chakra Petch, squared like a game screen. */
+  --typo-base--font-family: 'Chakra Petch', system-ui, sans-serif;
   --typo-base--font-size: inherit;
   --typo-base--color-light: var(--color-surface-950);
   --typo-base--color-dark: var(--color-surface-50);

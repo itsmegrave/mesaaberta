@@ -3,6 +3,11 @@
    to [data-theme='overdrive'] except the pedal's own pieces, which the classic theme draws too.
    Offsets, tilts and dot sizes are illustration geometry, so they are plain px/deg values. */
 @import '@fontsource/bangers';
+/* The running text (overdrive-theme.css); latin covers Portuguese. */
+@import '@fontsource/chakra-petch/latin-400.css';
+@import '@fontsource/chakra-petch/latin-500.css';
+@import '@fontsource/chakra-petch/latin-600.css';
+@import '@fontsource/chakra-petch/latin-700.css';
 
 @theme {
   /* Overdrive's titles, buttons and stickers. Loaded only when the theme paints it. */
