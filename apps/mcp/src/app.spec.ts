@@ -3,7 +3,7 @@ import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type JWK } from
 import { createFlags } from '@mesaaberta/core/server/flags/flags';
 import type { FlagName } from '@mesaaberta/core/server/flags/registry';
 import { createMcp, type McpEnv } from './app';
-import { TOOL_NAMES, WRITE_TOOL_NAMES } from './tools';
+import { DESTRUCTIVE_TOOL_NAMES, TOOL_NAMES, WRITE_TOOL_NAMES } from './tools';
 
 const SUPABASE = 'https://project.supabase.co';
 const ISSUER = `${SUPABASE}/auth/v1`;
@@ -181,7 +181,10 @@ describe('the read tools', () => {
     const writes = new Set<string>(WRITE_TOOL_NAMES);
     for (const tool of result.tools) {
       expect(tool.annotations?.readOnlyHint, tool.name).toBe(!writes.has(tool.name));
-      if (writes.has(tool.name)) expect(tool.annotations?.destructiveHint, tool.name).toBe(false);
+      if (writes.has(tool.name))
+        expect(tool.annotations?.destructiveHint, tool.name).toBe(
+          (DESTRUCTIVE_TOOL_NAMES as readonly string[]).includes(tool.name),
+        );
     }
   });
 
@@ -398,5 +401,153 @@ describe('send_announcement', () => {
       (await call('send_announcement', { ...news, link: 'https://example.com' })).isError,
     ).toBe(true);
     expect(seen.slice(before).every((request) => request.method === 'GET')).toBe(true);
+  });
+});
+
+describe('polls', () => {
+  const PERSON = '00000000-0000-4000-8000-0000000000bb';
+  const poll = {
+    question: 'Curtiu o tema Overdrive?',
+    options: ['Amei', 'Achei ok', 'Não curti'],
+    people: ['grave', PERSON],
+  };
+
+  it('only counts the reach until it is confirmed', async () => {
+    const { call, seen } = setUp({
+      answers: { '/v1/admin/widgets/reach': { body: { eventIds: [], reach: 2 } } },
+    });
+    expect(await call('create_poll', { ...poll, include: ['player'] })).toEqual({
+      isError: false,
+      body: { step: 'confirm', reach: 2 },
+    });
+    expect(seen.filter((request) => request.method === 'POST')).toEqual([
+      {
+        path: '/v1/admin/widgets/reach',
+        actor: USER,
+        method: 'POST',
+        body: { 'include:player': 'on', people: `grave\n${PERSON}` },
+      },
+    ]);
+  });
+
+  it('creates and publishes when confirmed, placed everywhere by default', async () => {
+    const { call, seen } = setUp({
+      answers: {
+        '/v1/admin/widgets/create': { body: { eventIds: [], created: 'w1' } },
+        '/v1/admin/widgets/publish': { body: { eventIds: [], published: 'w1', reach: 2 } },
+      },
+    });
+    expect(await call('create_poll', { ...poll, confirmed: true })).toEqual({
+      isError: false,
+      body: { step: 'published', id: 'w1', reach: 2 },
+    });
+    const posts = seen.filter((request) => request.method === 'POST');
+    expect(posts.map((request) => request.path)).toEqual([
+      '/v1/admin/widgets/create',
+      '/v1/admin/widgets/publish',
+    ]);
+    expect(posts[0].body).toEqual({
+      title: poll.question,
+      question: poll.question,
+      description: '',
+      choice: 'single',
+      maxChoices: '',
+      results: 'admin',
+      options: 'Amei\nAchei ok\nNão curti',
+      priority: '0',
+      'placement:everywhere': 'on',
+      people: `grave\n${PERSON}`,
+    });
+    expect(posts[1].body).toEqual({ id: 'w1' });
+  });
+
+  it('says a poll that could not be published waits as a draft', async () => {
+    const { call } = setUp({
+      answers: {
+        '/v1/admin/widgets/create': { body: { eventIds: [], created: 'w1' } },
+        '/v1/admin/widgets/publish': { body: { eventIds: [], refused: 'placement' } },
+      },
+    });
+    expect(await call('create_poll', { ...poll, confirmed: true })).toEqual({
+      isError: true,
+      body: { id: 'w1', pending: true, error: 'placement' },
+    });
+  });
+
+  it('names the people who match nobody, at either step', async () => {
+    const refusedPeople = { eventIds: [], refused: 'people', unknown: ['grave'] };
+    const { call } = setUp({
+      answers: {
+        '/v1/admin/widgets/reach': { body: refusedPeople },
+        '/v1/admin/widgets/create': { body: refusedPeople },
+      },
+    });
+    const unknown = {
+      isError: true,
+      body: { error: 'invalid', field: 'people', code: 'unknown', unknown: ['grave'] },
+    };
+    expect(await call('create_poll', poll)).toEqual(unknown);
+    expect(await call('create_poll', { ...poll, confirmed: true })).toEqual(unknown);
+  });
+
+  it('lists polls with a count of the people picked by hand, not who they are', async () => {
+    const { call } = setUp({
+      answers: {
+        '/v1/admin/widgets/panel': {
+          body: {
+            panel: {
+              polls: [
+                {
+                  id: 'w1',
+                  title: 'Overdrive',
+                  status: 'live',
+                  question: poll.question,
+                  choice: 'single',
+                  results: 'admin',
+                  placements: ['everywhere'],
+                  audience: { include: [], exclude: [], people: [USER, PERSON] },
+                  reach: 2,
+                  publishedReach: 2,
+                  publishedAt: '2026-11-13T12:00:00.000Z',
+                  voters: 1,
+                  dismissals: 0,
+                  options: [{ id: 'o1', label: 'Amei', hidden: false, votes: 1 }],
+                  priority: 0,
+                },
+              ],
+            },
+          },
+        },
+      },
+    });
+    const { body } = await call('list_polls', {});
+    expect(body).toEqual({
+      polls: [
+        expect.objectContaining({
+          id: 'w1',
+          audience: { include: [], exclude: [], people: 2 },
+          voters: 1,
+          options: [{ id: 'o1', label: 'Amei', hidden: false, votes: 1 }],
+        }),
+      ],
+    });
+  });
+
+  it('closes a poll and says when its state refuses it', async () => {
+    const id = '00000000-0000-4000-8000-0000000000cc';
+    const closing = setUp({
+      answers: { '/v1/admin/widgets/close': { body: { eventIds: [], moved: 'closed' } } },
+    });
+    expect(await closing.call('close_poll', { id })).toEqual({
+      isError: false,
+      body: { id, status: 'closed' },
+    });
+    const refusing = setUp({
+      answers: { '/v1/admin/widgets/close': { body: { eventIds: [], refused: 'state' } } },
+    });
+    expect(await refusing.call('close_poll', { id })).toEqual({
+      isError: true,
+      body: { error: 'refused', reason: 'state' },
+    });
   });
 });
