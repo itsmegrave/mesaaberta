@@ -875,7 +875,7 @@
   "table_error_full": "A mesa lotou. Você pode tentar de novo se abrir uma vaga.",
   "table_error_already": "Você já tem um lugar nesta mesa.",
   "table_error_forbidden": "Você não tem permissão para fazer isso.",
-  "table_error_adult_only": "Esta mesa é 18+: só quem tem 18 anos ou mais no perfil pode ter vaga nela.",
+  "table_error_adult_only": "Esta mesa é 18+: só quem informou no perfil ter 18 anos ou mais pode ter vaga nela. Confira sua faixa de idade no perfil.",
   "table_error_other": "Não deu certo. Tente de novo.",
   "rating_gm_average": "Nota de mestragem",
   "gm_rating_new": "Estreia na mestragem",

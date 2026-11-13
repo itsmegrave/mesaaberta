@@ -485,6 +485,16 @@ describe('18-rated tables and players under 18', () => {
     expect(await statusOf(table.id, minor.id)).toBeUndefined();
   });
 
+  it('treats a blank age range as under 18 until the player fills it in', async () => {
+    const unknown = player(9);
+    await test.db.insert(profiles).values({ id: unknown.id, username: 'p9' });
+    const table = await makeTable({ contentRating: '18' });
+    await expect(joinTable(test.db, unknown, table.slug)).rejects.toThrow(AdultOnly);
+
+    await test.db.update(profiles).set({ ageRange: '18_24' }).where(eq(profiles.id, unknown.id));
+    expect((await joinTable(test.db, unknown, table.slug)).status).toBe('confirmed');
+  });
+
   it('refuses the request too on a table that approves each player', async () => {
     const table = await makeTable({ contentRating: '18', joinMode: 'approval' });
     await expect(joinTable(test.db, minor, table.slug)).rejects.toThrow(AdultOnly);
