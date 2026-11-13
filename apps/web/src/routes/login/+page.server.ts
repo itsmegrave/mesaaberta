@@ -8,6 +8,13 @@ import type { SignInResult } from '@mesaaberta/core/server/auth/email';
 import { callApiRaw } from '#lib/server/api-client.js';
 import { afterSignIn } from '@mesaaberta/core/server/auth/onboarding';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
+import {
+  finishPasskeyLogin,
+  parseCredential,
+  signInChallenge,
+} from '@mesaaberta/core/server/auth/passkeys';
+import { passkeyAnswerSchema } from '#lib/auth/passkey.js';
+import { finishLoginViaApi } from '#lib/server/auth/finish-login.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -21,8 +28,13 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     confirmHint: url.searchParams.get('error') === 'exchange_failed',
     suspended: url.searchParams.get('error') === 'suspended',
     form: initialForm({ email: '', password: '', next }),
+    passkeys: await passkeysOn(locals),
   };
 };
+
+/** "Entrar com passkey" (`use_passkeys`), evaluated for the anonymous visitor. */
+const passkeysOn = (locals: App.Locals) =>
+  locals.supabase ? locals.flags.isEnabled('use_passkeys') : Promise.resolve(false);
 
 const STATUS = {
   invalid: 400,
@@ -93,5 +105,46 @@ export const actions: Actions = {
       return formMessage(form, { code: 'rate_limited', retryAfter }, { status: 429 });
     }
     return formMessage(form, { code: viaApi.result }, { status: STATUS[viaApi.result] });
+  },
+
+  // Step one of "Entrar com passkey": a challenge from Supabase for the browser's passkey prompt.
+  // No account is named; the browser offers the passkeys it holds for this site.
+  passkeyOptions: async ({ request, locals }) => {
+    if (!locals.supabase || !(await passkeysOn(locals))) return fail(404, { passkey: 'off' });
+    const captcha = (await request.formData()).get('captchaToken');
+    const challenge = await signInChallenge(
+      locals.supabase,
+      locals.log,
+      typeof captcha === 'string' && captcha ? captcha : undefined,
+    );
+    if (!challenge) return fail(503, { passkey: 'unavailable' });
+    return { challenge };
+  },
+
+  // Step two: the browser's answer. Supabase checks it and makes the session (the cookies); the
+  // api then finishes the sign-in like a provider's, and any refusal there signs the person out.
+  passkey: async ({ request, locals, getClientAddress }) => {
+    if (!locals.supabase || !(await passkeysOn(locals))) return fail(404, { passkey: 'off' });
+    const form = validateStringForm(await request.formData(), passkeyAnswerSchema, [
+      'challengeId',
+      'credential',
+      'next',
+    ]);
+    const credential = form.valid ? parseCredential(form.data.credential) : null;
+    if (!credential) return fail(400, { passkey: 'invalid' });
+
+    const ip = getClientAddress();
+    const target = await finishPasskeyLogin(
+      {
+        supabase: locals.supabase,
+        db: null,
+        log: locals.log,
+        ip,
+        remote: finishLoginViaApi(locals, ip),
+      },
+      { challengeId: form.data.challengeId, credential, next: form.data.next || null },
+    );
+    if (!target) return fail(400, { passkey: 'refused' });
+    redirect(303, target);
   },
 };

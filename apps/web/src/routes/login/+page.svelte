@@ -7,6 +7,7 @@
   import ProviderButtons from '#lib/components/ui/ProviderButtons.svelte';
   import AuthDivider from '#lib/components/ui/AuthDivider.svelte';
   import AuthShell from '#lib/components/ui/AuthShell.svelte';
+  import PasskeySignIn from './components/PasskeySignIn.svelte';
   import { credentialsSchema } from '#lib/auth/credentials.js';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -49,7 +50,12 @@
 
       <AuthDivider />
 
-      <ProviderButtons next={data.next} />
+      <div class="grid gap-3">
+        <ProviderButtons next={data.next} />
+        {#if data.passkeys}
+          <PasskeySignIn next={data.next} />
+        {/if}
+      </div>
 
       <LegalConsent mode="login" />
 
