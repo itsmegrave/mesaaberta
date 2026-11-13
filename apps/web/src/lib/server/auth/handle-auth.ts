@@ -98,7 +98,6 @@ async function claimedUser(supabase: {
     email: claims.email,
     phone: claims.phone,
     aud: Array.isArray(claims.aud) ? (claims.aud[0] ?? '') : (claims.aud ?? ''),
-    role: claims.role,
     app_metadata: claims.app_metadata ?? {},
     user_metadata: claims.user_metadata ?? {},
     is_anonymous: claims.is_anonymous,
