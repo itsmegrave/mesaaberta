@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { withQueryTiming } from './query-timing';
+import { withQueryObserver, withQueryTiming } from './query-timing';
 
 /** A client shaped like postgres.js: callable, with `unsafe` and `begin`, and a lazy query. */
 function fakeClient() {
@@ -71,5 +71,28 @@ describe('withQueryTiming', () => {
     await client.end();
     expect(inner.end).toHaveBeenCalledOnce();
     expect(client()).toBe('tagged');
+  });
+});
+
+describe('withQueryObserver', () => {
+  it('hands the observer the SQL when sent and the error when it fails', async () => {
+    const seen: string[] = [];
+    const client = withQueryObserver(fakeClient(), (sql) => {
+      seen.push(`start ${sql}`);
+      return (error) => seen.push(error ? `fail ${sql}` : `ok ${sql}`);
+    });
+
+    await client.unsafe('select 1');
+    await expect(client.unsafe('boom')).rejects.toThrow('boom');
+    await client.begin(async (sql) => sql.unsafe('select 2'));
+
+    expect(seen).toEqual([
+      'start select 1',
+      'ok select 1',
+      'start boom',
+      'fail boom',
+      'start select 2',
+      'ok select 2',
+    ]);
   });
 });

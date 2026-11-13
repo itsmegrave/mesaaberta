@@ -48,6 +48,10 @@ const COUNTS = new Set([
   'searched',
   'found',
   'bodyBytes',
+  // A stored picture's size before and after it became a WebP, and how many a run converted.
+  'bytesBefore',
+  'bytesAfter',
+  'converted',
 ]);
 const LABELS = new Set([
   'event',
@@ -72,6 +76,9 @@ const LABELS = new Set([
   'placement',
   // The MCP tool a call ran (`search_tables`), never its arguments.
   'tool',
+  // A stored picture's Storage bucket and type (`image/png`), never its path.
+  'bucket',
+  'imageType',
 ]);
 const IDS = new Set(['requestId', 'actionId', 'eventId', 'tableId', 'registrationId', 'userId']);
 /**

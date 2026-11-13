@@ -14,14 +14,23 @@ import { sessionsFromJson } from '../tables/sessions-json';
 export const read = async ({ locals, params }: RequestEvent) => {
   const user = await locals.getUser();
   const signedIn = user !== null;
-  const profile = user ? await locals.getProfile().catch(() => null) : null;
+  // The table, the profile and a pending invitation are read at once, not one after another.
+  const profileRead = user ? locals.getProfile().catch(() => null) : Promise.resolve(null);
+  const invitationRead = profileRead.then((profile) =>
+    profile ? pendingInvitationFor(locals, profile, params.slug!) : null,
+  );
+  // Awaited below once the table is known; a table that is not there is the page's 404 first.
+  invitationRead.catch(() => undefined);
   // The api reads the table (visitors too). Unknown, disabled or someone else's draft: its 404,
   // which becomes the page's.
-  const remote = await readFromApi<NonNullable<Awaited<ReturnType<typeof readDetail>>>>(
-    locals,
-    user?.id ?? null,
-    `/v1/reads/detail/${encodeURIComponent(params.slug!)}`,
-  );
+  const [remote, profile] = await Promise.all([
+    readFromApi<NonNullable<Awaited<ReturnType<typeof readDetail>>>>(
+      locals,
+      user?.id ?? null,
+      `/v1/reads/detail/${encodeURIComponent(params.slug!)}`,
+    ),
+    profileRead,
+  ]);
   // JSON turned the two dates into strings; the page gets them as dates.
   const detail = {
     ...remote,
@@ -61,7 +70,7 @@ export const read = async ({ locals, params }: RequestEvent) => {
     // The rating drawn as its ClassInd symbol on the cover or by the title (`use_content_rating_symbol`).
     ratingSymbol: await contentRatingSymbolShown(locals, profile),
     signedIn,
-    invitation: profile ? await pendingInvitationFor(locals, profile, params.slug!) : null,
+    invitation: await invitationRead,
     // The "Onde jogar" place it happens at, while the places are on and that place is listed.
     place: place && (await directoryEnabled(locals, 'places')) ? place : null,
     // "Adicionar à agenda" for the GM and confirmed players (`use_table_calendar`).

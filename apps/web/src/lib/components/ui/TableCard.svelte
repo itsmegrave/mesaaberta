@@ -53,12 +53,15 @@
   /**
    * `level`: the title's heading level, one below the heading the card sits under.
    * `markBeginners`: whether a table tagged "Iniciantes" shows the mark (`use_beginner_tables`).
+   * `priority`: the card's cover is likely the biggest thing on screen when the page opens (the
+   * first card of a list), so the browser fetches it first instead of lazily.
    */
   let {
     table,
     level = 'h3',
     markBeginners = false,
-  }: { table: Table; level?: 'h2' | 'h3'; markBeginners?: boolean } = $props();
+    priority = false,
+  }: { table: Table; level?: 'h2' | 'h3'; markBeginners?: boolean; priority?: boolean } = $props();
   const beginner = $derived(markBeginners && isBeginnerTable(table.tags));
 
   const locale = getLocale();
@@ -102,7 +105,8 @@
       <img
         src={table.imageUrl}
         alt=""
-        loading="lazy"
+        loading={priority ? 'eager' : 'lazy'}
+        fetchpriority={priority ? 'high' : 'auto'}
         decoding="async"
         referrerpolicy="no-referrer"
         class="absolute inset-0 size-full object-cover"

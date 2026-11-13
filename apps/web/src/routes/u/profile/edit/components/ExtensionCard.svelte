@@ -17,7 +17,8 @@
               resourceType: 'settings',
               resourceId: card.kind,
             });
-            const Sentry = await import('@sentry/sveltekit');
+            // `@sentry/core`, not the SDK: a dynamic import keeps every export (Replay too).
+            const Sentry = await import('@sentry/core');
             Sentry.captureException(failure, {
               tags: { resourceType: 'settings', resourceId: card.kind },
             });

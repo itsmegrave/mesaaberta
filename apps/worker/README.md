@@ -5,7 +5,9 @@ event-delivery graph from `@mesaaberta/core`, the same code the web Worker dispa
 
 **Status: owns the crons.** It has no routes. The web Worker's `triggers.crons` is empty, this
 Worker runs the event sweep (`*/5 * * * *`), the daily import (`0 4 * * *`) and the system logo
-search (`*/10 * * * *`, ten systems a run, off with `LOGO_SEARCH=off`; it has no Sentry monitor), and
+search (`*/10 * * * *`, ten systems a run, off with `LOGO_SEARCH=off`; it has no Sentry monitor). The
+same ten-minute run turns stored PNG and JPEG pictures into WebP, five a run, until none is left
+(off with `IMAGE_BACKFILL=off`; the old files stay in Storage). And
 `EVENT_POLLER` is off.
 
 ## Cutover (done in one release)

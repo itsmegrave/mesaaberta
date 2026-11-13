@@ -1,5 +1,6 @@
 import { currentRequestId, REQUEST_ID_HEADER } from '@mesaaberta/contracts';
 import { logger, type Logger } from '@mesaaberta/core/server/logger';
+import * as Sentry from '@sentry/sveltekit';
 
 /** The Service Binding to the api Worker (`env.API`); absent until the api is deployed and bound. */
 export type ApiBinding = { fetch: (request: Request) => Promise<Response> };
@@ -53,20 +54,39 @@ export async function sendToApi(
   // With a Service Binding the host is never resolved: it routes by binding, not by name.
   const send = binding ? binding.fetch.bind(binding) : (request: Request) => fetch(request);
   const origin = binding ? 'https://api.internal' : remote!.API_URL!.replace(/\/$/, '');
-  return send(
-    new Request(`${origin}${path}`, {
-      method,
-      headers: {
-        ...headers,
-        ...(remote ? { 'x-internal-token': remote.API_INTERNAL_TOKEN! } : {}),
-        ...(actorId ? { 'x-actor-id': actorId } : {}),
-        // The same request id on both sides, so the api's lines join the web request's.
-        ...(requestId ? { [REQUEST_ID_HEADER]: requestId } : {}),
-        ...(json === undefined ? {} : { 'content-type': 'application/json' }),
-      },
-      ...(json === undefined ? {} : { body: JSON.stringify(json) }),
-      signal: AbortSignal.timeout(25_000),
-    }),
+  // A Service Binding call is not a global `fetch`, so Sentry would not see it: one span per call,
+  // and the trace headers, so the api's own trace (and its db spans) joins this request's.
+  return Sentry.startSpan(
+    {
+      op: 'http.client',
+      name: `${method} ${routeTemplate(path)}`,
+      attributes: { 'http.request.method': method },
+    },
+    () =>
+      send(
+        new Request(`${origin}${path}`, {
+          method,
+          headers: {
+            ...headers,
+            ...traceHeaders(),
+            ...(remote ? { 'x-internal-token': remote.API_INTERNAL_TOKEN! } : {}),
+            ...(actorId ? { 'x-actor-id': actorId } : {}),
+            // The same request id on both sides, so the api's lines join the web request's.
+            ...(requestId ? { [REQUEST_ID_HEADER]: requestId } : {}),
+            ...(json === undefined ? {} : { 'content-type': 'application/json' }),
+          },
+          ...(json === undefined ? {} : { body: JSON.stringify(json) }),
+          signal: AbortSignal.timeout(25_000),
+        }),
+      ),
+  );
+}
+
+/** `sentry-trace` and `baggage` for the active span; none when Sentry is off. */
+function traceHeaders(): Record<string, string> {
+  const data = Sentry.getTraceData() as Record<string, string | undefined>;
+  return Object.fromEntries(
+    Object.entries(data).filter((entry): entry is [string, string] => Boolean(entry[1])),
   );
 }
 

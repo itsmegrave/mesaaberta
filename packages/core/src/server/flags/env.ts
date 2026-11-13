@@ -1,5 +1,8 @@
 import { createFlags, type Flags } from './flags';
-import { growthBookPayload } from './payload';
+import { growthBookPayload, isolateCache } from './payload';
+
+// Kept in this isolate, so each sweep and each extension publisher doesn't fetch the payload again.
+const cache = isolateCache();
 
 type Env = { GROWTHBOOK_API_HOST?: string; GROWTHBOOK_CLIENT_KEY?: string };
 
@@ -18,6 +21,7 @@ export function flagsFromEnv(
           apiHost: env.GROWTHBOOK_API_HOST,
           clientKey: env.GROWTHBOOK_CLIENT_KEY,
           fetch,
+          cache,
           waitUntil: () => {},
         })
       : async () => null,

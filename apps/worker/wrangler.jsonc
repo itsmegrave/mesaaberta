@@ -31,6 +31,8 @@
     "QUEUE_LIVE_HANDLERS": "",
     // "off" stops the background logo search; blank runs it (admins review every find).
     "LOGO_SEARCH": "",
+    // "off" stops turning stored PNGs and JPEGs into WebP; blank runs it, five pictures a run.
+    "IMAGE_BACKFILL": "",
   },
   "hyperdrive": [
     {
