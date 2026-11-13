@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { growthBookPayload, type PayloadCache } from './payload';
 
 const apiHost = 'https://cdn.growthbook.io';
@@ -16,7 +16,7 @@ const memoryCache = (): PayloadCache => {
   };
 };
 
-const setup = (fetch: typeof globalThis.fetch, cache?: PayloadCache) => {
+const setup = (fetch: typeof globalThis.fetch, cache?: PayloadCache, ttlSeconds?: number) => {
   const pending: Promise<unknown>[] = [];
   const load = growthBookPayload({
     apiHost,
@@ -25,6 +25,7 @@ const setup = (fetch: typeof globalThis.fetch, cache?: PayloadCache) => {
     cache,
     waitUntil: (promise) => void pending.push(promise),
     timeoutMs: 50,
+    ttlSeconds,
   });
   return { load, settled: () => Promise.all(pending) };
 };
@@ -83,5 +84,42 @@ describe('growthBookPayload', () => {
 
     expect(fetch).toHaveBeenCalledTimes(2);
     expect(second).toEqual(body);
+  });
+
+  describe('once the stored payload is older than its TTL', () => {
+    afterEach(() => vi.useRealTimers());
+
+    it('serves it at once and stores a fresh one after the answer', async () => {
+      const cache = memoryCache();
+      const fresh = { ...body, features: { use_table_image: { defaultValue: false } } };
+      const fetch = vi
+        .fn<typeof globalThis.fetch>()
+        .mockResolvedValueOnce(json(body))
+        .mockResolvedValueOnce(json(fresh));
+      const first = setup(fetch, cache, 300);
+      await first.load();
+      await first.settled();
+
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(Date.now() + 301_000);
+      const second = setup(fetch, cache, 300);
+      expect(await second.load()).toEqual(body);
+      await second.settled();
+
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(await setup(fetch, cache, 300).load()).toEqual(fresh);
+      expect(fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('reads a payload stored before the envelope, and refreshes it', async () => {
+      const cache = memoryCache();
+      await cache.set('https://cdn.growthbook.io/api/features/sdk-test', JSON.stringify(body), 60);
+      const fetch = vi.fn<typeof globalThis.fetch>(async () => json(body));
+      const run = setup(fetch, cache);
+
+      expect(await run.load()).toEqual(body);
+      await run.settled();
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
   });
 });
