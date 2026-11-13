@@ -126,6 +126,12 @@ export const flagDefaults = {
   // Off: its pages are a 404, the menus leave it out and nothing is answered. Signed-in people
   // only. Targeted by the person's id.
   use_matchmaking: false,
+  // Combinar's graph, a new feature (created on for everyone): people who played a table together
+  // (old tables too) stay out of each other's deck for MATCH_PLAYED_DAYS, Quem já jogou comigo
+  // lists them, people in common come first in the deck, and two who matched and have not played
+  // get a bell reminder (the sweep). Off: none of it. Targeted by the person's id; the sweep asks
+  // anonymously.
+  use_play_graph: false,
   // The westmarch (open table) kind, a new feature (created on for everyone): a roster larger than
   // any one session. Off: the form does not offer it and refuses it; tables that are one stay as
   // they are. Targeted by the person's id.

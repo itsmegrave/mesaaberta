@@ -2047,9 +2047,9 @@ export const matchCards = pgTable(
 ).enableRLS();
 
 // One person's answer about another's card: `yes` (Quero jogar junto) or not (Agora não). Never
-// shown to the person answered about. A no hides them for MATCH_PASS_DAYS; a yes stays until it
-// makes a match or is undone. Deleted after MATCH_ANSWER_DAYS (the sweep) and when the person
-// switches their card off.
+// shown to the person answered about. An answer hides them for MATCH_PASS_DAYS (a month), then
+// they come back; a yes keeps counting towards a match until it is pruned. Deleted after
+// MATCH_ANSWER_DAYS (the sweep) and when the person switches their card off.
 export const matchAnswers = pgTable(
   'match_answers',
   {
@@ -2086,6 +2086,10 @@ export const matches = pgTable(
     endedAt: timestamp('ended_at', { withTimezone: true }),
     // Who undid it. Not a foreign key: it is one of the two.
     endedBy: uuid('ended_by'),
+    // "Vocês combinaram e ainda não jogaram" bell reminders sent so far, and when the last went
+    // (`remindUnplayedMatches`). Set to the maximum once the two play together.
+    reminders: smallint('reminders').notNull().default(0),
+    remindedAt: timestamp('reminded_at', { withTimezone: true }),
   },
   (match) => [
     uniqueIndex('matches_pair_unique').on(match.profileA, match.profileB),

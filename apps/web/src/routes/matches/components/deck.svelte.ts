@@ -22,6 +22,8 @@ export function deckState(cards: () => MatchPerson[], left: () => number) {
   const answered = new SvelteSet<string>();
   let history = $state<string[]>([]);
   let matched = $state<MatchPerson | null>(null);
+  /** The last answer's side, for the way the card leaves. */
+  let exit = $state<'yes' | 'no' | null>(null);
   let used = $state(0);
 
   // A fresh load already leaves out what was answered and counts it in what is left.
@@ -56,6 +58,7 @@ export function deckState(cards: () => MatchPerson[], left: () => number) {
     const top = people[0];
     if (!top || answering.isPending) return;
     // The card leaves at once; a refusal brings the deck back from the server.
+    exit = yes ? 'yes' : 'no';
     answered.add(top.username);
     history = [...history, top.username];
     used += 1;
@@ -84,6 +87,8 @@ export function deckState(cards: () => MatchPerson[], left: () => number) {
 
   async function undo() {
     if (undoing.isPending) return;
+    // The card on top steps aside for the one coming back, without flying.
+    exit = null;
     try {
       const result = await undoing.mutateAsync();
       if (result.type !== 'success') throw new Error('undo failed');
@@ -106,6 +111,9 @@ export function deckState(cards: () => MatchPerson[], left: () => number) {
     /** Answers given here since the load. */
     get used() {
       return used;
+    },
+    get exit() {
+      return exit;
     },
     get matched() {
       return matched;
@@ -164,12 +172,20 @@ export function swipe(
       if (!start || event.pointerId !== start.id) return;
       start = null;
       const { onanswer, onmore, onmove } = options();
-      if (Math.abs(dx) >= SWIPE_AT) onanswer(dx > 0);
+      const answered = Math.abs(dx) >= SWIPE_AT;
+      // An answered card flies on from where it was let go (`throwCard` reads the offset); one the
+      // deck did not take (still busy) springs back.
+      node.dataset.dx = String(dx);
+      if (answered) onanswer(dx > 0);
       else if (-dy >= SWIPE_AT) onmore();
       dx = 0;
       dy = 0;
       onmove(0);
-      place(0, 0, true);
+      if (!answered) place(0, 0, true);
+      else
+        setTimeout(() => {
+          if (!node.dataset.leaving) place(0, 0, true);
+        }, 60);
     };
     node.addEventListener('pointerdown', down);
     node.addEventListener('pointermove', move);

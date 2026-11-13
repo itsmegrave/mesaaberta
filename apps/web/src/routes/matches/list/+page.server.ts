@@ -1,5 +1,5 @@
 import { requireUser } from '#lib/server/auth/guard.js';
-import { requireDirectory } from '#lib/server/directories/flags.js';
+import { playGraphEnabled, requireDirectory } from '#lib/server/directories/flags.js';
 import { readFromApi, revivedDates } from '#lib/server/api-read.js';
 import { writeViaApi } from '#lib/server/api-write.js';
 import { failFrom } from '#lib/server/fail-from.js';
@@ -15,13 +15,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const user = await requireUser(locals, url);
   await requireDirectory(locals, 'matches');
   const page = url.searchParams.get('page');
+  const graph = await playGraphEnabled(locals);
   const list = await readFromApi<MatchList>(
     locals,
     user.id,
     `/v1/matches${page === null ? '' : `?page=${encodeURIComponent(page)}`}`,
   );
   const current = pageNumber(page);
-  return { list: revivedDates(list), page: current };
+  return { list: revivedDates(list), page: current, graph };
 };
 
 const endSchema = z.object({ id: z.uuid() });

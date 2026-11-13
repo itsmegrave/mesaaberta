@@ -188,6 +188,8 @@ export function notificationText(item: Shown, timeZone = 'America/Sao_Paulo'): s
       return m.notification_follow_started({ player });
     case 'match_created':
       return m.notification_match_created({ player });
+    case 'match_reminder':
+      return m.notification_match_reminder({ player });
     case 'catalog_suggestion_approved':
       // A table that waited for its system can be published now.
       if (item.metadata.kind === 'system')

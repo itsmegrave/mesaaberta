@@ -88,6 +88,13 @@ describe('api Combinar routes over a database', () => {
       city: 'Curitiba',
       favoriteSystems: 2,
       availabilitySlots: 3,
+      // Ana's own card as others would see it: her two systems, nothing "em comum".
+      preview: expect.objectContaining({
+        username: 'ana',
+        tableRole: 'gm',
+        commonSystems: [],
+        fit: null,
+      }),
     });
     expect(await (await call('/deck', ana)).json()).toEqual({ state: 'no_card' });
   });
@@ -174,6 +181,13 @@ describe('api Combinar routes over a database', () => {
       undone: true,
     });
     expect((await (await call('/deck', ana)).json()).people).toHaveLength(1);
+    // A month after an answer, yes or no, the card comes back as a reminder.
+    const old = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
+    await test.db
+      .insert(matchAnswers)
+      .values({ fromId: ana, toId: dora, yes: true, createdAt: old });
+    expect((await (await call('/deck', ana)).json()).people).toHaveLength(1);
+    await test.db.delete(matchAnswers).where(eq(matchAnswers.fromId, ana));
     expect((await answer(ana, 'caio', true)).status).toBe(404);
     expect((await answer(ana, 'teen', true)).status).toBe(404);
   });

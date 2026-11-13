@@ -1,17 +1,21 @@
 <script lang="ts">
   import type { IconName } from '#lib/icons/names.js';
   import Icon from '#lib/components/ui/Icon.svelte';
+  import D20 from './D20.svelte';
 
   // The deck's answer buttons: chunky stickers with an ink outline and a hard shadow.
   let {
     icon,
+    d20,
     label,
     kind,
     big = false,
     disabled = false,
     onclick,
   }: {
-    icon: IconName;
+    icon?: IconName;
+    /** A d20 showing this face instead of an icon (20 is yes, 1 is no). */
+    d20?: number;
     label: string;
     kind: 'yes' | 'no' | 'undo' | 'more';
     big?: boolean;
@@ -39,5 +43,9 @@
     ? 'size-18 border-4 shadow-[4px_4px_0_var(--color-punk-ink)]'
     : 'size-13 border-3 shadow-[3px_3px_0_var(--color-punk-ink)]'}"
 >
-  <Icon name={icon} size={big ? 34 : 24} class="**:stroke-3" />
+  {#if d20}
+    <D20 face={d20} size={big ? 54 : 36} />
+  {:else if icon}
+    <Icon name={icon} size={big ? 34 : 24} class="**:stroke-3" />
+  {/if}
 </button>

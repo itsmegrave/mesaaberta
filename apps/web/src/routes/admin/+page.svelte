@@ -79,6 +79,17 @@
       ],
     },
     {
+      title: m.admin_combinar(),
+      rows: [
+        [m.admin_combinar_people(), data.combinar.people],
+        [m.admin_combinar_matches(), data.combinar.matches],
+        [m.admin_combinar_played(), data.combinar.playedAfter],
+        [m.admin_combinar_alone(), data.combinar.alone],
+        [m.admin_combinar_groups(), data.combinar.groups],
+        [m.admin_combinar_largest(), data.combinar.largest],
+      ],
+    },
+    {
       title: m.admin_operations(),
       rows: [
         [m.admin_platform_suggestions(), data.suggestions.platforms],

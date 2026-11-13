@@ -6,6 +6,7 @@
   import { cornersOf } from '../suits';
   import { cardLine, seatOf } from '../person';
   import SuitBadge from './SuitBadge.svelte';
+  import { slap } from '../motion';
 
   let {
     person,
@@ -37,6 +38,10 @@
         : null,
       person.bothOnline ? { icon: 'globe' as const, text: m.match_common_online() } : null,
       person.sameCity && person.city ? { icon: 'map-pin' as const, text: person.city } : null,
+      // Never who: only that the two share people they matched or played with.
+      person.commonPeople > 0
+        ? { icon: 'game-icons:tabletop-players' as const, text: m.match_common_people() }
+        : null,
     ].filter((chip) => chip !== null),
   );
 </script>
@@ -76,6 +81,7 @@
     {/if}
     {#if stamp}
       <span
+        in:slap
         aria-hidden="true"
         class="absolute top-16 z-20 rounded-md border-4 border-punk-ink px-3.5 font-comic text-4xl text-punk-ink {stamp ===
         'yes'

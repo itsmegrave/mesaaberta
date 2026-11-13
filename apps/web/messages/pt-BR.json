@@ -1295,6 +1295,7 @@
   "notification_waitlist_requested": "Abriu uma vaga em {table}: seu pedido saiu da lista de espera e foi para quem mestra.",
   "notification_follow_started": "{player} começou a seguir você.",
   "notification_match_created": "Bora jogar! {player} também quer jogar com você.",
+  "notification_match_reminder": "Vocês combinaram e ainda não jogaram juntos. Chame {player} para uma mesa!",
   "notification_rating_prompt": "A sessão de {table} terminou. Que tal deixar uma avaliação?",
   "notification_catalog_suggestion_approved": "Sua sugestão “{name}” foi aprovada no catálogo.",
   "notification_catalog_suggestion_merged": "Sua sugestão “{name}” foi unida a “{into}”, que já existia.",
@@ -2021,6 +2022,13 @@
   "admin_recent_title": "Mesas criadas recentemente",
   "admin_recent_all": "Ver todas",
   "admin_operations": "Operação",
+  "admin_combinar": "Combinar",
+  "admin_combinar_people": "Cartões ativos",
+  "admin_combinar_matches": "Combinações",
+  "admin_combinar_played": "Combinaram e já jogaram juntos",
+  "admin_combinar_alone": "Cartões sem nenhuma ligação",
+  "admin_combinar_groups": "Grupos ligados entre si",
+  "admin_combinar_largest": "Pessoas no maior grupo",
   "admin_queue_decisions_all": "Ver na auditoria",
   "instagram_view_profile": "Ver perfil público",
   "admin_audit_search": "Buscar por quem decidiu, mesa ou nome",
@@ -4085,6 +4093,25 @@
   "match_title": "Combinar",
   "match_lede": "Gente que quer jogar como você. Diga sim para quem você quer na mesa: se for mútuo, vocês combinam.",
   "match_list_link": "Minhas combinações",
+  "match_played_link": "Quem já jogou comigo",
+  "match_played_title": "Quem já jogou comigo",
+  "match_played_lede": "Gente com quem você dividiu uma mesa aqui, da mais recente para a mais antiga. Que tal jogar de novo?",
+  "match_played_tables": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 mesa juntos",
+        "count=*": "{count} mesas juntos"
+      }
+    }
+  ],
+  "match_played_last": "Última vez em {date}",
+  "match_played_again": "Jogar de novo",
+  "match_played_profile": "Ver perfil",
+  "match_played_empty_title": "Ninguém por aqui ainda",
+  "match_played_empty_hint": "Quando você jogar ou mestrar uma mesa no Mesa Aberta, quem estava nela aparece aqui.",
+  "match_played_empty_action": "Ver mesas abertas",
   "match_card_link": "Meu cartão",
   "match_deck_label": "Cartas para responder",
   "match_and": " e ",
@@ -4092,8 +4119,8 @@
   "match_message_failed": "Não deu para abrir a conversa agora. Tente de novo.",
   "match_limit_reached": "Você chegou ao limite de respostas de hoje.",
   "match_undo": "Voltar a última",
-  "match_no": "Agora não",
-  "match_yes": "Quero jogar junto",
+  "match_no": "Agora não (d20 no 1)",
+  "match_yes": "Quero jogar junto (d20 no 20)",
   "match_more": "Ver mais",
   "match_keys": "Atalhos: ← agora não, → quero jogar junto, ↑ ver mais, Backspace voltar a última.",
   "match_left": [
@@ -4144,6 +4171,7 @@
     }
   ],
   "match_common_online": "Os dois jogam online",
+  "match_common_people": "Vocês têm gente em comum",
   "match_fit_great": "Combina muito!",
   "match_fit_good": "Combina bem",
   "match_stamp_yes": "BORA!",
@@ -4228,5 +4256,13 @@
   "match_list_end": "Desfazer",
   "match_end_title": "Desfazer a combinação com {user}?",
   "match_end_text": "Vocês saem da lista e do baralho um do outro, para sempre. A outra pessoa não é avisada.",
-  "match_end_done": "Combinação desfeita."
+  "match_end_done": "Combinação desfeita.",
+  "match_card_preview": "Como os outros veem seu cartão",
+  "match_card_preview_hint": "Foto, sistemas favoritos e avaliações vêm do seu perfil. O resto muda enquanto você responde.",
+  "match_tutorial_open": "Como funciona",
+  "match_tutorial_title": "Como funciona o Combinar",
+  "match_tutorial_lede": "Monte seu cartão, arraste as cartas e combine. Leva 30 segundos.",
+  "match_tutorial_video": "Vídeo: passo a passo do Combinar, sem som",
+  "match_tutorial_hide": "Não mostrar de novo",
+  "match_tutorial_go": "Bora!"
 }
