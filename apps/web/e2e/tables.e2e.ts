@@ -100,6 +100,8 @@ test.describe('table list', () => {
     await filter.fill('dagger');
     await page.getByRole('option', { name: 'Daggerheart', exact: true }).click();
     await expect(page).toHaveURL(/system=cosmere-roleplaying-game&system=daggerheart/);
+    // A new filter draws the list again, folded to 3 cards.
+    await showAllTables(page);
     await expect(page.getByRole('link', { name: 'Os Sinos de Sablewood' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Crônicas de Roshar' })).toBeVisible();
 
