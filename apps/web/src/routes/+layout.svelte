@@ -148,6 +148,7 @@
           seenAt={data.account?.notifications.seenAt}
           messagesUnread={badges.data?.messages ?? data.account?.messagesUnread ?? 0}
           {directories}
+          matches={data.directories.matches}
         />
       </div>
     {/if}
@@ -254,7 +255,7 @@
       </main>
 
       {#if !data.maintenance}
-        <BottomTabBar {directories} />
+        <BottomTabBar {directories} matches={data.directories.matches} />
       {/if}
 
       {#if !data.maintenance}

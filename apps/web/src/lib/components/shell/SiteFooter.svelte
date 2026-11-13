@@ -84,6 +84,16 @@
           } as const,
         ]
       : []),
+    ...(directories.matches
+      ? [
+          {
+            route: '/matches',
+            path: '/matches',
+            items: undefined,
+            label: m.nav_matches,
+          } as const,
+        ]
+      : []),
   ]);
 
   const current = (path: string, items?: string) =>

@@ -1,5 +1,18 @@
 [
   {
+    "date": "2026-11-13",
+    "title": "Combinar no menu principal",
+    "summary": "O Combinar ganhou lugar próprio no menu, ao lado de Minhas mesas, e no rodapé das páginas.",
+    "changes": [
+      {
+        "kind": "improved",
+        "title": "Combinar no menu principal",
+        "description": "No computador, o Combinar aparece na barra lateral junto com Mesas e Minhas mesas. No celular, ganhou uma aba na barra de baixo. Ele saiu do Explorar e entrou no rodapé das páginas.",
+        "href": "/matches"
+      }
+    ]
+  },
+  {
     "date": "2026-11-12",
     "title": "Combinar: encontre gente para jogar",
     "summary": "Em Explorar, Combinar mostra uma carta por vez com quem quer jogar como você. Se os dois disserem sim, vocês combinam. E o cadastro de Onde jogar deixa claro que é só para lugares abertos ao público.",

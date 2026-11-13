@@ -22,15 +22,11 @@ describe('directoryNav', () => {
     ).toEqual(['/systems', '/places', '/gamemasters', '/crowdfunding', '/tools']);
   });
 
-  it('lists Combinar in place of Procuro mesa while it is on', () => {
+  it('drops Procuro mesa while Combinar is on, and never lists Combinar (it is in the main menu)', () => {
     const hrefs = (switches: Parameters<typeof directoryNav>[0]) =>
       directoryNav(switches).map((link) => link.href);
     expect(hrefs({ ...off, players: true })).toEqual(['/players', '/crowdfunding', '/tools']);
-    expect(hrefs({ ...off, players: true, matches: true })).toEqual([
-      '/matches',
-      '/crowdfunding',
-      '/tools',
-    ]);
+    expect(hrefs({ ...off, players: true, matches: true })).toEqual(['/crowdfunding', '/tools']);
   });
 
   it('marks Financiamentos current on its list and its pages', () => {
