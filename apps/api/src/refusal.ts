@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
 import {
+  AdultOnly,
   AlreadyRated,
   AlreadyRegistered,
   DirectMessagesOff,
@@ -30,6 +31,8 @@ export function refusal(c: Context, error: unknown) {
     return c.json({ error: 'rate_limited', retryAfter: error.retryAfterSeconds }, 429);
   // Before `Forbidden`, which it extends: the web Worker tells the GM why.
   if (error instanceof TableConcluded) return c.json({ error: 'table_concluded' }, 403);
+  // Before `Forbidden` too: the player is told the table is 18+.
+  if (error instanceof AdultOnly) return c.json({ error: 'adult_only' }, 403);
   if (error instanceof Forbidden) return c.json({ error: 'forbidden' }, 403);
   if (error instanceof NotFound) return c.json({ error: 'not_found' }, 404);
   if (error instanceof TableFull) return c.json({ error: 'table_full' }, 409);

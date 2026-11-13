@@ -3,7 +3,13 @@ import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { gameTables, profiles, registrations } from '@mesaaberta/core/server/db/schema';
 import { publicName } from '@mesaaberta/core/server/db/public-name';
 import { authorize, joinBlocker, type Actor } from '@mesaaberta/core/server/auth/policy';
-import { AlreadyRegistered, Forbidden, NotFound, TableFull } from '@mesaaberta/core/server/errors';
+import {
+  AdultOnly,
+  AlreadyRegistered,
+  Forbidden,
+  NotFound,
+  TableFull,
+} from '@mesaaberta/core/server/errors';
 import { releaseSessionSeats } from '../tables/session-signups';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import type { DomainEvent } from '@mesaaberta/core/server/events/types';
@@ -14,6 +20,7 @@ import { pendingInvitationFor } from '../invitations/service';
 import { Invalid } from '../errors';
 import { hasStarted } from '@mesaaberta/core/server/tables/schedule';
 import { promoteWaitlistOf } from './waitlist';
+import { isMinorAtAdultTable } from './age-gate';
 
 // Every operation is one transaction. The ones that can change how many seats are taken lock the
 // table's row first (`SELECT ... FOR UPDATE`), so two of them on the same table run one after the
@@ -94,6 +101,7 @@ export async function joinTable(
     if (blocker === 'registered') throw new AlreadyRegistered();
     if (blocker === 'full') throw new TableFull();
     if (blocker) throw new Forbidden('table:join');
+    if (await isMinorAtAdultTable(asDb(tx), table, actor!.id)) throw new AdultOnly();
     await enforceRateLimit(asDb(tx), actor!.id, JOIN_LIMIT, now);
 
     const status = table.joinMode === 'auto' ? 'confirmed' : 'pending';
@@ -174,6 +182,7 @@ export async function approveRegistration(
 
     const registration = await registrationOf(tx, table.id, playerId);
     if (registration?.status !== 'pending') throw new NotFound('no pending request');
+    if (await isMinorAtAdultTable(asDb(tx), table, playerId)) throw new AdultOnly();
     if ((await seatAvailability(asDb(tx), table.id, new Date())).available < 1)
       throw new TableFull();
 

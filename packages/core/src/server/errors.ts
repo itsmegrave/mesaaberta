@@ -20,6 +20,17 @@ export class TableConcluded extends Forbidden {
   }
 }
 
+/**
+ * The table is rated 18 and the player said they are under 18. A `Forbidden`, so a caller that only
+ * knows that still refuses; the web app says why.
+ */
+export class AdultOnly extends Forbidden {
+  constructor() {
+    super('adult only');
+    this.name = 'AdultOnly';
+  }
+}
+
 export class NotFound extends Error {
   constructor(message = 'not found') {
     super(message);

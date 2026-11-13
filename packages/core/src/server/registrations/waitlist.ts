@@ -8,13 +8,14 @@ import {
 } from '@mesaaberta/core/server/db/schema';
 import { publicName } from '@mesaaberta/core/server/db/public-name';
 import { authorize, joinBlocker, type Actor } from '@mesaaberta/core/server/auth/policy';
-import { AlreadyRegistered, Forbidden, NotFound } from '@mesaaberta/core/server/errors';
+import { AdultOnly, AlreadyRegistered, Forbidden, NotFound } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import { hasStarted } from '@mesaaberta/core/server/tables/schedule';
 import { Invalid } from '../errors';
 import { seatAvailability } from '../invitations/seats';
 import { pendingInvitationFor } from '../invitations/service';
 import { addTableMember } from '../messages/service';
+import { isMinorAtAdultTable } from './age-gate';
 
 // The lista de espera of a full table (`use_waitlist`, checked by the web Worker). Joining it is only
 // possible while the table has no seat left; when one frees up (a player leaves or is removed, or
@@ -58,6 +59,7 @@ export async function joinWaitlist(db: AnyDb, actor: Actor | null, slug: string,
     if (blocker === 'registered') throw new AlreadyRegistered();
     if (blocker === null) throw new Invalid('waitlist', 'seats_left');
     if (blocker !== 'full') throw new Forbidden('table:join');
+    if (await isMinorAtAdultTable(t, table, actor!.id)) throw new AdultOnly();
 
     await t
       .insert(tableWaitlist)

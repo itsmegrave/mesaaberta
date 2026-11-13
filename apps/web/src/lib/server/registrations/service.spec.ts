@@ -9,6 +9,7 @@ import {
 } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
+import { AdultOnly } from '@mesaaberta/core/server/errors';
 import {
   approveRegistration,
   declineRegistration,
@@ -467,5 +468,41 @@ describe('listRegistrations', () => {
     await expect(listRegistrations(test.db, player(2), table.slug)).rejects.toMatchObject({
       name: 'Forbidden',
     });
+  });
+});
+
+describe('18-rated tables and players under 18', () => {
+  const minor = player(7);
+  const adult = player(8);
+  beforeAll(async () => {
+    await test.db.update(profiles).set({ ageRange: '13_17' }).where(eq(profiles.id, minor.id));
+    await test.db.update(profiles).set({ ageRange: '25_34' }).where(eq(profiles.id, adult.id));
+  });
+
+  it('refuses a seat to a player who said they are 13 to 17, and leaves nothing behind', async () => {
+    const table = await makeTable({ contentRating: '18' });
+    await expect(joinTable(test.db, minor, table.slug)).rejects.toThrow(AdultOnly);
+    expect(await statusOf(table.id, minor.id)).toBeUndefined();
+  });
+
+  it('refuses the request too on a table that approves each player', async () => {
+    const table = await makeTable({ contentRating: '18', joinMode: 'approval' });
+    await expect(joinTable(test.db, minor, table.slug)).rejects.toThrow(AdultOnly);
+  });
+
+  it('lets an adult in, and a minor in at a table rated lower', async () => {
+    const adultTable = await makeTable({ contentRating: '18' });
+    expect((await joinTable(test.db, adult, adultTable.slug)).status).toBe('confirmed');
+    const teenTable = await makeTable({ contentRating: '16' });
+    expect((await joinTable(test.db, minor, teenTable.slug)).status).toBe('confirmed');
+  });
+
+  it('keeps the GM from approving a request a minor sent before the gate existed', async () => {
+    const table = await makeTable({ contentRating: '18', joinMode: 'approval' });
+    await test.db
+      .insert(registrations)
+      .values({ tableId: table.id, playerId: minor.id, status: 'pending' });
+    await expect(approveRegistration(test.db, gm, table.slug, minor.id)).rejects.toThrow(AdultOnly);
+    expect(await statusOf(table.id, minor.id)).toBe('pending');
   });
 });

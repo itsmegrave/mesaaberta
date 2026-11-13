@@ -380,3 +380,38 @@ it('does not approve a pending request after the table is closed', async () => {
     name: 'NotFound',
   });
 });
+
+describe('invitations to 18-rated tables', () => {
+  afterAll(() =>
+    test.db
+      .update(profiles)
+      .set({ ageRange: null })
+      .where(eq(profiles.id, id(2))),
+  );
+
+  it('will not invite a player who said they are 13 to 17, without saying why', async () => {
+    await test.db
+      .update(profiles)
+      .set({ ageRange: '13_17' })
+      .where(eq(profiles.id, id(2)));
+    const t = await table({ contentRating: '18' });
+    await expect(invite(t.slug)).rejects.toMatchObject({ name: 'Invalid', field: 'invitation' });
+  });
+
+  it('cancels an invitation sent before the player changed their age range, instead of seating them', async () => {
+    await test.db
+      .update(profiles)
+      .set({ ageRange: '25_34' })
+      .where(eq(profiles.id, id(2)));
+    const t = await table({ contentRating: '18' });
+    const i = await invite(t.slug);
+    await test.db
+      .update(profiles)
+      .set({ ageRange: '13_17' })
+      .where(eq(profiles.id, id(2)));
+    expect(
+      await respondToInvitation(test.db, actor(2), i.invitationId, 'accept', { now }),
+    ).toMatchObject({ status: 'cancelled' });
+    expect((await seatAvailability(test.db, t.id, now)).confirmed).toBe(0);
+  });
+});
