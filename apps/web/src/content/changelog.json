@@ -9,6 +9,11 @@
         "title": "Combinar no menu principal",
         "description": "No computador, o Combinar aparece na barra lateral junto com Mesas e Minhas mesas. No celular, ganhou uma aba na barra de baixo. Ele saiu do Explorar e entrou no rodapé das páginas.",
         "href": "/matches"
+      },
+      {
+        "kind": "improved",
+        "title": "Fotos menores e mais rápidas",
+        "description": "Toda foto enviada (capa de mesa, lugar, financiamento, logo, foto e capa de perfil) é convertida para WebP e reduzida ao tamanho em que aparece no site. As fotos que já estavam aqui também estão sendo convertidas, aos poucos. A primeira capa de Mesas agora carrega antes do resto da página."
       }
     ]
   },

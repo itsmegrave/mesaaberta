@@ -1,4 +1,5 @@
 import { Invalid } from './errors';
+import { imageSize, MAX_PIXELS, optimizeImage, type OptimizeOptions } from './image-optimize';
 import type { Logger } from './logger';
 
 // One limit for the form's check and the server's.
@@ -43,6 +44,9 @@ export async function prepareImage(file: File, folder = 'tables'): Promise<Prepa
   const bytes = new Uint8Array(await file.arrayBuffer());
   const contentType = detectImageType(bytes);
   if (!contentType) throw new Invalid('image', 'not_an_image');
+  // Decoding takes about 4 bytes a pixel; a Worker has 128 MB for everything.
+  const size = imageSize(bytes);
+  if (size && size.width * size.height > MAX_PIXELS) throw new Invalid('image', 'too_big');
 
   return { bytes, contentType, path: `${folder}/${crypto.randomUUID()}.${TYPES[contentType]}` };
 }
@@ -56,26 +60,69 @@ export type ImageStorage = {
   ): PromiseLike<{ error: { message: string } | null }>;
 };
 
+/** Pictures shown as a small square (logos, avatars) don't need more than this. */
+const SMALL: OptimizeOptions = { maxWidth: 512, maxHeight: 512, quality: 85 };
+/** Covers and banners: 1200 px wide on the page, with room for sharper screens. */
+const LARGE: OptimizeOptions = { maxWidth: 1600, maxHeight: 1600, quality: 80 };
+
+/** How big a picture in `path` is kept: covers large, everything shown as a square small. */
+export const optimizeOptionsFor = (path: string): OptimizeOptions =>
+  /^(tables|crowdfunding|places)\//.test(path) || /^[^/]+\/banners\//.test(path) ? LARGE : SMALL;
+
+/**
+ * The picture as a WebP no bigger than its place needs, under the same name with a `.webp` end.
+ * Compression must never cost someone their upload: when it fails, the picture is stored as sent.
+ */
+export async function compressed(
+  image: PreparedImage,
+  log?: Pick<Logger, 'warn'>,
+): Promise<PreparedImage> {
+  try {
+    const result = await optimizeImage(
+      image.bytes,
+      image.contentType,
+      optimizeOptionsFor(image.path),
+    );
+    if (!result) return image;
+    return {
+      bytes: result.bytes,
+      contentType: result.type,
+      path: image.path.replace(/\.(png|jpe?g|webp)$/i, '') + '.webp',
+    };
+  } catch (error) {
+    log?.warn('storage.image_compress_failed', {
+      code: 'image_compress_failed',
+      imageType: image.contentType,
+      bytesBefore: image.bytes.length,
+      error,
+    });
+    return image;
+  }
+}
+
+/**
+ * How long browsers keep a stored picture. Replacements get a new UUID URL, so browsers can reuse
+ * these bytes between visits. Avatars are shorter-lived because people can remove their picture.
+ */
+export const cacheControlFor = (path: string) =>
+  path.startsWith('tables/') || path.startsWith('crowdfunding/') || path.startsWith('partners/')
+    ? '2592000'
+    : '86400';
+
 /**
  * Uploads a prepared image and returns its path. Never overwrites an existing file. A refusal is
  * logged with Storage's own reason (a missing policy and a missing bucket look alike on the form).
  */
 export async function storeImage(
   storage: ImageStorage,
-  image: PreparedImage,
+  prepared: PreparedImage,
   log?: Pick<Logger, 'warn'>,
 ): Promise<string> {
+  const image = await compressed(prepared, log);
   const { error } = await storage.upload(image.path, image.bytes, {
     contentType: image.contentType,
     upsert: false,
-    // Replacements get a new UUID URL, so browsers can reuse these bytes between visits.
-    // Keep avatars shorter-lived because people can remove their profile picture.
-    cacheControl:
-      image.path.startsWith('tables/') ||
-      image.path.startsWith('crowdfunding/') ||
-      image.path.startsWith('partners/')
-        ? '2592000'
-        : '86400',
+    cacheControl: cacheControlFor(image.path),
   });
   if (error) {
     log?.warn('storage.image_upload_refused', { reason: error.message });

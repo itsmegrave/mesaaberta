@@ -108,6 +108,7 @@
             title={m.tables_starting_soon()}
             summary={m.tables_starting_soon_hint({ hours: STARTING_SOON_HOURS })}
             tables={data.startingSoon}
+            priority
           />
         {/if}
         {#if data.tables.length > 0}
@@ -117,6 +118,7 @@
             summary={m.tables_found({ count })}
             tables={data.tables}
             limit={Infinity}
+            priority={!data.startingSoon?.length}
           />
         {/if}
       </MAAccordion>

@@ -13,6 +13,7 @@
   /**
    * One folding section of the table list ("Começa já", "Todas as mesas"): the first `limit` cards,
    * then a "Ver mais N mesas" card that shows the rest in place. Goes inside an MAAccordion.
+   * `priority`: this is the page's first section, so its first cover loads first.
    */
   let {
     value,
@@ -21,6 +22,7 @@
     icon,
     tables,
     limit = 3,
+    priority = false,
   }: {
     value: string;
     title: string;
@@ -28,6 +30,7 @@
     icon?: IconName;
     tables: Table[];
     limit?: number;
+    priority?: boolean;
   } = $props();
 
   let expanded = $state(false);
@@ -46,8 +49,15 @@
 <MAAccordionItem {value} {title} {summary} {icon} titleClass="text-xl font-semibold">
   <div bind:this={grid}>
     <CardGrid>
-      {#each shown as table (table.slug)}
-        <li><TableCard {table} markBeginners={page.data.beginners} level="h3" /></li>
+      {#each shown as table, i (table.slug)}
+        <li>
+          <TableCard
+            {table}
+            markBeginners={page.data.beginners}
+            level="h3"
+            priority={priority && i === 0}
+          />
+        </li>
       {/each}
       {#if hidden > 0}
         <li>
