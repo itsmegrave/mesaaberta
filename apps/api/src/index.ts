@@ -6,11 +6,11 @@ import {
   sentryReleaseFor,
   type ReleaseEnv,
 } from '@mesaaberta/core/observability/sentry-options';
+import { querySpans } from '@mesaaberta/core/observability/query-spans';
 import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
 import { observeQueries } from '@mesaaberta/core/server/db/client';
 import { setAppName, setTelemetrySink } from '@mesaaberta/core/server/logger';
 import { createApi } from './app';
-import { querySpans } from './query-spans';
 import { sentrySink } from './sentry-sink';
 
 // What wrangler runs: the api wrapped with Sentry, with the same privacy policy as the web app and
@@ -22,7 +22,7 @@ setAppName('api');
 setRequestContextStore(new AsyncLocalStorage());
 logInstalled();
 // Every query becomes a `db` span, so Sentry can flag N+1 and consecutive queries.
-observeQueries(querySpans);
+observeQueries(querySpans(Sentry));
 
 const api = createApi();
 

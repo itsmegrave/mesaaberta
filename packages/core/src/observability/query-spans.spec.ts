@@ -3,12 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const span = { setStatus: vi.fn(), end: vi.fn() };
 const active = vi.fn();
 const start = vi.fn(() => span);
-vi.mock('@sentry/cloudflare', () => ({
-  getActiveSpan: () => active(),
-  startInactiveSpan: (options: unknown) => start(options),
-}));
+import { querySpans as spansWith } from './query-spans';
 
-const { querySpans } = await import('./query-spans');
+const querySpans = spansWith({
+  getActiveSpan: () => active(),
+  startInactiveSpan: (options) => start(options),
+} as never);
 
 beforeEach(() => {
   vi.clearAllMocks();
