@@ -10,6 +10,7 @@ import {
   soonSession,
   signIn,
   uniqueTitle,
+  showAllTables,
 } from './support/app';
 import { createUser, database } from './support/users';
 
@@ -81,6 +82,7 @@ test.describe('creating a table', () => {
     await anon.goto(`/t/${slug}`);
     await expect(anon.getByRole('heading', { level: 1 })).toHaveText(title);
     await anon.goto('/tables');
+    await showAllTables(anon);
     await expect(anon.getByRole('link', { name: title })).toBeVisible();
     await visitor.close();
   });

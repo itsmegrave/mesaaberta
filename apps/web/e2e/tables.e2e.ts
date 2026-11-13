@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { openSection, pageMenu } from './support/app';
+import { openSection, pageMenu, showAllTables } from './support/app';
 import { getHealth } from './support/health';
 import { sidewaysOverflow } from './support/overflow';
 
@@ -15,6 +15,7 @@ test.beforeEach(async ({ request }) => {
 test.describe('table list', () => {
   test('shows a seeded table, and opens its own page', async ({ page }) => {
     await page.goto('/tables');
+    await showAllTables(page);
 
     await expect(page.getByRole('heading', { level: 1, name: 'Mesas abertas' })).toBeVisible();
     await page.getByRole('link', { name: 'Os Sinos de Sablewood' }).click();
@@ -27,6 +28,7 @@ test.describe('table list', () => {
     page,
   }) => {
     await page.goto('/tables');
+    await showAllTables(page);
     const card = page.getByRole('article').filter({ hasText: 'Os Sinos de Sablewood' });
 
     await expect(card).toContainText('Daggerheart');
@@ -39,6 +41,7 @@ test.describe('table list', () => {
     page,
   }) => {
     await page.goto('/tables');
+    await showAllTables(page);
 
     await expect(page.getByRole('article').filter({ hasText: 'Noites de Neon' })).toContainText(
       'Presencial · Boa Viagem, Recife - PE',
@@ -50,6 +53,7 @@ test.describe('table list', () => {
 
   test('badges a campaign as one, and lists the soonest session first', async ({ page }) => {
     await page.goto('/tables');
+    await showAllTables(page);
     const cards = page.getByRole('article');
     const titles = await cards.evaluateAll((elements) =>
       elements.map((card) => card.querySelector('h2, h3')?.textContent?.trim()),
@@ -66,6 +70,7 @@ test.describe('table list', () => {
 
   test('never shows a disabled table, in the list or by its address', async ({ page }) => {
     await page.goto('/tables');
+    await showAllTables(page);
     await expect(page.getByText('A Última Estrada')).toHaveCount(0);
 
     const response = await page.goto('/t/a-ultima-estrada');
@@ -75,6 +80,7 @@ test.describe('table list', () => {
   test('filters by system, and says so when nothing matches', async ({ page, isMobile }) => {
     test.skip(isMobile, 'on a phone the system is picked in the filter sheet (see TablesFilters)');
     await page.goto('/tables');
+    await showAllTables(page);
     const filter = page.getByRole('combobox', { name: 'Sistema' });
     await expect(filter).toBeVisible();
 

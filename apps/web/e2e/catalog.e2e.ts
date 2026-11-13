@@ -8,6 +8,7 @@ import {
   soonSession,
   signIn,
   uniqueTitle,
+  showAllTables,
 } from './support/app';
 import { createUser } from './support/users';
 
@@ -24,16 +25,19 @@ test('the list filters by platform and by tag, any of the ticked ones, kept in t
   page,
 }) => {
   await page.goto('/tables?tag=dungeon-crawl');
+  await showAllTables(page);
   const cards = page.getByRole('article');
   await expect(cards.filter({ hasText: 'A Cripta do Rei Afogado' })).toHaveCount(1);
   await expect(cards.filter({ hasText: 'Os Sinos de Sablewood' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Tirar o filtro Dungeon crawl' })).toBeVisible();
 
   await page.goto('/tables?tag=dungeon-crawl&tag=iniciantes');
+  await showAllTables(page);
   await expect(cards.filter({ hasText: 'A Cripta do Rei Afogado' })).toHaveCount(1);
   await expect(cards.filter({ hasText: 'Os Sinos de Sablewood' })).toHaveCount(1);
 
   await page.goto('/tables?platform=foundry-vtt');
+  await showAllTables(page);
   await expect(cards.filter({ hasText: 'Os Sinos de Sablewood' })).toHaveCount(1);
   await expect(cards.filter({ hasText: 'Crônicas de Roshar' })).toHaveCount(0);
 });
@@ -66,6 +70,7 @@ test('ticking a platform applies it at once, and the modality keeps it', async (
 
 test('the card and the table page show the platforms and the tags', async ({ page }) => {
   await page.goto('/tables');
+  await showAllTables(page);
   await expect(
     page.getByRole('article').filter({ hasText: 'Os Sinos de Sablewood' }),
   ).toContainText('Discord +1');
