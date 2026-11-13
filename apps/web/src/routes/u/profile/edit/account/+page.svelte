@@ -3,6 +3,7 @@
   // for an account without one, creating a password.
   import AddPassword from '../components/AddPassword.svelte';
   import ConnectedAccounts from '../components/ConnectedAccounts.svelte';
+  import Passkeys from '../components/Passkeys.svelte';
   import FormField from '#lib/components/ui/FormField.svelte';
   import SettingsSection from '../components/ui/SettingsSection.svelte';
   import TextInput from '#lib/components/ui/TextInput.svelte';
@@ -47,6 +48,10 @@
 
 {#if data.connections}
   <ConnectedAccounts connections={data.connections} class={card} />
+{/if}
+
+{#if data.passkeysOn}
+  <Passkeys passkeys={data.passkeys} class={card} />
 {/if}
 
 {#if data.canAddPassword}

@@ -1,0 +1,40 @@
+<script lang="ts">
+  // "Entrar com passkey": the browser offers the passkeys it holds for this site, and the server
+  // asks Supabase to check the one chosen. No e-mail is typed first.
+  import MAButton from '#lib/components/ui/MAButton.svelte';
+  import PasskeyProblem from '#lib/components/ui/PasskeyProblem.svelte';
+  import { passkeyCeremony } from '#lib/auth/passkey-ceremony.svelte.js';
+  import { m } from '#lib/paraglide/messages.js';
+
+  let { next, captcha = false }: { next: string; captcha?: boolean } = $props();
+
+  // svelte-ignore state_referenced_locally
+  const ceremony = passkeyCeremony('sign-in', {
+    options: '?/passkeyOptions',
+    answer: '?/passkey',
+    fields: { next },
+  });
+
+  // With Turnstile on, Supabase wants an answer with the challenge too. The page has one widget,
+  // in the e-mail form; its answer is good once, so the widget gets a fresh one after each try.
+  async function start() {
+    const field = captcha
+      ? document.querySelector<HTMLInputElement>('input[name="captchaToken"]')
+      : null;
+    await ceremony.start(field?.value || undefined);
+    if (captcha) window.turnstile?.reset();
+  }
+</script>
+
+<div class="grid gap-2">
+  <MAButton
+    variant="ghost"
+    class="w-full justify-center border-2 border-surface-200-800 bg-panel font-semibold hover:preset-tonal"
+    submitting={ceremony.pending}
+    aria-describedby="passkey-problem"
+    onclick={() => void start()}
+  >
+    {m.passkey_sign_in()}
+  </MAButton>
+  <PasskeyProblem id="passkey-problem" problem={ceremony.problem} />
+</div>

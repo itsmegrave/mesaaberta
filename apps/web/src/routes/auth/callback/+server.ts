@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
-import { finishLogin, type CompleteLoginResult } from '@mesaaberta/core/server/auth/login';
-import { callApiRaw } from '#lib/server/api-client.js';
+import { finishLogin } from '@mesaaberta/core/server/auth/login';
+import { finishLoginViaApi } from '#lib/server/auth/finish-login.js';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url, locals, getClientAddress }) => {
@@ -18,26 +18,15 @@ export const GET: RequestHandler = async ({ url, locals, getClientAddress }) => 
   }
 
   const ip = getClientAddress();
-  // The api Worker does the database half with the new access token. An answer it does not know
-  // (no binding, a failure) is null: the person is signed out again and sent to the login page.
-  const remote = async (accessToken: string, next: string | null) => {
-    const answer = await callApiRaw(
-      locals.env,
-      '/v1/auth/finish-login',
-      null,
-      locals.log,
-      { next },
-      { authorization: `Bearer ${accessToken}`, 'x-client-ip': ip },
-    );
-    const done = answer?.body as CompleteLoginResult | undefined;
-    if (done?.result === 'ok' && typeof done.target === 'string') return done;
-    if (done?.result === 'profile_failed' || done?.result === 'suspended') return done;
-    return null;
-  };
-
   const target = await finishLogin(
     // No database here: the profile, the ban check and the connection record live in the api.
-    { supabase: locals.supabase, db: null, log: locals.log, ip, remote },
+    {
+      supabase: locals.supabase,
+      db: null,
+      log: locals.log,
+      ip,
+      remote: finishLoginViaApi(locals, ip),
+    },
     { code: url.searchParams.get('code'), next: url.searchParams.get('next') },
   );
 

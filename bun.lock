@@ -142,6 +142,7 @@
       "dependencies": {
         "@fontsource/bangers": "^5.3.0",
         "@fontsource/chakra-petch": "^5.3.0",
+        "@simplewebauthn/browser": "14.0.0",
       },
     },
     "apps/worker": {
@@ -734,6 +735,8 @@
     "@sentry/svelte": ["@sentry/svelte@11.1.0", "", { "dependencies": { "@sentry/browser": "11.1.0", "@sentry/conventions": "0.24.0", "@sentry/core": "11.1.0", "magic-string": "0.30.21" }, "peerDependencies": { "svelte": "3.x || 4.x || 5.x" } }, "sha512-hZJEMU8rF2abgb/PctGQ/jxHKc7MWO+h39ysAdpA4rjSNTIlN1U5PatxPQ1vdSysN+Mb6GyOS6cCo1zAmKLL2A=="],
 
     "@sentry/sveltekit": ["@sentry/sveltekit@11.1.0", "", { "dependencies": { "@opentelemetry/api": "1.9.1", "@sentry/bundler-plugins": "11.1.0", "@sentry/cloudflare": "11.1.0", "@sentry/conventions": "0.24.0", "@sentry/core": "11.1.0", "@sentry/node": "11.1.0", "@sentry/server-runtime-injection": "11.1.0", "@sentry/server-utils": "11.1.0", "@sentry/svelte": "11.1.0", "@sveltejs/acorn-typescript": "1.0.13", "acorn": "8.18.0", "magic-string": "0.30.21", "sorcery": "1.0.0" }, "peerDependencies": { "@sveltejs/kit": "2.x || ^3.0.0-0", "vite": "*" }, "optionalPeers": ["vite"] }, "sha512-ND5+IiqyxIgfvjSySwJwnIGcwjULLOgWCIaLo0tKetKTR2V6a3mnpQmNt9CAgiPKroxxiu4Ym+A5xX4lT9ayMw=="],
+
+    "@simplewebauthn/browser": ["@simplewebauthn/browser@14.0.0", "", {}, "sha512-1odWVqeEBTl7lJ9zMKLEsmTlnyrDO5iRcTvfMKKk1WThUnp/i8JJdffdj2icP+tty159s4PgwE3BiMoEW9NFow=="],
 
     "@sinclair/typebox": ["@sinclair/typebox@0.31.30", "", {}, "sha512-MGsM7bVmHg3sUKCphlu3SGQ+T+5JTbygZWYArfKQCW5anJeACHeqLhcnf+R7XlCWZ+QR3C8JTBx3kCKJTN69ow=="],
 

@@ -182,6 +182,11 @@ export const flagDefaults = {
   // no pedal, and a pedal already pressed is ignored, so everyone sees the classic theme. Targeted
   // by the viewer's id, or anonymously.
   use_overdrive_theme: false,
+  // Passkeys, a new feature (created on for everyone): "Entrar com passkey" on /login and a
+  // Passkeys list in Conta e acesso to add and remove them, through Supabase Auth's passkeys (its
+  // Authentication > Passkeys setting must be on). Off: no button, no list, and the passkey
+  // actions refuse. Visitors are evaluated anonymously; the settings by the person's id.
+  use_passkeys: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;
