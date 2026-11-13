@@ -25,6 +25,9 @@
     // The namespace of calendar event UIDs. Set it once and never change it after the first invite
     // went out, or calendar apps show a table twice. Blank: the host of APP_ORIGIN.
     "CALENDAR_UID_DOMAIN": "",
+    // "local" checks a session token's signature in the Worker instead of asking Supabase Auth on
+    // every request (see handle-auth.ts). "remote" asks Supabase, as before: the rollback.
+    "SESSION_CHECK": "local",
     // "true" turns on the daily RPG campaign discovery (04:00 UTC).
     "CROWDFUNDING_IMPORT_ENABLED": "false",
     // Blank key: every feature flag returns its default from the registry.
