@@ -27,9 +27,12 @@ const SLUG = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 const USERNAME = z.string().regex(/^@?[a-z0-9]+(?:-[a-z0-9]+)*$/i);
 const PAGE = z.number().int().min(1).optional().describe('Page number, from 1.');
 
-// Most tools only read. The few that write add something; only close_poll ends something (a poll,
-// whose results stay). The api checks the caller's permission for each one as it does for the
-// site's own forms.
+// Most tools only read. The few that write add something. The ones that reach everyone or can't be
+// taken back (an announcement, a poll on everyone's screen, a public post) or that end something
+// (close_poll) are marked destructive, so a client asks the person before every call: what these
+// tools read (messages, profiles, tables) is written by members, and a line in it must never be
+// enough to make the model send something to everyone. The api checks the caller's permission for
+// each one as it does for the site's own forms.
 const READ = { readOnlyHint: true, openWorldHint: false } as const;
 const WRITE = {
   readOnlyHint: false,
@@ -37,6 +40,7 @@ const WRITE = {
   idempotentHint: false,
   openWorldHint: false,
 } as const;
+const ASK_FIRST = { ...WRITE, destructiveHint: true } as const;
 
 /** The refusal a tool answers, as a code the model can act on; never the api's own text. */
 const refusal = (status: number) =>
@@ -468,7 +472,7 @@ export function registerTools(server: McpServer, context: ToolContext) {
           .describe('A username, only for specific_user.'),
         confirmed: z.boolean().optional(),
       },
-      annotations: WRITE,
+      annotations: ASK_FIRST,
     },
     async ({ title, body, link, tone, icon, audience, recipient, confirmed }) =>
       answer(
@@ -563,7 +567,7 @@ export function registerTools(server: McpServer, context: ToolContext) {
         priority: z.number().int().min(-999).max(9999).optional(),
         confirmed: z.boolean().optional(),
       },
-      annotations: WRITE,
+      annotations: ASK_FIRST,
     },
     async (input) => {
       const audience = {
@@ -726,7 +730,7 @@ export function registerTools(server: McpServer, context: ToolContext) {
           .describe('A public https address that answers the file itself.'),
         confirmed: z.boolean().optional(),
       },
-      annotations: { ...WRITE, openWorldHint: true },
+      annotations: { ...ASK_FIRST, openWorldHint: true },
     },
     async ({ caption, media_url, confirmed }) =>
       answer(
@@ -794,7 +798,13 @@ export const WRITE_TOOL_NAMES = [
   'post_on_social',
 ] as const satisfies readonly (typeof TOOL_NAMES)[number][];
 
-/** The writes that end something, marked `destructiveHint` so a client asks before each call. */
+/**
+ * The writes marked `destructiveHint`, so a client asks before each call: the ones that reach
+ * everyone or can't be taken back, and the one that ends something.
+ */
 export const DESTRUCTIVE_TOOL_NAMES = [
+  'send_announcement',
+  'create_poll',
   'close_poll',
+  'post_on_social',
 ] as const satisfies readonly (typeof WRITE_TOOL_NAMES)[number][];

@@ -35,7 +35,7 @@ export const actions: Actions = {
     const parsed = endSchema.safeParse({ id: (await request.formData()).get('id') });
     if (!parsed.success) return fail(400, { error: 'invalid' as const });
     try {
-      await writeViaApi(locals, user, `/v1/matches/${parsed.data.id}/end`, {});
+      await writeViaApi(locals, user, `/v1/matches/${encodeURIComponent(parsed.data.id)}/end`, {});
       return { ended: true };
     } catch (cause) {
       return failFrom(cause);

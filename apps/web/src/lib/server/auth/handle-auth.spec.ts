@@ -7,8 +7,18 @@ import { createHandleAuth } from './handle-auth';
 
 const env = { SUPABASE_URL: 'https://x.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_x' };
 
-const setup = (platformEnv: object | undefined, getUser = vi.fn()) => {
-  const createClient = vi.fn(() => ({ auth: { getUser } }));
+/** An unsigned JWT with these claims: the tests stand in for Supabase, which already verified it. */
+const tokenWith = (claims: object) =>
+  `e30.${btoa(JSON.stringify(claims)).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_')}.sig`;
+const sessionWith = (claims: object) =>
+  vi.fn(async () => ({ data: { session: { access_token: tokenWith(claims) } }, error: null }));
+
+const setup = (
+  platformEnv: object | undefined,
+  getUser = vi.fn(),
+  getSession = sessionWith({ sub: 'u1', aud: 'authenticated' }),
+) => {
+  const createClient = vi.fn(() => ({ auth: { getUser, getSession } }));
   const event = {
     locals: { env: platformEnv },
     cookies: { getAll: () => [], set: vi.fn() },
@@ -72,6 +82,19 @@ describe('handleAuth', () => {
 
     expect(await event.locals.getUser()).toEqual({ id: 'u1' });
     expect(event.locals.userId).toBe('u1');
+  });
+
+  it('refuses a token Supabase issued to an OAuth client: approving an app must not sign it in to the site', async () => {
+    const getUser = vi.fn().mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
+    const { event, run } = setup(
+      env,
+      getUser,
+      sessionWith({ sub: 'u1', aud: 'authenticated', client_id: 'some-app' }),
+    );
+    await run();
+
+    expect(await event.locals.getUser()).toBeNull();
+    expect(event.locals.userId).toBeUndefined();
   });
 
   it('asks Supabase once per request however often a route asks who is signed in', async () => {
@@ -208,6 +231,25 @@ describe('handleAuth with SESSION_CHECK=local', () => {
     });
     expect(event.locals.userId).toBe('u-1');
     expect(getUser).not.toHaveBeenCalled();
+  });
+
+  it('refuses a verified token that belongs to an OAuth client (the MCP or any approved app)', async () => {
+    const getClaims = vi.fn(async () => ({
+      data: { claims: { sub: 'u-1', aud: 'authenticated', client_id: 'claude' } },
+      error: null,
+    }));
+    const { event } = await run(getClaims);
+    expect(await event.locals.getUser()).toBeNull();
+    expect(event.locals.userId).toBeUndefined();
+  });
+
+  it('refuses a verified token minted for another audience', async () => {
+    const getClaims = vi.fn(async () => ({
+      data: { claims: { sub: 'u-1', aud: 'something-else' } },
+      error: null,
+    }));
+    const { event } = await run(getClaims);
+    expect(await event.locals.getUser()).toBeNull();
   });
 
   it('is nobody when the token does not verify', async () => {

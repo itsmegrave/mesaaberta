@@ -104,9 +104,19 @@ describe('api sign-in', () => {
     expect(signInForSession.mock.calls[0][1]).toMatchObject(credentials);
   });
 
+  it('hands the CAPTCHA answer to Supabase, and nothing when the form sent none', async () => {
+    signInForSession.mockResolvedValue({ result: 'captcha_failed', session: null });
+
+    expect((await signIn({ ...credentials, captchaToken: 'turnstile' })).status).toBe(400);
+    expect(signInForSession.mock.calls[0][1]).toMatchObject({ captchaToken: 'turnstile' });
+    await signIn({ ...credentials, captchaToken: { not: 'a string' } });
+    expect(signInForSession.mock.calls[1][1]).toMatchObject({ captchaToken: null });
+  });
+
   it.each([
     ['invalid', 400],
     ['unconfirmed', 400],
+    ['captcha_failed', 400],
     ['suspended', 403],
     ['rate_limited', 429],
     ['failed', 500],

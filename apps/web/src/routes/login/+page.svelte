@@ -42,7 +42,12 @@
 
   {#if data.authEnabled}
     <div class="grid gap-5">
-      <CredentialsForm mode="login" {controller} action="?/email" />
+      <CredentialsForm
+        mode="login"
+        {controller}
+        action="?/email"
+        captchaSiteKey={data.captchaSiteKey}
+      />
 
       <p>
         <a href="/forgot" class="link-underline font-semibold text-link">{m.login_forgot()}</a>
@@ -53,7 +58,7 @@
       <div class="grid gap-3">
         <ProviderButtons next={data.next} />
         {#if data.passkeys}
-          <PasskeySignIn next={data.next} />
+          <PasskeySignIn next={data.next} captcha={Boolean(data.captchaSiteKey)} />
         {/if}
       </div>
 

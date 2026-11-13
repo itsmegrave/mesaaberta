@@ -19,7 +19,7 @@ export const load: PageServerLoad = async ({ locals, params, url, setHeaders }) 
   const report = await readFromApi<NonNullable<Awaited<ReturnType<typeof reportDetail>>>>(
     locals,
     user.id,
-    `/v1/admin-reads/reports/${params.id}`,
+    `/v1/admin-reads/reports/${encodeURIComponent(params.id)}`,
   );
   return { report: revivedDates(report) };
 };

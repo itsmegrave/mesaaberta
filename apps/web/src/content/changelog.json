@@ -30,6 +30,16 @@
         "kind": "improved",
         "title": "Posts no Instagram pelo conector do Claude",
         "description": "Para a administração: o conector do Claude agora publica uma imagem ou um vídeo (Reel) no Instagram da Mesa Aberta. Ele mostra a conta e o arquivo antes e só publica depois de confirmar."
+      },
+      {
+        "kind": "fixed",
+        "title": "Mesas 18+ só para maiores",
+        "description": "Quem informou no perfil que tem de 13 a 17 anos não consegue mais entrar, pedir vaga, entrar na lista de espera nem aceitar convite em mesa com classificação 18."
+      },
+      {
+        "kind": "fixed",
+        "title": "Fotos sem localização",
+        "description": "Toda foto enviada é guardada sem os dados escondidos do arquivo, como o lugar onde foi tirada."
       }
     ]
   },

@@ -9,17 +9,23 @@ import { callApiRaw } from '#lib/server/api-client.js';
 import { keepCodeVerifier } from '#lib/server/auth/code-verifier.js';
 import { afterSignIn } from '@mesaaberta/core/server/auth/onboarding';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
+import { captchaField, captchaSiteKey } from '#lib/server/auth/captcha.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
   const next = safeNext(url.searchParams.get('next'));
   if (await locals.getUser()) redirect(303, next);
 
-  return { next, form: initialForm({ email: '', password: '', next }) };
+  return {
+    next,
+    form: initialForm({ email: '', password: '', next }),
+    captchaSiteKey: captchaSiteKey(locals?.env),
+  };
 };
 
 const STATUS = {
   weak_password: 400,
+  captcha_failed: 400,
   failed: 500,
   rate_limited: 429,
 } as const satisfies Record<Exclude<SignUpResult, 'signed_in' | 'check_email'>, number>;
@@ -35,7 +41,13 @@ type Via = { result: SignUpResult; retryAfter?: number } | { result: 'session_lo
 async function signUpViaApi(
   locals: App.Locals,
   ip: string,
-  details: { email: string; password: string; origin: string; next: string },
+  details: {
+    email: string;
+    password: string;
+    origin: string;
+    next: string;
+    captchaToken?: string;
+  },
 ): Promise<Via> {
   if (!locals.supabase) return { result: 'failed' };
 
@@ -74,11 +86,8 @@ export const actions: Actions = {
   default: async ({ request, locals, url, getClientAddress, setHeaders }) => {
     if (!locals.supabase) redirect(303, '/login?error=unavailable');
 
-    const form = validateStringForm(await request.formData(), credentialsSchema, [
-      'email',
-      'password',
-      'next',
-    ]);
+    const data = await request.formData();
+    const form = validateStringForm(data, credentialsSchema, ['email', 'password', 'next']);
     const next = safeNext(form.data.next);
     const { email, password } = form.data;
     withoutSecrets(form, ['password']);
@@ -88,6 +97,7 @@ export const actions: Actions = {
       password,
       origin: url.origin,
       next,
+      ...captchaField(data),
     });
     const { result } = viaApi;
     // The account exists, so signing up again would not help: the person signs in instead.

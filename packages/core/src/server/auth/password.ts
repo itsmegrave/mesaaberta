@@ -8,7 +8,7 @@ import type { Logger } from '@mesaaberta/core/server/logger';
 type Deps = { supabase: SupabaseClient; log: Logger };
 
 /** `sent` is the answer whether or not the address has an account: Supabase does not say, and neither do we. */
-export type ResetRequestResult = 'sent' | 'rate_limited' | 'failed';
+export type ResetRequestResult = 'sent' | 'captcha_failed' | 'rate_limited' | 'failed';
 export type ChangePasswordResult =
   'ok' | 'weak_password' | 'same_password' | 'no_session' | 'rate_limited' | 'failed';
 
@@ -16,15 +16,17 @@ const RATE_LIMITED = new Set(['over_email_send_rate_limit', 'over_request_rate_l
 
 export async function requestPasswordReset(
   { supabase, log }: Deps,
-  { email, origin }: { email: string; origin: string },
+  { email, origin, captchaToken }: { email: string; origin: string; captchaToken?: string | null },
 ): Promise<ResetRequestResult> {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     // The link comes back to the callback, which trades its code for a session and moves on.
     redirectTo: `${origin}/auth/callback?next=${encodeURIComponent('/reset')}`,
+    ...(captchaToken ? { captchaToken } : {}),
   });
 
   if (!error) return 'sent';
   if (error.code && RATE_LIMITED.has(error.code)) return 'rate_limited';
+  if (error.code === 'captcha_failed') return 'captcha_failed';
 
   // The code and status only: the message can quote the address.
   log.warn('auth.password_reset_request_refused', { code: error.code, status: error.status });

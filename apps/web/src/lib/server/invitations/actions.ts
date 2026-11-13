@@ -36,7 +36,7 @@ export function invitationAction(kind: Kind): Action {
             ? '/v1/account/invitation-preferences'
             : kind === 'block'
               ? '/v1/account/invitation-blocks'
-              : `/v1/invitations/${id}/${kind}`;
+              : `/v1/invitations/${encodeURIComponent(id)}/${kind}`;
       const body =
         kind === 'invite'
           ? { username: data.username }

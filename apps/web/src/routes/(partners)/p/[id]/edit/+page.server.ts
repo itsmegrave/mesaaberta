@@ -82,11 +82,11 @@ export const actions: Actions = {
   },
   // "Quem cuida do parceiro": every owner may invite, cancel an invite and take an account off.
   invite: ownerAction(partnerInviteSchema, ['username'], ({ username }, params) => [
-    `/v1/partners/${params.id}/owners/invite`,
+    `/v1/partners/${encodeURIComponent(params.id)}/owners/invite`,
     { username },
   ]),
   cancelInvite: ownerAction(partnerInvitationIdSchema, ['invitationId'], (data, params) => [
-    `/v1/partners/${params.id}/owners/cancel`,
+    `/v1/partners/${encodeURIComponent(params.id)}/owners/cancel`,
     { invitationId: data.invitationId },
   ]),
   // "Mostrar meu perfil em Quem mestra": each person who looks after it decides for themselves.
@@ -96,13 +96,13 @@ export const actions: Actions = {
   },
   // Their own row is "Deixar de cuidar…": they no longer reach this page, so it sends them to /p.
   removeOwner: ownerAction(partnerOwnerSchema, ['profileId'], ({ profileId }, params) => [
-    `/v1/partners/${params.id}/owners/remove`,
+    `/v1/partners/${encodeURIComponent(params.id)}/owners/remove`,
     { profileId },
   ]),
   leave: ownerAction(
     partnerOwnerSchema,
     ['profileId'],
-    (_data, params) => [`/v1/partners/${params.id}/owners/leave`, {}],
+    (_data, params) => [`/v1/partners/${encodeURIComponent(params.id)}/owners/leave`, {}],
     { flagged: false, then: () => '/partners' },
   ),
 };
@@ -110,6 +110,9 @@ export const actions: Actions = {
 const showAsGm = ownerAction(
   partnerShowAsGmFormSchema,
   ['show'],
-  ({ show }, params) => [`/v1/partners/${params.id}/show-as-gm`, { show: show === 'true' }],
+  ({ show }, params) => [
+    `/v1/partners/${encodeURIComponent(params.id)}/show-as-gm`,
+    { show: show === 'true' },
+  ],
   { flagged: false },
 );

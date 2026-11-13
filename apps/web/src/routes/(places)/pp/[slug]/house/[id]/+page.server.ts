@@ -17,7 +17,7 @@ export const load: PageServerLoad = async ({ locals, url, params }) => {
     await readFromApi<Awaited<ReturnType<typeof loadPlaceHostInvitation>>>(
       locals,
       user.id,
-      `/v1/places/hosts/invitations/${params.id}`,
+      `/v1/places/hosts/invitations/${encodeURIComponent(params.id)}`,
     ),
   );
   const { imagePath, ...place } = invitation.place;
@@ -31,7 +31,8 @@ export const load: PageServerLoad = async ({ locals, url, params }) => {
 
 const answer = (decision: 'accept' | 'decline') =>
   moderationAction(z.object({}), [], {
-    path: (event) => `/v1/places/hosts/invitations/${event.params.id}/${decision}`,
+    path: (event) =>
+      `/v1/places/hosts/invitations/${encodeURIComponent(event.params.id ?? '')}/${decision}`,
   });
 
 export const actions: Actions = {

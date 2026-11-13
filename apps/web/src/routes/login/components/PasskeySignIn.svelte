@@ -6,7 +6,7 @@
   import { passkeyCeremony } from '#lib/auth/passkey-ceremony.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
 
-  let { next }: { next: string } = $props();
+  let { next, captcha = false }: { next: string; captcha?: boolean } = $props();
 
   // svelte-ignore state_referenced_locally
   const ceremony = passkeyCeremony('sign-in', {
@@ -14,6 +14,16 @@
     answer: '?/passkey',
     fields: { next },
   });
+
+  // With Turnstile on, Supabase wants an answer with the challenge too. The page has one widget,
+  // in the e-mail form; its answer is good once, so the widget gets a fresh one after each try.
+  async function start() {
+    const field = captcha
+      ? document.querySelector<HTMLInputElement>('input[name="captchaToken"]')
+      : null;
+    await ceremony.start(field?.value || undefined);
+    if (captcha) window.turnstile?.reset();
+  }
 </script>
 
 <div class="grid gap-2">
@@ -22,7 +32,7 @@
     class="w-full justify-center border-2 border-surface-200-800 bg-panel font-semibold hover:preset-tonal"
     submitting={ceremony.pending}
     aria-describedby="passkey-problem"
-    onclick={() => ceremony.start()}
+    onclick={() => void start()}
   >
     {m.passkey_sign_in()}
   </MAButton>

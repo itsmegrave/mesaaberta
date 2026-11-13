@@ -18,7 +18,7 @@ export const GET: RequestHandler = async ({ locals, params, url }) => {
       await requireApi<{ profileId: string; tables: CalendarTable[] }>(
         locals,
         null,
-        `/v1/calendar-feed/${params.token}`,
+        `/v1/calendar-feed/${encodeURIComponent(params.token)}`,
       ),
     );
   } catch (cause) {
