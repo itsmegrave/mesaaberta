@@ -32,6 +32,7 @@
     seenAt,
     messagesUnread,
     directories = [],
+    matches = false,
   }: {
     account: Account | null;
     authEnabled: boolean;
@@ -41,6 +42,8 @@
     messagesUnread: number;
     /** Explorar's links, drawn as their own group after the destinations. */
     directories?: DirectoryLink[];
+    /** Whether Combinar is on for the person: then it is a destination of its own. */
+    matches?: boolean;
   } = $props();
 
   const STORAGE_KEY = 'nav-expanded';
@@ -70,7 +73,7 @@
   // Parceiros has no link in the app chrome.
   const pathname = $derived(page.url.pathname);
   const links = $derived(
-    mainNav('sidebar', { signedIn: !!account }).map((link) => ({
+    mainNav('sidebar', { signedIn: !!account, matches }).map((link) => ({
       href: link.href,
       label: link.label(),
       icon: link.icon,

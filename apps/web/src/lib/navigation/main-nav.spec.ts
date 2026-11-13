@@ -42,6 +42,18 @@ describe('mainNav', () => {
     ]);
   });
 
+  it('lists Combinar as a destination only while it is on', () => {
+    expect(hrefs(mainNav('tabs', { signedIn: true }))).not.toContain('/matches');
+    expect(hrefs(mainNav('tabs', { signedIn: true, matches: true }))).toEqual([
+      '/tables',
+      '/tables/new',
+      '/u/tables',
+      '/matches',
+    ]);
+    expect(hrefs(mainNav('sidebar', { signedIn: true, matches: true }))).toContain('/matches');
+    expect(MAIN_NAV.find((item) => item.href === '/matches')!.current('/matches/list')).toBe(true);
+  });
+
   // Financiamentos is in Explorar (directoryNav), not among the destinations.
   it('leaves Financiamentos to Explorar', () => {
     expect(hrefs(mainNav('tabs', { signedIn: true }))).not.toContain('/crowdfunding');

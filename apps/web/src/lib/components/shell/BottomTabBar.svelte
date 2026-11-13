@@ -9,14 +9,17 @@
 
   let {
     directories = [],
+    matches = false,
   }: {
     /** Explorar's links (directories and Financiamentos): one is linked straight, two or more open the sheet. */
     directories?: DirectoryLink[];
+    /** Whether Combinar is on for the person: then it has its own tab. */
+    matches?: boolean;
   } = $props();
 
   const pathname = $derived(page.url.pathname);
   // Every tab shows for everyone (the members' ones lead to sign-in). Admin is in the account menu.
-  const links = mainNav('tabs', { signedIn: true });
+  const links = $derived(mainNav('tabs', { signedIn: true, matches }));
 
   const tabClass = (current: boolean, primary = false) =>
     `relative flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 text-center text-xs font-semibold no-underline ${
