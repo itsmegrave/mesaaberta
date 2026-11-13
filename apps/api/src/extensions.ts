@@ -1,8 +1,10 @@
 import { Hono } from 'hono';
+import { z } from 'zod';
 import type { createDb, DatabaseEnv } from '@mesaaberta/core/server/db/client';
 import { connectionStringFrom, createDb as openDb } from '@mesaaberta/core/server/db/client';
 import { logger } from '@mesaaberta/core/server/logger';
 import { socialFor, type SocialEnv } from '@mesaaberta/core/server/social/index';
+import { SOCIAL_CAPTION_MAX } from '@mesaaberta/core/server/social/port';
 import {
   extensionById,
   extensions,
@@ -12,6 +14,17 @@ import { adminGuard, type AdminVariables } from './admin-guard';
 import { afterAnswer, apiFlags, type FlagsEnv } from './flags';
 
 type Open = typeof createDb;
+
+const SOCIAL_POST = z.object({
+  caption: z.string().trim().min(1).max(SOCIAL_CAPTION_MAX),
+  mediaUrl: z
+    .string()
+    .trim()
+    .max(2048)
+    .url()
+    .refine((url) => url.startsWith('https://')),
+  confirmed: z.boolean().optional().default(false),
+});
 
 /**
  * The admin's hand actions on an installed extension (Trello #120): `POST /:ext/:action`, from that
@@ -62,6 +75,45 @@ export function extensionRoutes(open: Open = openDb, installed: readonly Extensi
       })(),
     );
     return c.json({ eventIds: [] }, 202);
+  });
+
+  // A hand-written post (an image or a video, by a public https address) on the deployment's
+  // social account, for the MCP's post_on_social. Without `confirmed` it saves nothing and answers
+  // what it would post; with it, it queues the post for the cron. The connector reads the media.
+  app.post('/social/posts', async (c) => {
+    const parsed = SOCIAL_POST.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) {
+      const field = String(parsed.error.issues[0]?.path[0] ?? '');
+      return c.json({ error: 'invalid', field, message: 'invalid' }, 400);
+    }
+    const social = socialFor(c.env as SocialEnv, installed);
+    if (!social.queuePost || !social.configured(c.env))
+      return c.json({ error: 'unavailable' }, 503);
+    const { caption, mediaUrl, confirmed } = parsed.data;
+    const answer = await social.queuePost(
+      c.get('db'),
+      c.env,
+      { caption, media: { url: mediaUrl }, createdBy: c.get('actorId') },
+      { confirmed },
+    );
+    if ('invalid' in answer)
+      return c.json(
+        { error: 'invalid', field: answer.invalid.field, message: answer.invalid.code },
+        400,
+      );
+    if ('status' in answer && answer.status === 'unavailable')
+      return c.json({ error: 'unavailable' }, 503);
+    return c.json({ eventIds: [], network: social.label ?? social.name, ...answer });
+  });
+
+  // Where a hand-written post stands (queued, published with its link, failed).
+  app.get('/social/posts/:id', async (c) => {
+    const id = c.req.param('id');
+    const social = socialFor(c.env as SocialEnv, installed);
+    if (!/^[0-9a-f-]{36}$/i.test(id) || !social.postStatus)
+      return c.json({ error: 'not_found' }, 404);
+    const post = await social.postStatus(c.get('db'), c.env, id);
+    return post ? c.json({ post }) : c.json({ error: 'not_found' }, 404);
   });
 
   app.post('/:ext/:action', async (c) => {

@@ -19,6 +19,11 @@
         "kind": "improved",
         "title": "Páginas abrem mais rápido",
         "description": "O site carrega menos código no celular, lê os dados de cada página ao mesmo tempo em vez de um depois do outro e confere seu login sem esperar outro servidor. A página de uma mesa e o topo de todas as páginas ficaram mais rápidos."
+      },
+      {
+        "kind": "improved",
+        "title": "Posts no Instagram pelo conector do Claude",
+        "description": "Para a administração: o conector do Claude agora publica uma imagem ou um vídeo (Reel) no Instagram da Mesa Aberta. Ele mostra a conta e o arquivo antes e só publica depois de confirmar."
       }
     ]
   },

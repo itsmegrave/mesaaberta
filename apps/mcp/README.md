@@ -6,8 +6,9 @@ to the api and nothing more: no database, no business rule, no store and no secr
 
 **Status: phase 1 (reads) plus a few admin writes, admins only (kill switch `use_mcp`).** Every
 tool reads except `add_tool`, which adds and approves a tool in Ferramentas, `send_announcement`,
-which sends a notification as Admin > Notificações does, and `create_poll` and `close_poll`, which
-publish and end a poll as Admin > Enquetes does. Other writes (asking for a
+which sends a notification as Admin > Notificações does, `create_poll` and `close_poll`, which
+publish and end a poll as Admin > Enquetes does, and `post_on_social`, which posts an image or a
+video on the site's social account through the installed connector. Other writes (asking for a
 seat, the GM's answers, messages) come in a later phase, each one confirmed by the person before it
 runs.
 
@@ -55,6 +56,8 @@ ends access. A "Connected apps" screen in the account is a later phase.
 | `create_poll` (writes)                    | `POST /v1/admin/widgets/reach`, or `/create` then `/publish`                |
 | `list_polls`                              | `GET /v1/admin/widgets/panel`                                               |
 | `close_poll` (writes)                     | `POST /v1/admin/widgets/close`                                              |
+| `post_on_social` (writes)                 | `POST /v1/admin/social/posts`                                               |
+| `get_social_post`                         | `GET /v1/admin/social/posts/:id`                                            |
 
 Each tool answers the api's JSON as text, or `{ "error": code }` (`not_found`, `forbidden`,
 `rate_limited`, `unavailable`, or `invalid` with the `field` and `code` the api named) with
@@ -79,6 +82,14 @@ groups (`include`, `exclude`), `people` narrows a poll to hand-picked usernames 
 (Mixpanel's distinct ids are profile ids), for an audience the database cannot work out, such as
 who tried a theme. `list_polls` answers how many people were picked, never who. Polls only show
 while `use_widgets` is on for the person.
+
+`post_on_social` takes a caption and the public https address of a JPEG or an MP4 (25 MB at
+most). The connector reads the file itself: unconfirmed it saves nothing and answers
+`{ step: "confirm", network, account, kind, bytes }`, which the client shows the person with the
+caption before calling again with `confirmed: true`. Then it answers `{ status: "queued", id }` and
+the worker's cron publishes it; `get_social_post` answers where it stands (`published` with its
+`permalink`, `failed`, or `uncertain` when the outcome is unknown and an admin checks the account).
+A build without a connector answers `unavailable`.
 
 ## Settings
 
