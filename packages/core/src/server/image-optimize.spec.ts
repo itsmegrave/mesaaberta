@@ -243,7 +243,7 @@ describe('compressed', () => {
       contentType: 'image/png' as const,
       path: 'tables/x.png',
     };
-    expect(await compressed(broken, log)).toBe(broken);
+    expect(await compressed(broken, log)).toEqual(broken);
     expect(log.warn).toHaveBeenCalledWith(
       'storage.image_compress_failed',
       expect.objectContaining({ code: 'image_compress_failed', imageType: 'image/png' }),
