@@ -1,13 +1,13 @@
 <script lang="ts">
   // "Sugerir ferramenta" and the admin's "Editar ferramenta": the same form. The name, the site, the
-  // kind and a line about it, then an optional square logo. The card as it will look sits beside it
+  // kinds and a line about it, then an optional square logo. The card as it will look sits beside it
   // (below it on a phone). A suggestion waits for an admin; an admin's edit takes effect at once.
   import EditorForm from '#lib/components/ui/EditorForm.svelte';
   import FormField from '#lib/components/ui/FormField.svelte';
   import FormSection from '#lib/components/ui/FormSection.svelte';
   import ImageUpload from '#lib/components/ui/ImageUpload.svelte';
   import MAButton from '#lib/components/ui/MAButton.svelte';
-  import RadioPills from '#lib/components/ui/RadioPills.svelte';
+  import CheckboxPills from '#lib/components/ui/CheckboxPills.svelte';
   import TextInput from '#lib/components/ui/TextInput.svelte';
   import ToolCard from './ui/ToolCard.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
@@ -19,17 +19,16 @@
   import { toolKindOptions } from '#lib/tools/labels.js';
   import { toast } from '#lib/toaster.js';
   import {
-    isToolKind,
     TOOL_LIMITS,
     toolFormSchema,
+    toolKindsOf,
     toolSiteUrl,
-    type ToolKind,
   } from '@mesaaberta/core/tools/schema';
 
   type Values = {
     name: string;
     siteUrl: string;
-    kind: string;
+    kinds: string[];
     description: string;
     logo?: File;
   };
@@ -74,8 +73,8 @@
     code ? (codes[code]?.() ?? errorText(code, field)) : undefined;
   const errors = fieldErrors<keyof Values>(controller, say);
   const { err } = errors;
-  const kindError = $derived(
-    controller.errors.kind?.[0] === 'required' ? m.tool_err_kind_required() : err('kind'),
+  const kindsError = $derived(
+    controller.errors.kinds?.[0] === 'required' ? m.tool_err_kind_required() : err('kinds'),
   );
   const logoError = $derived(
     controller.errors.logo?.[0]
@@ -89,7 +88,7 @@
       [
         ['name', m.tool_form_name()],
         ['siteUrl', m.tool_form_site()],
-        ['kind', m.tool_form_kind()],
+        ['kinds', m.tool_form_kind()],
         ['description', m.tool_form_description()],
       ],
       problem('logo', m.tool_form_logo(), logoError),
@@ -109,7 +108,7 @@
 
   const card = $derived({
     name: $draft.name || m.tool_form_name(),
-    kind: (isToolKind($draft.kind) ? $draft.kind : '') as ToolKind | '',
+    kinds: toolKindsOf($draft.kinds),
     siteUrl: toolSiteUrl($draft.siteUrl) ?? '',
     description: $draft.description,
     logoUrl: picked ?? logoUrl,
@@ -171,13 +170,13 @@
         />
       {/snippet}
     </FormField>
-    <RadioPills
-      name="kind"
+    <CheckboxPills
+      name="kinds"
       legend={m.tool_form_kind()}
       hint={m.tool_form_kind_hint()}
       options={toolKindOptions()}
-      bind:value={$draft.kind}
-      error={kindError}
+      bind:group={$draft.kinds}
+      error={kindsError}
     />
     <FormField
       id="description"

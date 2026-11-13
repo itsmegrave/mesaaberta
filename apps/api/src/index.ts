@@ -6,7 +6,9 @@ import {
   sentryReleaseFor,
   type ReleaseEnv,
 } from '@mesaaberta/core/observability/sentry-options';
+import { querySpans } from '@mesaaberta/core/observability/query-spans';
 import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
+import { observeQueries } from '@mesaaberta/core/server/db/client';
 import { setAppName, setTelemetrySink } from '@mesaaberta/core/server/logger';
 import { createApi } from './app';
 import { sentrySink } from './sentry-sink';
@@ -19,6 +21,8 @@ setAppName('api');
 // Carries the request id to every log line and outbox write of the request (Trello #278).
 setRequestContextStore(new AsyncLocalStorage());
 logInstalled();
+// Every query becomes a `db` span, so Sentry can flag N+1 and consecutive queries.
+observeQueries(querySpans(Sentry));
 
 const api = createApi();
 

@@ -7,7 +7,7 @@
   // sticker only while Overdrive paints (overdrive.css), so there is no swap after the first paint.
   import sprite from '#lib/icons/sprite.generated.svg?url';
   import { ANIMATED_ICONS } from '#lib/icons/sprite.generated.js';
-  import { COMIC_ICONS } from '#lib/icons/comic.js';
+  import { COMIC_ICONS, stickerTint } from '#lib/icons/comic.js';
   import type { IconName } from '#lib/icons/names.js';
 
   let {
@@ -22,6 +22,8 @@
     `${sprite}#${name.replaceAll(':', '--')}${!motion && ANIMATED_ICONS.includes(name) ? '--still' : ''}`,
   );
   const comic = $derived(COMIC_ICONS[name]);
+  // Without a drawn sticker, Overdrive turns the icon's own silhouette into one (overdrive.css).
+  const tint = $derived(stickerTint(name));
 </script>
 
 <!-- Decorative: the text next to an icon says what it means. One <svg> either way; an icon with a
@@ -51,6 +53,7 @@
     width={size}
     height={size}
     data-icon={name}
+    data-sticker={tint}
     aria-hidden="true"
     class="shrink-0 {className}"><use {href} /></svg
   >

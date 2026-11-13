@@ -117,3 +117,48 @@ export const COMIC_ICONS: Partial<Record<IconName, ComicIcon>> = {
     tilt: 7,
   },
 };
+
+/**
+ * Control glyphs that stay plain in Overdrive: arrows, ticks and editor marks read as controls, the
+ * spinner moves, and the brand logos are other people's marks. Every other icon without a drawn
+ * sticker above becomes one in CSS (overdrive.css, `svg[data-sticker]`): its own silhouette, filled
+ * in a sticker colour, with an ink edge, a hard shadow and a tilt.
+ */
+const PLAIN_IN_OVERDRIVE = new Set<string>([
+  'svg-spinners:tadpole',
+  'check',
+  'xmark',
+  'plus',
+  'minus',
+  'more',
+  'chevron-down',
+  'chevron-left',
+  'chevron-right',
+  'arrow-left',
+  'arrow-right',
+  'arrow-up',
+  'arrow-down',
+  'external-link',
+  'bold',
+  'italic',
+  'underline',
+  'quote',
+  'list',
+  'code',
+  'link',
+  'unlink',
+  'undo-2',
+  'redo-2',
+  'panel-left-open',
+  'panel-left-close',
+]);
+
+/** Which of the five sticker colours an icon takes (0-4), or undefined when it stays plain. The same
+ * name always gets the same colour, so an icon looks the same wherever it appears. */
+export function stickerTint(name: IconName): number | undefined {
+  if (COMIC_ICONS[name] || name.startsWith('brand:') || PLAIN_IN_OVERDRIVE.has(name))
+    return undefined;
+  let hash = 0;
+  for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) % 9973;
+  return hash % 5;
+}

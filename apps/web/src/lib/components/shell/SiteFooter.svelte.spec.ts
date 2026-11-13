@@ -118,4 +118,17 @@ describe('SiteFooter.svelte', () => {
       .element(browserPage.getByRole('link', { name: 'Quem mestra' }))
       .toHaveAttribute('href', '/gamemasters');
   });
+
+  it('lists Combinar while it is on, in place of Procuro mesa', async () => {
+    render(SiteFooter, {
+      site,
+      directories: { systems: false, gms: false, places: false, players: true, matches: true },
+    });
+    await expect
+      .element(browserPage.getByRole('link', { name: 'Combinar' }))
+      .toHaveAttribute('href', '/matches');
+    await expect
+      .element(browserPage.getByRole('link', { name: 'Procuro mesa' }))
+      .not.toBeInTheDocument();
+  });
 });

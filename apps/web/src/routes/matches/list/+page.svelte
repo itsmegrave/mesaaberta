@@ -42,7 +42,12 @@
     lede={m.match_list_lede()}
   >
     {#snippet actions()}
-      <a href={routes.matches} class={buttonClass('primary')}>{m.match_list_back()}</a>
+      <div class="flex flex-wrap gap-2">
+        <a href={routes.matches} class={buttonClass('primary')}>{m.match_list_back()}</a>
+        {#if data.graph}
+          <a href={routes.matchPlayed} class={buttonClass('secondary')}>{m.match_played_link()}</a>
+        {/if}
+      </div>
     {/snippet}
   </PageHead>
 

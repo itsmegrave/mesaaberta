@@ -265,6 +265,7 @@
             alt=""
             width="1200"
             height="480"
+            fetchpriority="high"
             decoding="async"
             referrerpolicy="no-referrer"
             class="aspect-5/2 w-full rounded-lg object-cover"

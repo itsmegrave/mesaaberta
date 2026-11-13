@@ -14,7 +14,7 @@ import {
   suggestTool,
   updateTool,
 } from '@mesaaberta/core/server/tools/service';
-import type { ToolInput } from '@mesaaberta/core/tools/schema';
+import { toolInputWireSchema, type ToolInput } from '@mesaaberta/core/tools/schema';
 import { createTestDb } from '../db/test-db';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
@@ -28,7 +28,7 @@ const bruno = member(2);
 const input = (over: Partial<ToolInput> = {}): ToolInput => ({
   name: "Let's Role",
   siteUrl: 'lets-role.com',
-  kind: 'vtt',
+  kinds: ['vtt'],
   description: 'Mesa virtual no navegador com fichas que você mesmo monta.',
   ...over,
 });
@@ -67,9 +67,11 @@ describe('the seeded list', () => {
     const list = await listTools(test.db, { now });
     expect(list.groups.map((group) => group.kind)).toEqual(['vtt', 'chat', 'call', 'helper']);
     const all = list.groups.flatMap((group) => group.tools);
-    expect(all).toHaveLength(13);
+    // Old Dragon Online is in two sections (migration 0088): 13 tools, 14 cards.
+    expect(new Set(all.map((tool) => tool.id)).size).toBe(13);
+    expect(all).toHaveLength(14);
     expect(all.find((tool) => tool.slug === 'discord')).toMatchObject({
-      kind: 'chat',
+      kinds: ['chat'],
       siteUrl: 'https://discord.com',
       logoPath: '/tools/discord.svg',
       platformSlug: 'discord',
@@ -78,6 +80,14 @@ describe('the seeded list', () => {
     // No square logo to ship: the card shows the initial.
     expect(all.find((tool) => tool.slug === 'talespire')?.logoPath).toBeNull();
     expect(await pendingToolCount(test.db)).toBe(0);
+  });
+
+  it('shows Old Dragon Online under Mesas virtuais and under Fichas e apoio', async () => {
+    const list = await listTools(test.db, { now });
+    const holding = list.groups
+      .filter((group) => group.tools.some((tool) => tool.slug === 'old-dragon-online'))
+      .map((group) => group.kind);
+    expect(holding).toEqual(['vtt', 'helper']);
   });
 });
 
@@ -112,6 +122,7 @@ describe('a suggested tool', () => {
       slug: 'discord',
       name: 'Discord',
       kind: 'chat',
+      kinds: ['chat'],
       siteUrl: 'https://discord.com',
       description: 'Chat.',
       approvedAt: now,
@@ -173,11 +184,62 @@ describe('a suggested tool', () => {
       test.db,
       admin,
       toolId,
-      input({ kind: 'helper', description: 'Fichas online.' }),
+      input({ kinds: ['helper'], description: 'Fichas online.' }),
       { logoPath: `tools/${admin.id}/b.png`, now },
     );
     expect(replacedLogo).toBe(`tools/${ana.id}/a.png`);
     expect(await shown()).toEqual({ pending: [], groups: [['helper', ["Let's Role"]]] });
+  });
+
+  it('shows in the section of each of its kinds, in the page order, and tells the change', async () => {
+    const { id: toolId } = await suggest();
+    await approveTool(test.db, admin, toolId);
+    const { eventId } = await updateTool(
+      test.db,
+      admin,
+      toolId,
+      input({ kinds: ['helper', 'vtt', 'helper'] }),
+      { now },
+    );
+    expect(await shown()).toEqual({
+      pending: [],
+      groups: [
+        ['vtt', ["Let's Role"]],
+        ['helper', ["Let's Role"]],
+      ],
+    });
+    const [row] = await test.db.select().from(tools).where(eq(tools.id, toolId));
+    expect(row).toMatchObject({ kind: 'vtt', kinds: ['vtt', 'helper'] });
+    expect((await stored(eventId)).payload).toMatchObject({
+      changes: { kinds: { from: 'vtt', to: 'vtt,helper' } },
+    });
+    await expect(updateTool(test.db, admin, toolId, input({ kinds: [] }))).rejects.toMatchObject({
+      field: 'kinds',
+      message: 'required',
+    });
+  });
+
+  it('written by an older build with one kind only, still shows in that section', async () => {
+    await test.db.insert(tools).values({
+      slug: 'antiga',
+      name: 'Antiga',
+      kind: 'call',
+      siteUrl: 'https://antiga.example',
+      description: 'De antes.',
+      approvedAt: now,
+    });
+    expect(await shown()).toEqual({ pending: [], groups: [['call', ['Antiga']]] });
+  });
+
+  it('reaches the api from a caller that still sends one kind', () => {
+    expect(
+      toolInputWireSchema.parse({
+        name: 'X',
+        siteUrl: 'x.example',
+        kind: 'chat',
+        description: 'Y',
+      }),
+    ).toMatchObject({ kinds: ['chat'] });
   });
 
   it('lists every tool for admins, those that wait first, with who suggested each', async () => {

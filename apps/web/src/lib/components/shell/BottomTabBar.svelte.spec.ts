@@ -43,6 +43,15 @@ describe('BottomTabBar.svelte', () => {
     await expect.element(nav().getByRole('link', { name: 'Admin' })).not.toBeInTheDocument();
     expect(nav().getByRole('link').elements()).toHaveLength(3);
   });
+  it('gives Combinar its own tab while it is on', async () => {
+    render(BottomTabBar, { matches: true });
+
+    await expect
+      .element(nav().getByRole('link', { name: 'Combinar' }))
+      .toHaveAttribute('href', '/matches');
+    expect(nav().getByRole('link').elements()).toHaveLength(4);
+  });
+
   it('uses the new game artwork for every mobile tab', async () => {
     render(BottomTabBar);
     const expected = {

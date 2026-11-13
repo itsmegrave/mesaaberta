@@ -4,6 +4,7 @@
   import Icon from '#lib/components/ui/Icon.svelte';
   import TableLogo from '#lib/components/ui/TableLogo.svelte';
   import { footerNotes } from '#lib/extensions/panels.js';
+  import { listsPlayers } from '#lib/navigation/directory-nav.js';
   import { isUnder } from '#lib/navigation/main-nav.js';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -16,7 +17,13 @@
   }: {
     site: { CONTACT_EMAIL: string; INSTAGRAM_HANDLE?: string };
     /** Which directories are on for the person: each one's link shows only then. */
-    directories?: { systems: boolean; gms: boolean; places: boolean; players?: boolean };
+    directories?: {
+      systems: boolean;
+      gms: boolean;
+      places: boolean;
+      players?: boolean;
+      matches?: boolean;
+    };
     /** Whether a blog post is out: the Blog link shows only then. */
     blogLive?: boolean;
   } = $props();
@@ -67,13 +74,23 @@
           } as const,
         ]
       : []),
-    ...(directories.players
+    ...(listsPlayers(directories)
       ? [
           {
             route: '/players',
             path: '/players',
             items: undefined,
             label: m.directory_footer_players,
+          } as const,
+        ]
+      : []),
+    ...(directories.matches
+      ? [
+          {
+            route: '/matches',
+            path: '/matches',
+            items: undefined,
+            label: m.nav_matches,
           } as const,
         ]
       : []),

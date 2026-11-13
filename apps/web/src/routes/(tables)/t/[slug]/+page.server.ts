@@ -31,8 +31,11 @@ const tableIds = (locals: App.Locals, actorId: string, slug: string) =>
   ).catch(() => null);
 
 export const load: PageServerLoad = async (event) => {
-  const data = await loadRead(event, 'detail');
   const { locals, params } = event;
+  // The GM's Seguir button is read alongside the table, not after it.
+  const followRead = gmFollowState(locals, params.slug);
+  followRead.catch(() => undefined);
+  const data = await loadRead(event, 'detail');
   const viewerId = (await locals.getUser())?.id;
   locals.track('player_mesa_detail_viewed', viewerId, async () => {
     const table = viewerId ? await tableIds(locals, viewerId, params.slug) : null;
@@ -43,7 +46,7 @@ export const load: PageServerLoad = async (event) => {
   return {
     ...data,
     // Seguir on the GM row, for anyone but the GM.
-    follow: data.gmUsername ? await gmFollowState(locals, params.slug) : null,
+    follow: data.gmUsername ? await followRead : null,
     ratingForm: {
       valid: false,
       data: {

@@ -6,7 +6,7 @@ import type { Actor } from '../auth/policy';
 import type { AnyDb } from '../db/client';
 import { addCrowdfunding } from '../crowdfunding/service';
 import { addPartner, updatePartner } from '../partners/service';
-import { toolInputSchema, type ToolInput } from '../../tools/schema';
+import { toolInputWireSchema, type ToolInput } from '../../tools/schema';
 import { suggestTool, updateTool } from '../tools/service';
 
 /** A file the web Worker already stored, as a path in the bucket (never a URL, never a file). */
@@ -51,7 +51,7 @@ export const submissionActions = {
   },
   // "Sugerir ferramenta": the logo is optional.
   toolSuggest: {
-    schema: z.object({ input: toolInputSchema, logoPath: storedPath.nullable().default(null) }),
+    schema: z.object({ input: toolInputWireSchema, logoPath: storedPath.nullable().default(null) }),
     apply: async (
       db: AnyDb,
       actor: Actor | null,
@@ -64,7 +64,7 @@ export const submissionActions = {
   },
   // An admin's "Editar" on a tool (the service checks the admin).
   toolUpdate: {
-    schema: z.object({ input: toolInputSchema, logoPath: storedPath.nullable().default(null) }),
+    schema: z.object({ input: toolInputWireSchema, logoPath: storedPath.nullable().default(null) }),
     apply: async (
       db: AnyDb,
       actor: Actor | null,

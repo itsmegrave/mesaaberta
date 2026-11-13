@@ -13,6 +13,7 @@ import {
   tags,
 } from '@mesaaberta/core/server/db/schema';
 import { listQueue } from './catalog';
+import { matchGraphStats } from '../matches/graph';
 
 const countWhere = (condition: SQL) =>
   sql<number>`count(*) filter (where ${condition})`.mapWith(Number);
@@ -140,6 +141,8 @@ export async function adminOverview(db: AnyDb, now = new Date()) {
     },
     recent,
     people: people[0],
+    // Combinar's community map: counts only, never names.
+    combinar: await matchGraphStats(db, now),
     tables: tables[0],
     seats: seats[0],
     queue: queue[0],

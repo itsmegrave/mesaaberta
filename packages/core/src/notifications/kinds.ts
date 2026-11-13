@@ -97,6 +97,8 @@ export const NOTIFICATION_KINDS = {
   follow_started: { category: 'system', icon: 'user-plus' },
   // Combinar: both said yes. Each of the two hears, naming the other.
   match_created: { category: 'system', icon: 'sparkles' },
+  // Combinar: matched a month ago and still no table together (twice at most, bell only).
+  match_reminder: { category: 'system', icon: 'sparkles' },
   catalog_suggestion_approved: { category: 'catalog', icon: 'tag' },
   catalog_suggestion_merged: { category: 'catalog', icon: 'tag' },
   catalog_suggestion_rejected: { category: 'catalog', icon: 'tag' },

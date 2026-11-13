@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
+  import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
+  import MAAccordion from '#lib/components/ui/MAAccordion.svelte';
+  import MAAccordionItem from '#lib/components/ui/MAAccordionItem.svelte';
   import CardGrid from '#lib/components/ui/CardGrid.svelte';
   import EmptyState from '#lib/components/ui/EmptyState.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
@@ -8,8 +10,13 @@
   import { m } from '#lib/paraglide/messages.js';
   import { toolGroupLabels } from '#lib/tools/labels.js';
   import ToolCard from '#lib/components/tools/ui/ToolCard.svelte';
+  import { ToolSections } from './sections.svelte.js';
 
   let { data } = $props();
+
+  // Each kind is a section that folds (a tool with several kinds is in each). On a phone they are
+  // pages: one open at a time, picked from the chips, the buttons under it or a sideways swipe.
+  const sections = new ToolSections(() => data.groups.map((group) => group.kind));
 
   // svelte-ignore state_referenced_locally
   let text = $state(data.query);
@@ -66,21 +73,84 @@
     </section>
   {/if}
 
-  {#each data.groups as group (group.kind)}
-    <section aria-labelledby="tools-{group.kind}" class="mt-10">
-      <div class="flex items-baseline gap-3">
-        <h2 id="tools-{group.kind}" class="text-2xl font-semibold tracking-tight">
-          {toolGroupLabels[group.kind]()}
-        </h2>
-        <span class="font-semibold text-muted">{group.tools.length}</span>
-      </div>
-      <CardGrid class="mt-5">
-        {#each group.tools as tool (tool.id)}
-          <li><ToolCard {tool} /></li>
+  {#if data.groups.length > 0}
+    {#if sections.paged && data.groups.length > 1}
+      <!-- A phone's index of the sections: tapping one opens it alone. The row scrolls sideways
+           when the chips do not fit. -->
+      <nav
+        aria-label={m.tool_sections_label()}
+        class="-mx-5 mt-8 flex snap-x scroll-px-5 scrollbar-none gap-2 overflow-x-auto px-5 pb-1 md:hidden [&::-webkit-scrollbar]:hidden"
+      >
+        {#each data.groups as group (group.kind)}
+          {@const active = sections.current === group.kind}
+          <MAButton
+            size="custom"
+            class="flex h-11 shrink-0 snap-start items-center gap-2 rounded-full border px-4 text-sm {active
+              ? 'border-primary-500 preset-filled-primary-500 font-semibold'
+              : 'border-surface-200-800 bg-panel'}"
+            aria-controls="tools-{group.kind}"
+            aria-current={active || undefined}
+            onclick={() => sections.show(group.kind)}
+          >
+            {toolGroupLabels[group.kind]()}
+            <span class="tabular-nums {active ? '' : 'text-muted'}">{group.tools.length}</span>
+          </MAButton>
         {/each}
-      </CardGrid>
-    </section>
-  {/each}
+      </nav>
+    {/if}
+
+    <MAAccordion bind:value={sections.open} class="mt-6 border-y border-surface-200-800 md:mt-10">
+      {#each data.groups as group, index (group.kind)}
+        {@const previous = data.groups[index - 1]}
+        {@const next = data.groups[index + 1]}
+        <div id="tools-{group.kind}" class="scroll-mt-6">
+          <MAAccordionItem
+            value={group.kind}
+            title={toolGroupLabels[group.kind]()}
+            summary={m.tool_count({ count: group.tools.length })}
+            titleClass="text-xl leading-tight font-semibold tracking-tight md:text-2xl"
+          >
+            <div {...sections.swipe}>
+              <CardGrid class="pt-2">
+                {#each group.tools as tool (tool.id)}
+                  <li><ToolCard {tool} /></li>
+                {/each}
+              </CardGrid>
+              {#if sections.paged && data.groups.length > 1}
+                <div class="mt-6 flex items-center justify-between gap-3 md:hidden">
+                  <MAButton
+                    variant="secondary"
+                    size="icon"
+                    aria-label={previous
+                      ? `${m.tool_section_previous()}: ${toolGroupLabels[previous.kind]()}`
+                      : m.tool_section_previous()}
+                    aria-disabled={!previous || undefined}
+                    onclick={() => previous && sections.show(previous.kind)}
+                  >
+                    <Icon name="arrow-left" size={18} />
+                  </MAButton>
+                  <span class="text-sm font-semibold text-muted tabular-nums">
+                    {m.tool_section_position({ current: index + 1, total: data.groups.length })}
+                  </span>
+                  <MAButton
+                    variant="secondary"
+                    size="icon"
+                    aria-label={next
+                      ? `${m.tool_section_next()}: ${toolGroupLabels[next.kind]()}`
+                      : m.tool_section_next()}
+                    aria-disabled={!next || undefined}
+                    onclick={() => next && sections.show(next.kind)}
+                  >
+                    <Icon name="arrow-right" size={18} />
+                  </MAButton>
+                </div>
+              {/if}
+            </div>
+          </MAAccordionItem>
+        </div>
+      {/each}
+    </MAAccordion>
+  {/if}
 
   {#if empty}
     <EmptyState

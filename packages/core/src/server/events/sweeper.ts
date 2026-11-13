@@ -11,6 +11,7 @@ import { pruneAuthAttempts } from '../auth/attempt-limit';
 import { flagsFromEnv } from '../flags/env';
 import { pruneTableChats } from '../messages/retention';
 import { pruneMatchAnswers } from '../matches/service';
+import { remindUnplayedMatches } from '../matches/graph';
 import { pollOutbox } from '@mesaaberta/events';
 import { pruneEvents, sweepEvents } from './dispatcher';
 import { reportDelay } from './delay';
@@ -34,6 +35,8 @@ type Deps = {
   open?: typeof createDb;
   /** Whether a GM gets the reminders to close a session; GrowthBook by default. */
   closeReminders?: (gm: { id: string; isAdmin: boolean }) => Promise<boolean>;
+  /** Whether Combinar's graph is on (`use_play_graph`), for its reminders; GrowthBook by default. */
+  playGraph?: () => Promise<boolean>;
   handlers: readonly Handler[];
   log: Logger;
 };
@@ -50,14 +53,16 @@ type Deps = {
  */
 export async function runSweeper(
   env: DatabaseEnv & PollerEnv,
-  { open = createDb, handlers, log, closeReminders }: Deps,
+  { open = createDb, handlers, log, closeReminders, playGraph }: Deps,
 ): Promise<number> {
   const connectionString = connectionStringFrom(env);
   if (!connectionString) return 0;
-  const flags = closeReminders ? null : flagsFromEnv(env, {});
+  let flags: ReturnType<typeof flagsFromEnv> | null = null;
+  const flagsOf = () => (flags ??= flagsFromEnv(env, {}));
   const remindGm =
     closeReminders ??
-    ((gm: { id: string; isAdmin: boolean }) => flags!.isEnabled(CLOSE_REMINDERS_FLAG, gm));
+    ((gm: { id: string; isAdmin: boolean }) => flagsOf().isEnabled(CLOSE_REMINDERS_FLAG, gm));
+  const graphOn = playGraph ?? (() => flagsOf().isEnabled('use_play_graph', {}));
 
   const { db, close } = open(connectionString);
   try {
@@ -110,6 +115,15 @@ export async function runSweeper(
     if (chats > 0) log.info('sweep.table_chats_pruned', { chats });
     const answers = await pruneMatchAnswers(db);
     if (answers > 0) log.info('sweep.match_answers_pruned', { pruned: answers });
+    // Isolated: a failed reminder must not hold up the sweep.
+    try {
+      if (await graphOn()) {
+        const reminded = await remindUnplayedMatches(db, now);
+        if (reminded > 0) log.info('sweep.match_reminders_sent', { reminded });
+      }
+    } catch (error) {
+      log.warn('sweep.match_reminders_failed', { code: 'match_reminders_failed', error });
+    }
     const deliveries = await pruneMailDeliveries(db);
     if (deliveries > 0) log.info('sweep.mail_deliveries_pruned', { deliveries });
     const attempts = await pruneAuthAttempts(db);

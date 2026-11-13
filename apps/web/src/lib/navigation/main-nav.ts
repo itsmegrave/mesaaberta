@@ -17,7 +17,7 @@ export type Audience = 'everyone' | 'members';
 export type Surface = 'sidebar' | 'tabs';
 
 export interface MainNavLink {
-  href: '/tables' | '/tables/new' | '/u/tables';
+  href: '/tables' | '/tables/new' | '/u/tables' | '/matches';
   icon: IconName;
   /** The open sidebar's label. */
   label: () => string;
@@ -28,6 +28,8 @@ export interface MainNavLink {
   audience: Audience;
   /** The call to action, drawn filled. */
   primary?: boolean;
+  /** Listed only while this feature is on for the person (Combinar: `use_matchmaking`). */
+  feature?: 'matches';
 }
 
 // Parceiros has no link in the app chrome; the footer lists it. Financiamentos is in Explorar
@@ -60,14 +62,28 @@ export const MAIN_NAV: readonly MainNavLink[] = [
     current: (pathname) => isUnder(pathname, '/u/tables'),
     audience: 'members',
   },
+  {
+    // Combinar is a main section, not an Explorar directory; listed while `use_matchmaking` is on.
+    href: '/matches',
+    icon: 'game-icons:card-play',
+    label: m.nav_matches,
+    tabLabel: m.nav_matches,
+    current: (pathname) => isUnder(pathname, '/matches'),
+    audience: 'members',
+    feature: 'matches',
+  },
 ];
 
 /**
  * The links a surface lists in order. The sidebar hides the members' links from visitors; the tab
  * bar always shows them (they lead to sign-in). Admin is never listed: it is in the account menu.
  */
-export function mainNav(surface: Surface, viewer: { signedIn: boolean }): MainNavLink[] {
+export function mainNav(
+  surface: Surface,
+  viewer: { signedIn: boolean; matches?: boolean },
+): MainNavLink[] {
   return MAIN_NAV.filter((link) => {
+    if (link.feature === 'matches' && viewer.matches !== true) return false;
     if (link.audience === 'members') return surface === 'tabs' || viewer.signedIn;
     return true;
   });

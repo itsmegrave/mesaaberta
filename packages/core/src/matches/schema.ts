@@ -44,8 +44,20 @@ export function leaning(axis: MatchAxis, value: number): { pole: MatchPole; perc
 
 /** How many answers a person gives a day: a cap on sweeping through everyone. */
 export const MATCH_DAILY_ANSWERS = 50;
-/** A no hides the person for this long; then they may come back if both cards still fit. */
-export const MATCH_PASS_DAYS = 90;
+/**
+ * An answer, yes or no, takes the person out of the deck for this long; then they come back (a
+ * reminder) if both cards still fit and no match was made. A yes keeps counting towards a match.
+ */
+export const MATCH_PASS_DAYS = 30;
+/**
+ * People who played a table together stay out of each other's deck while their latest shared
+ * session is this recent (`use_play_graph`); after that they may meet again.
+ */
+export const MATCH_PLAYED_DAYS = 180;
+/** A match whose two have not played together gets a bell reminder this many days after it… */
+export const MATCH_REMINDER_DAYS = 30;
+/** …and as long again after each one, this many times in all. */
+export const MATCH_REMINDERS = 2;
 /** Answers are deleted after this many days (the sweep); a match that came of one stays. */
 export const MATCH_ANSWER_DAYS = 180;
 /** How many cards one deck read brings. */

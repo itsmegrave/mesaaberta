@@ -10,6 +10,7 @@ import {
 } from '@mesaaberta/contracts';
 import { ANNOUNCEMENT_LIMITS } from '@mesaaberta/core/notifications/announcement';
 import { plainToHtml } from '@mesaaberta/core/text/rich';
+import { SEGMENTS } from '@mesaaberta/core/audience/segments';
 import { z } from 'zod';
 import { SOCIAL_CAPTION_MAX } from '@mesaaberta/core/server/social/port';
 import { queryOf, type ApiAnswer, type ApiReader, type ApiWriter } from './api';
@@ -26,8 +27,9 @@ const SLUG = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 const USERNAME = z.string().regex(/^@?[a-z0-9]+(?:-[a-z0-9]+)*$/i);
 const PAGE = z.number().int().min(1).optional().describe('Page number, from 1.');
 
-// Most tools only read. The few that write add something and never remove or overwrite anything;
-// the api checks the caller's permission for each one as it does for the site's own forms.
+// Most tools only read. The few that write add something; only close_poll ends something (a poll,
+// whose results stay). The api checks the caller's permission for each one as it does for the
+// site's own forms.
 const READ = { readOnlyHint: true, openWorldHint: false } as const;
 const WRITE = {
   readOnlyHint: false,
@@ -387,9 +389,13 @@ export function registerTools(server: McpServer, context: ToolContext) {
       inputSchema: {
         name: z.string().trim().min(1).max(TOOL_LIMITS.name),
         siteUrl: z.string().trim().min(1).max(2048).describe('The address, such as "https://…".'),
-        kind: z
-          .enum(TOOL_KINDS)
-          .describe('vtt (virtual tabletop), chat, call (voice/video) or helper (anything else).'),
+        kinds: z
+          .array(z.enum(TOOL_KINDS))
+          .min(1)
+          .describe(
+            'The sections it shows in, one or more: vtt (virtual tabletop), chat, call ' +
+              '(voice/video), helper (character sheets and anything else).',
+          ),
         description: z
           .string()
           .trim()
@@ -486,6 +492,217 @@ export function registerTools(server: McpServer, context: ToolContext) {
       ),
   );
 
+  // Polls are the private package's widgets extension (`/v1/admin/widgets/...`); a build without it
+  // answers 404, so these tools answer `not_found` there.
+  const POLLS = '/v1/admin/widgets';
+
+  server.registerTool(
+    'create_poll',
+    {
+      title: 'Create a poll (Admin > Enquetes)',
+      description:
+        'Publishes a poll: a card that floats over the pages it is placed on, for the people it ' +
+        'aims at, until they vote or press "Agora não". Admins only. Two steps: without ' +
+        '`confirmed` it writes nothing and answers `{ step: "confirm", reach }`, how many people ' +
+        'it would reach; tell the person that number and call again with `confirmed: true` only ' +
+        'after they say to publish. Write it in Brazilian Portuguese. Once people vote, the ' +
+        'question and options cannot change; close_poll ends it.',
+      inputSchema: {
+        question: z.string().trim().min(1).max(300),
+        options: z.array(z.string().trim().min(1).max(120)).min(2).max(10),
+        title: z
+          .string()
+          .trim()
+          .min(1)
+          .max(120)
+          .optional()
+          .describe('A name for admins only; empty: the question.'),
+        description: z.string().trim().max(500).optional().describe('A line under the question.'),
+        choice: z.enum(['single', 'multiple']).optional().describe('single (default) or multiple.'),
+        max_choices: z
+          .number()
+          .int()
+          .min(2)
+          .max(10)
+          .optional()
+          .describe('For multiple: the most options one person may tick.'),
+        results: z
+          .enum(['admin', 'after_vote', 'public'])
+          .optional()
+          .describe(
+            'Who sees the results besides admins: admin (default, nobody), after_vote (voters), ' +
+              'public (anyone, on its own page).',
+          ),
+        allow_change: z.boolean().optional().describe('Whether a voter may change their vote.'),
+        placements: z
+          .array(z.string().regex(/^[a-z][a-z-]*$/))
+          .min(1)
+          .max(10)
+          .optional()
+          .describe(
+            'Where it shows: everywhere (default), home, tables, table, profile, my-tables, ' +
+              'messages, notifications, partners, crowdfunding.',
+          ),
+        include: z
+          .array(z.enum(SEGMENTS))
+          .optional()
+          .describe(
+            'Aim at anyone in one of these groups (none: everyone): admin, gm (opened a table), ' +
+              'player (a confirmed seat), recent (played in 90 days), new (account under 30 days).',
+          ),
+        exclude: z.array(z.enum(SEGMENTS)).optional().describe('Leave out these groups.'),
+        people: z
+          .array(z.string().trim().min(1).max(64))
+          .max(1000)
+          .optional()
+          .describe(
+            'Only these people: usernames or profile ids (Mixpanel distinct ids are profile ' +
+              'ids). A name that matches nobody is refused (`invalid`, field `people`, with the ' +
+              '`unknown` names) and nothing is written.',
+          ),
+        priority: z.number().int().min(-999).max(9999).optional(),
+        confirmed: z.boolean().optional(),
+      },
+      annotations: WRITE,
+    },
+    async (input) => {
+      const audience = {
+        ...Object.fromEntries((input.include ?? []).map((s) => [`include:${s}`, 'on'])),
+        ...Object.fromEntries((input.exclude ?? []).map((s) => [`exclude:${s}`, 'on'])),
+        ...(input.people?.length ? { people: input.people.join('\n') } : {}),
+      };
+      // A name in `people` that matches nobody comes back as `{ refused: 'people', unknown }`.
+      const unknownPeople = (body: unknown) => {
+        const { refused: why, unknown } = (body ?? {}) as { refused?: unknown; unknown?: unknown };
+        return why === 'people'
+          ? result({ error: 'invalid', field: 'people', code: 'unknown', unknown }, true)
+          : null;
+      };
+      if (!input.confirmed) {
+        let counted: ApiAnswer;
+        try {
+          counted = await write(`${POLLS}/reach`, audience);
+        } catch (error) {
+          return failed('create_poll', error);
+        }
+        if (!ok(counted)) return refused('create_poll', counted);
+        const { eventIds: _eventIds, ...rest } = (counted.body ?? {}) as Record<string, unknown>;
+        return unknownPeople(rest) ?? result({ step: 'confirm', ...rest });
+      }
+
+      const choice = input.choice ?? 'single';
+      const form = {
+        title: input.title ?? input.question.slice(0, 120),
+        question: input.question,
+        description: input.description ?? '',
+        choice,
+        maxChoices: choice === 'multiple' && input.max_choices ? String(input.max_choices) : '',
+        results: input.results ?? 'admin',
+        ...(input.allow_change ? { allowChange: 'on' } : {}),
+        options: input.options.join('\n'),
+        priority: String(input.priority ?? 0),
+        ...Object.fromEntries(
+          (input.placements ?? ['everywhere']).map((name) => [`placement:${name}`, 'on']),
+        ),
+        ...audience,
+      };
+      let created: ApiAnswer;
+      try {
+        created = await write(`${POLLS}/create`, form);
+      } catch (error) {
+        return failed('create_poll', error);
+      }
+      const id = (created.body as { created?: unknown } | null)?.created;
+      if (ok(created) && typeof id !== 'string') {
+        const unknown = unknownPeople(created.body);
+        if (unknown) return unknown;
+      }
+      if (!ok(created) || typeof id !== 'string') return refused('create_poll', created);
+      // The draft is in; publishing is what shows it. If that step fails, the poll waits as a
+      // draft in Admin > Enquetes, and the answer says so (`pending`).
+      try {
+        const published = await write(`${POLLS}/publish`, { id });
+        const body = (published.body ?? {}) as { reach?: unknown; refused?: unknown };
+        if (!ok(published) || body.refused)
+          return result(
+            { id, pending: true, error: body.refused ?? refusal(published.status) },
+            true,
+          );
+        return result({ step: 'published', id, reach: body.reach });
+      } catch (error) {
+        return failed('create_poll', error, { id, pending: true });
+      }
+    },
+  );
+
+  server.registerTool(
+    'list_polls',
+    {
+      title: 'List polls and their results',
+      description:
+        'The polls of Admin > Enquetes, newest first (up to 50): status, who they aim at, how many ' +
+        'they reach now and reached when published, the votes per option, voters and "Agora não" ' +
+        'presses. Admins only; admins always see the results.',
+      inputSchema: {},
+      annotations: READ,
+    },
+    async () =>
+      answer(
+        'list_polls',
+        () => read(`${POLLS}/panel`),
+        (body) => {
+          const polls = ((body as { panel?: { polls?: unknown } } | null)?.panel?.polls ??
+            []) as Record<string, unknown>[];
+          return {
+            polls: polls.map((poll) => {
+              const audience = (poll.audience ?? {}) as { people?: unknown[] };
+              return {
+                id: poll.id,
+                title: poll.title,
+                status: poll.status,
+                question: poll.question,
+                choice: poll.choice,
+                results: poll.results,
+                placements: poll.placements,
+                audience: { ...audience, people: audience.people?.length ?? 0 },
+                reach: poll.reach,
+                publishedReach: poll.publishedReach,
+                publishedAt: poll.publishedAt,
+                voters: poll.voters,
+                dismissals: poll.dismissals,
+                options: poll.options,
+              };
+            }),
+          };
+        },
+      ),
+  );
+
+  server.registerTool(
+    'close_poll',
+    {
+      title: 'Close a poll',
+      description:
+        'Ends a live or paused poll: nobody is offered it again, and its results stay in ' +
+        'Admin > Enquetes. Admins only. It cannot be reopened, so confirm with the person first.',
+      inputSchema: { id: z.string().uuid().describe('From list_polls or create_poll.') },
+      annotations: { ...WRITE, destructiveHint: true },
+    },
+    async ({ id }) => {
+      let closed: ApiAnswer;
+      try {
+        closed = await write(`${POLLS}/close`, { id });
+      } catch (error) {
+        return failed('close_poll', error);
+      }
+      const body = (closed.body ?? {}) as { moved?: unknown; refused?: unknown };
+      if (!ok(closed)) return refused('close_poll', closed);
+      return body.refused
+        ? result({ error: 'refused', reason: body.refused }, true)
+        : result({ id, status: body.moved });
+    },
+  );
+
   server.registerTool(
     'post_on_social',
     {
@@ -561,6 +778,9 @@ export const TOOL_NAMES = [
   'list_tools',
   'add_tool',
   'send_announcement',
+  'create_poll',
+  'list_polls',
+  'close_poll',
   'post_on_social',
   'get_social_post',
 ] as const;
@@ -569,5 +789,12 @@ export const TOOL_NAMES = [
 export const WRITE_TOOL_NAMES = [
   'add_tool',
   'send_announcement',
+  'create_poll',
+  'close_poll',
   'post_on_social',
 ] as const satisfies readonly (typeof TOOL_NAMES)[number][];
+
+/** The writes that end something, marked `destructiveHint` so a client asks before each call. */
+export const DESTRUCTIVE_TOOL_NAMES = [
+  'close_poll',
+] as const satisfies readonly (typeof WRITE_TOOL_NAMES)[number][];

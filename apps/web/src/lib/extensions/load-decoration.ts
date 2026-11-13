@@ -19,7 +19,8 @@ export async function loadDecoration<P extends Record<string, unknown>>(
   } catch (failure) {
     console.error('extension.load_failed', { resourceType: 'decoration', resourceId: kind });
     // Imported only on a failure: the SDK reads `$app/state`, which isolated component tests mock.
-    const Sentry = await import('@sentry/sveltekit');
+    // `@sentry/core`, not the SDK: a dynamic import keeps every export, Replay and Feedback included.
+    const Sentry = await import('@sentry/core');
     Sentry.captureException(failure, { tags: { resourceType: 'decoration', resourceId: kind } });
     return null;
   }

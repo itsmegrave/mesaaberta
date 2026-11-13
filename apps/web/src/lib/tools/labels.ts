@@ -17,6 +17,10 @@ export const toolGroupLabels: Record<ToolKind, () => string> = {
   helper: m.tool_kind_helper,
 };
 
+/** A tool's kinds as one line, for the admin list ("Mesa virtual, Fichas e apoio"). */
+export const toolKindsLabel = (kinds: readonly ToolKind[]) =>
+  kinds.map((kind) => toolKindLabels[kind]()).join(', ');
+
 /** The kinds as the form's choices, in the page's order. */
 export const toolKindOptions = () =>
   TOOL_KINDS.map((value) => ({ value, label: toolKindLabels[value]() }));

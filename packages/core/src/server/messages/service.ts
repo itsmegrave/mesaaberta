@@ -305,12 +305,18 @@ export async function sendMessage(
       count: 1,
       ...(table ? { tableId: table.id, slug: table.slug, title: table.title } : {}),
     });
-    for (const { profileId } of recipients) {
+    // One statement for every member, however many are in a table chat.
+    if (recipients.length > 0)
       await t.execute(sql`
         insert into notifications (recipient_id, actor_id, category, type, link, metadata, created_at)
-        values (${profileId}, ${actor.id}, 'messages', 'message_received',
-          ${routes.conversation(conversationId)}, ${metadata}::jsonb,
-          ${now.toISOString()}::timestamptz)
+        values ${sql.join(
+          recipients.map(
+            ({ profileId }) => sql`(${profileId}, ${actor.id}, 'messages', 'message_received',
+              ${routes.conversation(conversationId)}, ${metadata}::jsonb,
+              ${now.toISOString()}::timestamptz)`,
+          ),
+          sql`, `,
+        )}
         on conflict (recipient_id, (metadata->>'conversationId'))
           where type = 'message_received' and read_at is null
         do update set
@@ -323,7 +329,6 @@ export async function sendMessage(
             to_jsonb((coalesce((notifications.metadata->>'count')::int, 1) + 1))
           )
       `);
-    }
 
     return message;
   });

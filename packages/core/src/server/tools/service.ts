@@ -1,6 +1,6 @@
 import { and, asc, count, desc, eq, ilike, isNotNull, isNull, like, or, sql } from 'drizzle-orm';
 import {
-  isToolKind,
+  storedToolKinds,
   TOOL_ADMIN_STATUSES,
   TOOL_KINDS,
   type ToolAdminStatus,
@@ -8,6 +8,7 @@ import {
   type ToolInput,
   type ToolKind,
   type ToolRemovalReason,
+  toolKindsOf,
 } from '../../tools/schema';
 import { authorize, type Actor } from '../auth/policy';
 import type { AnyDb } from '../db/client';
@@ -39,10 +40,13 @@ function conflictOn(error: unknown): string | null {
 function columnsOf(input: ToolInput) {
   const siteUrl = toolSiteUrl(input.siteUrl);
   if (!siteUrl) throw new Invalid('siteUrl', 'invalid_url');
-  if (!isToolKind(input.kind)) throw new Invalid('kind', 'required');
+  const kinds = toolKindsOf(input.kinds);
+  if (kinds.length === 0) throw new Invalid('kinds', 'required');
   return {
     name: input.name.trim(),
-    kind: input.kind,
+    // `kind` is the first, for a build that reads only it (until it is dropped).
+    kind: kinds[0],
+    kinds,
     siteUrl,
     description: input.description.trim(),
   };
@@ -53,7 +57,8 @@ export type ToolCard = {
   id: string;
   slug: string;
   name: string;
-  kind: ToolKind;
+  /** Every section it shows in, in TOOL_KINDS order. */
+  kinds: ToolKind[];
   siteUrl: string;
   description: string;
   logoPath: string | null;
@@ -66,8 +71,9 @@ export type ToolCard = {
 };
 
 /**
- * The page: the approved tools, grouped by kind in TOOL_KINDS order and by name inside each, plus
- * the viewer's own suggestions that still wait. `query` narrows by name or description.
+ * The page: the approved tools, grouped by kind in TOOL_KINDS order and by name inside each (a
+ * tool with several kinds is in each of their groups), plus the viewer's own suggestions that
+ * still wait. `query` narrows by name or description.
  */
 export async function listTools(
   db: AnyDb,
@@ -95,6 +101,7 @@ export async function listTools(
       slug: tools.slug,
       name: tools.name,
       kind: tools.kind,
+      kinds: tools.kinds,
       siteUrl: tools.siteUrl,
       description: tools.description,
       logoPath: tools.logoPath,
@@ -116,13 +123,16 @@ export async function listTools(
     )
     .orderBy(asc(sql`lower(${tools.name})`), asc(tools.id));
 
-  const cards = rows.map((row) => ({ ...row, kind: row.kind as ToolKind })) as ToolCard[];
+  const cards: ToolCard[] = rows.map(({ kind, kinds, ...row }) => ({
+    ...row,
+    kinds: storedToolKinds({ kind, kinds }),
+  }));
   return {
     query: query.trim(),
     pending: cards.filter((card) => card.pending),
     groups: TOOL_KINDS.map((kind) => ({
       kind,
-      tools: cards.filter((card) => !card.pending && card.kind === kind),
+      tools: cards.filter((card) => !card.pending && card.kinds.includes(kind)),
     })).filter((group) => group.tools.length > 0),
   };
 }
@@ -235,6 +245,7 @@ export async function listAdminTools(db: AnyDb, actor: Actor | null, params: URL
       slug: tools.slug,
       name: tools.name,
       kind: tools.kind,
+      kinds: tools.kinds,
       siteUrl: tools.siteUrl,
       description: tools.description,
       logoPath: tools.logoPath,
@@ -267,7 +278,10 @@ export async function listAdminTools(db: AnyDb, actor: Actor | null, params: URL
       asc(sql`lower(${tools.name})`),
     );
   return {
-    rows: rows.map((row) => ({ ...row, kind: row.kind as ToolKind })),
+    rows: rows.map(({ kind, kinds, ...row }) => ({
+      ...row,
+      kinds: storedToolKinds({ kind, kinds }),
+    })),
     total: rows.length,
     status,
     query,
@@ -284,6 +298,7 @@ export async function findToolForAdmin(db: AnyDb, actor: Actor | null, id: strin
       id: tools.id,
       name: tools.name,
       kind: tools.kind,
+      kinds: tools.kinds,
       siteUrl: tools.siteUrl,
       description: tools.description,
       logoPath: tools.logoPath,
@@ -293,11 +308,12 @@ export async function findToolForAdmin(db: AnyDb, actor: Actor | null, id: strin
     .from(tools)
     .where(eq(tools.id, id));
   if (!row) throw new NotFound(`no tool "${id}"`);
-  return row;
+  const { kind, kinds, ...rest } = row;
+  return { ...rest, kinds: storedToolKinds({ kind, kinds }) };
 }
 
 /**
- * An admin edits a tool (the name, site, kind, line or logo). It keeps its place: an approved tool
+ * An admin edits a tool (the name, site, kinds, line or logo). It keeps its place: an approved tool
  * stays up and a suggestion keeps waiting. A new logo replaces the old one; the replaced path is
  * returned so the caller can delete that file. Returns the `ToolUpdated` event.
  */
@@ -318,8 +334,13 @@ export async function updateTool(
     if (current.removedAt) throw new Invalid('id', 'closed');
 
     const changes: Changes = {};
-    for (const key of Object.keys(next) as (keyof typeof next)[]) {
-      if (next[key] !== current[key]) changes[key] = { from: current[key], to: next[key] };
+    // The kinds are told as one text ("vtt,helper"); `kind` follows them, so it is not told.
+    const after = { ...next, kinds: next.kinds.join(',') };
+    const before = { ...current, kinds: storedToolKinds(current).join(',') };
+    for (const key of Object.keys(after) as (keyof typeof after)[]) {
+      if (key !== 'kind' && after[key] !== before[key]) {
+        changes[key] = { from: before[key], to: after[key] };
+      }
     }
     if (logoPath) changes.logo = { redacted: true };
 

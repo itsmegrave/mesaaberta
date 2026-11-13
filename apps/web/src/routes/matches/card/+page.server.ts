@@ -7,7 +7,7 @@ import { refuse, responseForm } from '#lib/forms/server.js';
 import { matchCardSchema, type MatchCardInput } from '@mesaaberta/core/matches/schema';
 import { routes } from '@mesaaberta/core/routes';
 import { Invalid } from '@mesaaberta/core/server/errors';
-import type { MatchCardState } from '@mesaaberta/core/server/matches/service';
+import type { MatchCardState, MatchPerson } from '@mesaaberta/core/server/matches/service';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -29,10 +29,16 @@ const NEW_CARD: MatchCardInput = {
 export const load: PageServerLoad = async ({ locals, url }) => {
   const user = await requireUser(locals, url);
   await requireDirectory(locals, 'matches');
-  const state = await readFromApi<MatchCardState>(locals, user.id, '/v1/matches/card');
+  const state = await readFromApi<MatchCardState & { preview: MatchPerson | null }>(
+    locals,
+    user.id,
+    '/v1/matches/card',
+  );
   const card = state.card;
   return {
-    state: { ...state, card: undefined },
+    state: { ...state, card: undefined, preview: undefined },
+    // Their own card as others see it; the page draws the answers over it as they change.
+    preview: state.preview,
     hasCard: card !== null,
     enabled: card?.enabled ?? false,
     form: initialForm<MatchCardInput>(

@@ -28,6 +28,7 @@ import { recordEvent } from '../events/outbox';
 import { pictureOf } from '../images';
 import { gmRatings } from '../ratings/service';
 import { participantRatings } from '../ratings/players';
+import { neighboursOf, peopleInCommon } from './graph';
 import {
   fitOf,
   isAdultRange,
@@ -36,6 +37,7 @@ import {
   MATCH_DAILY_ANSWERS,
   MATCH_DECK_SIZE,
   MATCH_PASS_DAYS,
+  MATCH_PLAYED_DAYS,
   MATCH_WEIGHTS,
   MATCHES_PAGE_SIZE,
   SEEKING_MEETS,
@@ -264,6 +266,8 @@ export type MatchPerson = {
   /** The public scores, when there are any ("na mestragem" only for people who run games). */
   gm: MatchRating | null;
   player: MatchRating | null;
+  /** How many of the viewer's own people (matched or played with) they are joined to too. */
+  commonPeople: number;
 };
 
 export type MatchDeck =
@@ -286,13 +290,17 @@ async function answersToday(db: AnyDb, profileId: string, now: Date) {
 
 /**
  * The next cards of the person's deck, best fit first: up to MATCH_DECK_SIZE people whose cards fit
- * theirs and whom they have not answered (a no hides for MATCH_PASS_DAYS), nor who passed on them in
+ * theirs and whom they have not answered in MATCH_PASS_DAYS (yes or no), nor who passed on them in
  * that time. The score is systems in common, free times in common and how close the four axes are.
  */
 export async function matchDeck(
   db: AnyDb,
   profileId: string,
-  { now = new Date(), supabaseUrl }: { now?: Date; supabaseUrl?: string } = {},
+  {
+    now = new Date(),
+    supabaseUrl,
+    graph = false,
+  }: { now?: Date; supabaseUrl?: string; graph?: boolean } = {},
 ): Promise<MatchDeck> {
   const found = await meFor(db, profileId);
   if (found.state !== 'ready') return { state: found.state };
@@ -310,6 +318,15 @@ export async function matchDeck(
   const answersLeft = Math.max(0, MATCH_DAILY_ANSWERS - answered);
   const canUndo = answered > 0;
   if (answersLeft === 0) return { state: 'ready', people: [], answersLeft, canUndo };
+  const size = Math.min(MATCH_DECK_SIZE, answersLeft);
+
+  // The graph (`use_play_graph`): whoever played with the person lately stays out, and people
+  // joined to the person's own come first.
+  const near = graph ? await neighboursOf(db, profileId, now) : null;
+  const playedSince = now.getTime() - MATCH_PLAYED_DAYS * DAY_MS;
+  const recent = (near?.played ?? [])
+    .filter((pair) => pair.lastAt.getTime() > playedSince)
+    .map((pair) => pair.b);
 
   const mine = sql`(select count(*) from ${profileFavoriteSystems} where ${profileFavoriteSystems.profileId} = ${me.id})`;
   const theirs = sql`(select count(*) from profile_favorite_systems f where f.profile_id = ${profiles.id})`;
@@ -343,17 +360,44 @@ export async function matchDeck(
     .where(
       and(
         fits(me),
-        // Not answered by them lately: a yes waits for its match, a no hides them for a while.
-        sql`not exists (select 1 from ${matchAnswers} where ${matchAnswers.fromId} = ${me.id} and ${matchAnswers.toId} = ${profiles.id} and (${matchAnswers.yes} or ${matchAnswers.createdAt} > ${passSince}::timestamptz))`,
+        // Not answered by them in the last MATCH_PASS_DAYS: then the card comes back as a reminder.
+        sql`not exists (select 1 from ${matchAnswers} where ${matchAnswers.fromId} = ${me.id} and ${matchAnswers.toId} = ${profiles.id} and ${matchAnswers.createdAt} > ${passSince}::timestamptz)`,
         // Nor passed on them in that time: nobody is told, the card just never comes.
         sql`not exists (select 1 from ${matchAnswers} where ${matchAnswers.fromId} = ${profiles.id} and ${matchAnswers.toId} = ${me.id} and not ${matchAnswers.yes} and ${matchAnswers.createdAt} > ${passSince}::timestamptz)`,
+        recent.length
+          ? sql`not (${profiles.id} = any(${`{${recent.join(',')}}`}::uuid[]))`
+          : undefined,
       ),
     )
     .orderBy(desc(score), desc(matchCards.updatedAt), asc(profiles.username))
-    .limit(Math.min(MATCH_DECK_SIZE, answersLeft));
+    // With the graph, a wider pick, so people in common can move up before the cut.
+    .limit(near ? MATCH_DECK_SIZE * 3 : size);
 
-  const people = await present(db, me, rows, { now, supabaseUrl });
-  return { state: 'ready', people, answersLeft, canUndo };
+  const common = near
+    ? await peopleInCommon(
+        db,
+        near.ids,
+        rows.map((row) => row.id),
+        now,
+      )
+    : new Map<string, number>();
+  const boosted = near
+    ? rows
+        .map((row, i) => ({ row, i, rank: row.score + ((common.get(row.id) ?? 0) > 0 ? 10 : 0) }))
+        .sort((x, y) => y.rank - x.rank || x.i - y.i)
+        .slice(0, size)
+        .map(({ row }) => row)
+    : rows;
+  const people = await present(db, me, boosted, { now, supabaseUrl });
+  return {
+    state: 'ready',
+    people: people.map((person, i) => ({
+      ...person,
+      commonPeople: common.get(boosted[i].id) ?? 0,
+    })),
+    answersLeft,
+    canUndo,
+  };
 }
 
 type Row = {
@@ -441,8 +485,62 @@ async function present(
       sameCity: me.card.inPerson && card.inPerson && !!city && city.toLowerCase() === myCity,
       gm: rated(gms.get(row.id)),
       player: rated(players.get(row.id)),
+      commonPeople: 0,
     };
   });
+}
+
+/** Nobody's id: seen from it, every favorite system is "theirs", none "em comum". */
+const NOBODY = '00000000-0000-4000-8000-000000000000';
+
+/**
+ * The person's own card as others see it, for the preview on Meu cartão: their name, photo,
+ * systems and ratings, with nothing "em comum". The setup draws its own answers over it as they
+ * change. Null without a @usuário.
+ */
+export async function matchPreviewOf(
+  db: AnyDb,
+  profileId: string,
+  { now = new Date(), supabaseUrl }: { now?: Date; supabaseUrl?: string } = {},
+): Promise<MatchPerson | null> {
+  const [row] = await db
+    .select({
+      id: profiles.id,
+      username: profiles.username,
+      name: profiles.name,
+      showName: profiles.showName,
+      avatarPath: profiles.avatarPath,
+      avatarUrl: profiles.avatarUrl,
+      tableRole: profiles.tableRole,
+      city: profiles.city,
+      showFavoriteSystems: profiles.showFavoriteSystems,
+      card: matchCards,
+    })
+    .from(profiles)
+    .leftJoin(matchCards, eq(matchCards.profileId, profiles.id))
+    .where(eq(profiles.id, profileId));
+  if (!row?.username) return null;
+  const card: Card = row.card ?? {
+    profileId,
+    enabledAt: null,
+    adultConfirmedAt: now,
+    seeking: [],
+    online: true,
+    inPerson: false,
+    axisCombat: 50,
+    axisRules: 50,
+    axisLength: 50,
+    axisTone: 50,
+    createdAt: now,
+    updatedAt: now,
+  };
+  const [person] = await present(
+    db,
+    { id: NOBODY, card: { ...card, online: false, inPerson: false }, city: null },
+    [{ ...row, card, commonSlots: 0, score: 0 }],
+    { now, supabaseUrl },
+  );
+  return { ...person, fit: null };
 }
 
 export type MatchAnswerResult = {

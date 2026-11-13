@@ -106,10 +106,23 @@ describe('audiences', () => {
     expect(inAudience(gm, { include: ['gm'], exclude: ['new'] })).toBe(false);
   });
 
+  it('narrows to the people picked by hand, when there are any', () => {
+    const gm = { ...none, gm: true };
+    const picked = { include: [], exclude: [], people: [id(1), id(2)] };
+    expect(inAudience(gm, picked, id(1))).toBe(true);
+    expect(inAudience(gm, picked, id(3))).toBe(false);
+    expect(inAudience(gm, picked)).toBe(false);
+    expect(inAudience(gm, { ...picked, include: ['player'] }, id(1))).toBe(false);
+    expect(inAudience(gm, { include: [], exclude: [], people: [] }, id(3))).toBe(true);
+  });
+
   it('counts the same people the per-person check would let in', async () => {
     expect(await countAudience(test.db, { include: [], exclude: [] }, now)).toBe(7);
     expect(await countAudience(test.db, { include: ['gm'], exclude: [] }, now)).toBe(4);
     expect(await countAudience(test.db, { include: ['gm'], exclude: ['recent'] }, now)).toBe(2);
     expect(await countAudience(test.db, { include: ['player', 'new'], exclude: [] }, now)).toBe(2);
+    // A picked person who cannot be reached (id(7)) or does not exist (id(99)) is not counted.
+    const people = [id(1), id(2), id(7), id(99)];
+    expect(await countAudience(test.db, { include: [], exclude: [], people }, now)).toBe(2);
   });
 });

@@ -6,20 +6,32 @@ import * as m from '#lib/paraglide/messages.js';
 /** How often an isolate looks again when the newest day was not announced (flag off). */
 const RECHECK_MS = 10 * 60 * 1000;
 let checkedAt = 0;
+/** The newest day the api said is settled; this isolate never asks about it again. */
+let settledDate: string | undefined;
+
+/** The shared marker that a day is settled, so a new isolate doesn't ask either. */
+const markerUrl = (date: string) => `https://changelog-notice.internal/${date}`;
+const MARKER_TTL_SECONDS = 7 * 24 * 60 * 60;
 
 /**
  * Puts the newest changelog day in everyone's bell, once, after the response. The first request of
  * an isolate (and then at most one every ten minutes) sends it to the api, which checks
  * `use_changelog_notices` and does nothing for a day that already went out, so a release needs no
- * extra step to notify.
+ * extra step to notify. Once the api answers that the day is settled, the isolate stops asking and
+ * leaves a marker in the host's cache, so the isolates after it skip the call too.
  */
 export const handleChangelogNotice: Handle = ({ event, resolve }) => {
   const latest = releases[0];
   const now = Date.now();
 
-  if (latest && now - checkedAt > RECHECK_MS) {
+  if (latest && latest.date !== settledDate && now - checkedAt > RECHECK_MS) {
     checkedAt = now;
     event.locals.afterResponse(async () => {
+      const cache = event.locals.host?.cache;
+      if (await cache?.get(markerUrl(latest.date)).catch(() => undefined)) {
+        settledDate = latest.date;
+        return;
+      }
       const answer = await sendToApi(event.locals.env, '/v1/changelog/notice', null, {
         method: 'POST',
         json: {
@@ -30,13 +42,26 @@ export const handleChangelogNotice: Handle = ({ event, resolve }) => {
         },
       });
       // A refusal is the api's to explain in its own lines; this one says which status came back.
-      if (answer && !answer.ok)
+      if (answer && !answer.ok) {
         event.locals.log.warn('changelog.notice_refused', {
           code: 'changelog_notice_refused',
           status: answer.status,
         });
+        return;
+      }
+      const body = (await answer?.json().catch(() => null)) as { settled?: boolean } | null;
+      if (body?.settled === true) {
+        settledDate = latest.date;
+        await cache?.set(markerUrl(latest.date), '1', MARKER_TTL_SECONDS).catch(() => undefined);
+      }
     });
   }
 
   return resolve(event);
+};
+
+/** For specs: forgets what this isolate checked. */
+export const resetChangelogNotice = () => {
+  checkedAt = 0;
+  settledDate = undefined;
 };

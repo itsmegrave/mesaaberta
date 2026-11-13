@@ -174,3 +174,44 @@ describe('getProfile', () => {
     await test.close();
   });
 });
+
+describe('handleAuth with SESSION_CHECK=local', () => {
+  const run = async (getClaims: ReturnType<typeof vi.fn>) => {
+    const getUser = vi.fn();
+    const createClient = vi.fn(() => ({ auth: { getUser, getClaims } }));
+    const event = {
+      locals: { env: { ...env, SESSION_CHECK: 'local' } },
+      cookies: { getAll: () => [], set: vi.fn() },
+    } as unknown as RequestEvent;
+    await createHandleAuth(createClient as never)({ event, resolve: async () => new Response() });
+    return { event, getUser };
+  };
+
+  it('reads the user from the verified token, without asking Supabase', async () => {
+    const getClaims = vi.fn(async () => ({
+      data: {
+        claims: {
+          sub: 'u-1',
+          email: 'a@b.c',
+          aud: 'authenticated',
+          user_metadata: { full_name: 'Ana' },
+        },
+      },
+      error: null,
+    }));
+    const { event, getUser } = await run(getClaims);
+
+    expect(await event.locals.getUser()).toMatchObject({
+      id: 'u-1',
+      email: 'a@b.c',
+      user_metadata: { full_name: 'Ana' },
+    });
+    expect(event.locals.userId).toBe('u-1');
+    expect(getUser).not.toHaveBeenCalled();
+  });
+
+  it('is nobody when the token does not verify', async () => {
+    const { event } = await run(vi.fn(async () => ({ data: null, error: new Error('bad') })));
+    expect(await event.locals.getUser()).toBeNull();
+  });
+});

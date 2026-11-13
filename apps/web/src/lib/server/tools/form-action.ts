@@ -34,7 +34,10 @@ export async function handleToolForm(
 
   const data = await request.formData();
   // Files are allowed so the schema can check the logo; every failure below strips them.
-  const form = validateFormData(data, toolFormSchema, NEW_TOOL_VALUES, { files: ['logo'] });
+  const form = validateFormData(data, toolFormSchema, NEW_TOOL_VALUES, {
+    arrays: ['kinds'],
+    files: ['logo'],
+  });
   if (!form.valid) return fail(400, { form: responseForm(form) });
 
   let replacedLogo: string | null = null;

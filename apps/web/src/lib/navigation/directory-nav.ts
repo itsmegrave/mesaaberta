@@ -24,10 +24,12 @@ export interface DirectoryLink {
   current: (pathname: string) => boolean;
 }
 
-// In the menus' order: Sistemas, Onde jogar, Quem mestra, Procuro mesa, Combinar, then Financiamentos and
-// Ferramentas.
+// In the menus' order: Sistemas, Onde jogar, Quem mestra, Procuro mesa, then Financiamentos and
+// Ferramentas. Combinar is in the main menu (main-nav.ts), not here.
 // A link with no `key` has no flag and is always listed.
-const DIRECTORY_NAV: readonly (DirectoryLink & { key?: keyof DirectorySwitches })[] = [
+const DIRECTORY_NAV: readonly (DirectoryLink & {
+  key?: Exclude<keyof DirectorySwitches, 'matches'>;
+})[] = [
   {
     key: 'systems',
     href: '/systems',
@@ -66,15 +68,6 @@ const DIRECTORY_NAV: readonly (DirectoryLink & { key?: keyof DirectorySwitches }
     current: (pathname) => isUnder(pathname, '/players'),
   },
   {
-    key: 'matches',
-    href: '/matches',
-    icon: 'game-icons:card-play',
-    label: m.nav_matches,
-    shortLabel: m.nav_matches,
-    description: m.nav_matches_description,
-    current: (pathname) => isUnder(pathname, '/matches'),
-  },
-  {
     href: '/crowdfunding',
     icon: 'game-icons:open-treasure-chest',
     label: m.nav_crowdfunding,
@@ -92,7 +85,17 @@ const DIRECTORY_NAV: readonly (DirectoryLink & { key?: keyof DirectorySwitches }
   },
 ];
 
+/** Whether Procuro mesa is listed: Combinar takes its place in the menus while it is on (the page stays). */
+export const listsPlayers = (switches: DirectorySwitches) =>
+  switches.players === true && switches.matches !== true;
+
 /** The Explorar links to draw, in order: the directories whose flag is on, Financiamentos and Ferramentas. */
 export function directoryNav(switches: DirectorySwitches): DirectoryLink[] {
-  return DIRECTORY_NAV.filter((link) => link.key === undefined || switches[link.key] === true);
+  return DIRECTORY_NAV.filter((link) =>
+    link.key === undefined
+      ? true
+      : link.key === 'players'
+        ? listsPlayers(switches)
+        : switches[link.key] === true,
+  );
 }

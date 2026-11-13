@@ -1328,8 +1328,15 @@ export const tools = pgTable(
     // Made from the name and kept; also the logo file name of a seeded tool.
     slug: text('slug').notNull(),
     name: text('name').notNull(),
-    // Mirror TOOL_KINDS in `@mesaaberta/core/tools/schema`.
+    // The first of `kinds`, kept while code that reads only it may still run (expand, then
+    // contract: a later migration drops it). Mirror TOOL_KINDS in `@mesaaberta/core/tools/schema`.
     kind: text('kind').notNull(),
+    // Every section of the page it shows in ("Mesa virtual" and "Fichas e apoio"), in TOOL_KINDS
+    // order. Empty only for a row an older build wrote: read it as `[kind]`.
+    kinds: text('kinds')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     siteUrl: text('site_url').notNull(),
     description: text('description').notNull(),
     // A path in the avatar bucket (`tools/<submitter id>/...`), a site path for a seeded tool
@@ -1359,6 +1366,10 @@ export const tools = pgTable(
     check('tools_slug_format', sql`${tool.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
     // Mirror TOOL_KINDS and TOOL_LIMITS in `@mesaaberta/core/tools/schema`.
     check('tools_kind_known', sql`${tool.kind} IN ('vtt', 'chat', 'call', 'helper')`),
+    check(
+      'tools_kinds_known',
+      sql`${tool.kinds} <@ ARRAY['vtt', 'chat', 'call', 'helper']::text[]`,
+    ),
     check('tools_name_length', sql`char_length(${tool.name}) BETWEEN 1 AND 60`),
     check('tools_description_length', sql`char_length(${tool.description}) BETWEEN 1 AND 140`),
     check('tools_site_url_length', sql`char_length(${tool.siteUrl}) <= 300`),
@@ -2036,9 +2047,9 @@ export const matchCards = pgTable(
 ).enableRLS();
 
 // One person's answer about another's card: `yes` (Quero jogar junto) or not (Agora não). Never
-// shown to the person answered about. A no hides them for MATCH_PASS_DAYS; a yes stays until it
-// makes a match or is undone. Deleted after MATCH_ANSWER_DAYS (the sweep) and when the person
-// switches their card off.
+// shown to the person answered about. An answer hides them for MATCH_PASS_DAYS (a month), then
+// they come back; a yes keeps counting towards a match until it is pruned. Deleted after
+// MATCH_ANSWER_DAYS (the sweep) and when the person switches their card off.
 export const matchAnswers = pgTable(
   'match_answers',
   {
@@ -2075,6 +2086,10 @@ export const matches = pgTable(
     endedAt: timestamp('ended_at', { withTimezone: true }),
     // Who undid it. Not a foreign key: it is one of the two.
     endedBy: uuid('ended_by'),
+    // "Vocês combinaram e ainda não jogaram" bell reminders sent so far, and when the last went
+    // (`remindUnplayedMatches`). Set to the maximum once the two play together.
+    reminders: smallint('reminders').notNull().default(0),
+    remindedAt: timestamp('reminded_at', { withTimezone: true }),
   },
   (match) => [
     uniqueIndex('matches_pair_unique').on(match.profileA, match.profileB),

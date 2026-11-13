@@ -3,6 +3,11 @@
    to [data-theme='overdrive'] except the pedal's own pieces, which the classic theme draws too.
    Offsets, tilts and dot sizes are illustration geometry, so they are plain px/deg values. */
 @import '@fontsource/bangers';
+/* The running text (overdrive-theme.css); latin covers Portuguese. */
+@import '@fontsource/chakra-petch/latin-400.css';
+@import '@fontsource/chakra-petch/latin-500.css';
+@import '@fontsource/chakra-petch/latin-600.css';
+@import '@fontsource/chakra-petch/latin-700.css';
 
 @theme {
   /* Overdrive's titles, buttons and stickers. Loaded only when the theme paints it. */
@@ -124,7 +129,15 @@
    sections: a title inside a card, a dialog or a side panel stays plain. */
 [data-theme='overdrive']
   main
-  h2:not(.sr-only, :is(.card, article, dialog, [role='dialog'], aside) h2) {
+  h2:not(
+    .sr-only,
+    :is(.card, article, dialog, [role='dialog'], aside) h2,
+    :has([data-section-title])
+  ),
+[data-theme='overdrive']
+  main
+  h2:not(:is(.card, article, dialog, [role='dialog'], aside) h2)
+  [data-section-title] {
   width: fit-content;
   max-width: 100%;
   padding: 0.375rem 0.875rem 0.25rem;
@@ -133,6 +146,12 @@
   border: 3px solid var(--color-surface-950);
   box-shadow: 5px 5px 0 light-dark(var(--color-tertiary-400), var(--color-primary-500));
   rotate: -2deg;
+}
+/* A folding section's heading holds its whole button: the box goes on the title alone, and the
+   line under it ("8 mesas encontradas") stays in the running text's font. */
+[data-theme='overdrive'] h2 [data-section-summary] {
+  font-family: var(--typo-base--font-family);
+  letter-spacing: normal;
 }
 
 /* Filled buttons become comic stickers, each leaning its own way. */
@@ -180,6 +199,22 @@
 [data-theme='overdrive'] :is(ul, ol, div).grid > li > article:hover {
   rotate: 0deg;
 }
+/* On a phone the cards fill the column, so a full tilt plus the 6px shadow ran past the page's
+   right gutter and the shadow read as skewed. Smaller tilt and shadow, and a 4px inset each side,
+   keep the sticker look inside the gutter. */
+@media (width < 48rem) {
+  [data-theme='overdrive'] :is(ul, ol, div).grid > li > article {
+    margin-inline: 0.25rem;
+    box-shadow: 4px 4px 0 var(--comic-shadow);
+    rotate: -0.75deg;
+  }
+  [data-theme='overdrive'] :is(ul, ol, div).grid > li:nth-child(3n + 2) > article {
+    rotate: 0.5deg;
+  }
+  [data-theme='overdrive'] :is(ul, ol, div).grid > li:nth-child(3n) > article {
+    rotate: -0.4deg;
+  }
+}
 
 /* Menus, popovers and dialogs drawn as cards. */
 [data-theme='overdrive'] .card {
@@ -209,6 +244,35 @@
 }
 [data-theme='overdrive'] [data-look='plain'] {
   display: none;
+}
+/* Every other pictogram (Icon's data-sticker, from stickerTint): its own silhouette in a sticker
+   colour, an ink edge from four 0.75px shadows, a hard shadow and a tilt that alternates with the
+   colour. Plain drop-shadows, not an SVG filter, which Safari clips to the element's box. */
+[data-theme='overdrive'] svg[data-sticker] {
+  overflow: visible;
+  color: var(--color-warning-400);
+  rotate: -6deg;
+  filter: drop-shadow(0.75px 0 0 var(--color-surface-950))
+    drop-shadow(-0.75px 0 0 var(--color-surface-950))
+    drop-shadow(0 0.75px 0 var(--color-surface-950))
+    drop-shadow(0 -0.75px 0 var(--color-surface-950))
+    drop-shadow(1.5px 1.5px 0 var(--comic-shadow, var(--color-surface-950)));
+}
+[data-theme='overdrive'] svg[data-sticker='1'] {
+  color: var(--color-primary-500);
+  rotate: 5deg;
+}
+[data-theme='overdrive'] svg[data-sticker='2'] {
+  color: var(--color-tertiary-400);
+  rotate: -3deg;
+}
+[data-theme='overdrive'] svg[data-sticker='3'] {
+  color: var(--color-success-500);
+  rotate: 7deg;
+}
+[data-theme='overdrive'] svg[data-sticker='4'] {
+  color: var(--color-secondary-300);
+  rotate: -8deg;
 }
 [data-ink] {
   stroke: var(--color-surface-950);

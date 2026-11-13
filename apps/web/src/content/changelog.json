@@ -1,5 +1,33 @@
 [
   {
+    "date": "2026-11-13",
+    "title": "Combinar no menu principal",
+    "summary": "O Combinar ganhou lugar próprio no menu, ao lado de Minhas mesas, e no rodapé das páginas.",
+    "changes": [
+      {
+        "kind": "improved",
+        "title": "Combinar no menu principal",
+        "description": "No computador, o Combinar aparece na barra lateral junto com Mesas e Minhas mesas. No celular, ganhou uma aba na barra de baixo. Ele saiu do Explorar e entrou no rodapé das páginas.",
+        "href": "/matches"
+      },
+      {
+        "kind": "improved",
+        "title": "Fotos menores e mais rápidas",
+        "description": "Toda foto enviada (capa de mesa, lugar, financiamento, logo, foto e capa de perfil) é convertida para WebP e reduzida ao tamanho em que aparece no site. As fotos que já estavam aqui também estão sendo convertidas, aos poucos. A primeira capa de Mesas agora carrega antes do resto da página."
+      },
+      {
+        "kind": "improved",
+        "title": "Páginas abrem mais rápido",
+        "description": "O site carrega menos código no celular, lê os dados de cada página ao mesmo tempo em vez de um depois do outro e confere seu login sem esperar outro servidor. A página de uma mesa e o topo de todas as páginas ficaram mais rápidos."
+      },
+      {
+        "kind": "improved",
+        "title": "Posts no Instagram pelo conector do Claude",
+        "description": "Para a administração: o conector do Claude agora publica uma imagem ou um vídeo (Reel) no Instagram da Mesa Aberta. Ele mostra a conta e o arquivo antes e só publica depois de confirmar."
+      }
+    ]
+  },
+  {
     "date": "2026-11-12",
     "title": "Combinar: encontre gente para jogar",
     "summary": "Em Explorar, Combinar mostra uma carta por vez com quem quer jogar como você. Se os dois disserem sim, vocês combinam. E o cadastro de Onde jogar deixa claro que é só para lugares abertos ao público.",
@@ -15,6 +43,18 @@
         "title": "Minhas combinações",
         "description": "Quem disse sim para você também aparece em Minhas combinações, com o que vocês têm em comum e o botão para mandar mensagem. Você recebe um aviso no sino a cada combinação.",
         "href": "/matches/list"
+      },
+      {
+        "kind": "improved",
+        "title": "Prévia do seu cartão e mais movimento",
+        "description": "Em Meu cartão, você vê o seu cartão como os outros vão ver, mudando enquanto responde. No baralho, a carta voa para o lado da resposta, o carimbo cai na carta e o Bora jogar! chega com os raios girando. Com o Combinar no menu, Procuro mesa sai de Explorar. Os botões viraram dados: d20 no 20 para Quero jogar junto e d20 no 1 para Agora não. Na primeira visita, um vídeo curto mostra como funciona.",
+        "href": "/matches/card"
+      },
+      {
+        "kind": "new",
+        "title": "Quem já jogou comigo",
+        "description": "Em Minhas combinações, uma lista de quem já dividiu uma mesa com você aqui, mesas antigas incluídas, com o botão Jogar de novo. Quem jogou com você nos últimos seis meses não aparece no baralho, quem tem gente em comum com você aparece antes, e se vocês combinaram e ainda não jogaram, um aviso no sino lembra depois de um mês.",
+        "href": "/matches/played"
       },
       {
         "kind": "new",
@@ -46,8 +86,28 @@
       },
       {
         "kind": "improved",
+        "title": "Todos os ícones viram adesivo no Overdrive",
+        "description": "Com o pedal ligado, os ícones que ainda estavam no traço clássico, como o da casa, os do perfil e os do calendário, também viram adesivos coloridos com contorno de tinta."
+      },
+      {
+        "kind": "improved",
+        "title": "Letra nova no Overdrive",
+        "description": "Com o pedal ligado, o texto corrido usa a Chakra Petch, uma letra quadrada de tela de jogo, combinando com os títulos de gibi."
+      },
+      {
+        "kind": "improved",
         "title": "Títulos com tinta no Overdrive",
         "description": "No Overdrive, o título da página ganhou contorno de nanquim e sombra colorida, os títulos de seção viraram caixas de legenda amarelas, como num gibi, e o nome Mesa Aberta no topo tem uma pincelada embaixo."
+      },
+      {
+        "kind": "improved",
+        "title": "Lista de mesas em seções",
+        "description": "A lista de mesas agora tem o título Todas as mesas, e cada seção abre e fecha. Começa já mostra até 3 mesas, e um card Ver mais traz as outras."
+      },
+      {
+        "kind": "fixed",
+        "title": "Cards do Overdrive no celular",
+        "description": "No celular, os cards inclinados do Overdrive passavam da borda da tela e a sombra rosa parecia torta. Agora a inclinação e a sombra são menores e o card cabe inteiro na tela."
       },
       {
         "kind": "fixed",
@@ -61,8 +121,14 @@
       },
       {
         "kind": "improved",
-        "title": "Posts no Instagram pelo conector do Claude",
-        "description": "Para a administração: o conector do Claude agora publica uma imagem ou um vídeo (Reel) no Instagram da Mesa Aberta. Ele mostra a conta e o arquivo antes e só publica depois de confirmar."
+        "title": "Enquetes pelo conector do Claude",
+        "description": "Para a administração: o conector do Claude agora cria enquetes, lista os resultados e encerra uma enquete. Dá para mirar em pessoas escolhidas a dedo, além dos grupos de Admin › Enquetes. Ele conta antes quantas pessoas vão ver e só publica depois de confirmar."
+      },
+      {
+        "kind": "improved",
+        "title": "Ferramentas em mais de uma seção",
+        "description": "Uma ferramenta pode estar em mais de uma seção, as seções recolhem com um toque e, no celular, dá para passar de uma seção para a outra.",
+        "href": "/tools"
       }
     ]
   },

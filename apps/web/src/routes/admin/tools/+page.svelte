@@ -13,7 +13,7 @@
   import { removeTool } from '#lib/admin/moderation-presets.js';
   import { personMessages } from '#lib/admin/message-person.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
-  import { toolHost, toolKindLabels } from '#lib/tools/labels.js';
+  import { toolHost, toolKindsLabel } from '#lib/tools/labels.js';
   import {
     removeToolSchema,
     TOOL_ADMIN_STATUSES,
@@ -139,7 +139,7 @@
           </div>
         </div>
       {:else if id === 'kind'}
-        {toolKindLabels[row.kind]()}
+        {toolKindsLabel(row.kinds)}
       {:else if id === 'site'}
         <!-- eslint-disable svelte/no-navigation-without-resolve -- the tool's own site, not an app route -->
         <a
@@ -164,7 +164,7 @@
         {#snippet title()}{row.name}{/snippet}
         {#snippet meta()}
           <p class="truncate">{row.description}</p>
-          <p>{toolKindLabels[row.kind]()} · {toolHost(row.siteUrl)}</p>
+          <p>{toolKindsLabel(row.kinds)} · {toolHost(row.siteUrl)}</p>
           <p>{sender(row)}</p>
         {/snippet}
         {#snippet badges()}
