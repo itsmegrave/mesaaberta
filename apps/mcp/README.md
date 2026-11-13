@@ -4,9 +4,10 @@ The [MCP](https://modelcontextprotocol.io) server of Mesa Aberta: Claude (claude
 the desktop app) and other MCP clients read the site as the person who connected them. It is a door
 to the api and nothing more: no database, no business rule, no store and no secret.
 
-**Status: phase 1 (reads) plus two writes, admins only (kill switch `use_mcp`).** Every tool
-reads except `add_tool`, which adds and approves a tool in Ferramentas, and `send_announcement`,
-which sends a notification as Admin > Notificações does. Other writes (asking for a
+**Status: phase 1 (reads) plus a few admin writes, admins only (kill switch `use_mcp`).** Every
+tool reads except `add_tool`, which adds and approves a tool in Ferramentas, `send_announcement`,
+which sends a notification as Admin > Notificações does, and `create_poll` and `close_poll`, which
+publish and end a poll as Admin > Enquetes does. Other writes (asking for a
 seat, the GM's answers, messages) come in a later phase, each one confirmed by the person before it
 runs.
 
@@ -51,6 +52,9 @@ ends access. A "Connected apps" screen in the account is a later phase.
 | `list_tools`                              | `GET /v1/tools`                                                             |
 | `add_tool` (writes)                       | `POST /v1/submissions/tools`, then `POST /v1/admin/moderation/tool.approve` |
 | `send_announcement` (writes)              | `POST /v1/admin/announcements`                                              |
+| `create_poll` (writes)                    | `POST /v1/admin/widgets/reach`, or `/create` then `/publish`                |
+| `list_polls`                              | `GET /v1/admin/widgets/panel`                                               |
+| `close_poll` (writes)                     | `POST /v1/admin/widgets/close`                                              |
 
 Each tool answers the api's JSON as text, or `{ "error": code }` (`not_found`, `forbidden`,
 `rate_limited`, `unavailable`, or `invalid` with the `field` and `code` the api named) with
@@ -66,6 +70,15 @@ through the worker's sweep, since the MCP does not dispatch them itself.
 two steps: unconfirmed it only answers `{ step: "confirm", count }`, and the client must show that
 count to the person and call again with `confirmed: true` once they say to send. The sweep
 delivers it, as for `add_tool`.
+
+The poll tools need the private package's `widgets` extension (polls, Trello #231); without it the
+api answers 404 and they answer `not_found`. `create_poll` has the same two steps: unconfirmed it
+only answers `{ step: "confirm", reach }`; confirmed it writes the poll as a draft and publishes
+it, and if the publish is refused the draft's `id` comes back with `pending: true`. Besides the
+groups (`include`, `exclude`), `people` narrows a poll to hand-picked usernames or profile ids
+(Mixpanel's distinct ids are profile ids), for an audience the database cannot work out, such as
+who tried a theme. `list_polls` answers how many people were picked, never who. Polls only show
+while `use_widgets` is on for the person.
 
 ## Settings
 

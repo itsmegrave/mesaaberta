@@ -3,6 +3,11 @@
    to [data-theme='overdrive'] except the pedal's own pieces, which the classic theme draws too.
    Offsets, tilts and dot sizes are illustration geometry, so they are plain px/deg values. */
 @import '@fontsource/bangers';
+/* The running text (overdrive-theme.css); latin covers Portuguese. */
+@import '@fontsource/chakra-petch/latin-400.css';
+@import '@fontsource/chakra-petch/latin-500.css';
+@import '@fontsource/chakra-petch/latin-600.css';
+@import '@fontsource/chakra-petch/latin-700.css';
 
 @theme {
   /* Overdrive's titles, buttons and stickers. Loaded only when the theme paints it. */
@@ -239,6 +244,35 @@
 }
 [data-theme='overdrive'] [data-look='plain'] {
   display: none;
+}
+/* Every other pictogram (Icon's data-sticker, from stickerTint): its own silhouette in a sticker
+   colour, an ink edge from four 0.75px shadows, a hard shadow and a tilt that alternates with the
+   colour. Plain drop-shadows, not an SVG filter, which Safari clips to the element's box. */
+[data-theme='overdrive'] svg[data-sticker] {
+  overflow: visible;
+  color: var(--color-warning-400);
+  rotate: -6deg;
+  filter: drop-shadow(0.75px 0 0 var(--color-surface-950))
+    drop-shadow(-0.75px 0 0 var(--color-surface-950))
+    drop-shadow(0 0.75px 0 var(--color-surface-950))
+    drop-shadow(0 -0.75px 0 var(--color-surface-950))
+    drop-shadow(1.5px 1.5px 0 var(--comic-shadow, var(--color-surface-950)));
+}
+[data-theme='overdrive'] svg[data-sticker='1'] {
+  color: var(--color-primary-500);
+  rotate: 5deg;
+}
+[data-theme='overdrive'] svg[data-sticker='2'] {
+  color: var(--color-tertiary-400);
+  rotate: -3deg;
+}
+[data-theme='overdrive'] svg[data-sticker='3'] {
+  color: var(--color-success-500);
+  rotate: 7deg;
+}
+[data-theme='overdrive'] svg[data-sticker='4'] {
+  color: var(--color-secondary-300);
+  rotate: -8deg;
 }
 [data-ink] {
   stroke: var(--color-surface-950);
