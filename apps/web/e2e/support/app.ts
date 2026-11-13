@@ -260,3 +260,15 @@ export async function openJoinRequest(page: Page) {
     await expect(send).toBeVisible({ timeout: 1_000 });
   }).toPass();
 }
+
+/**
+ * Shows every card on the table list: each section stops at 3 cards with a "Ver mais N mesas"
+ * button. The button only answers once the page has hydrated, so this clicks until none is left.
+ */
+export async function showAllTables(page: Page) {
+  const more = page.getByRole('button', { name: /^Ver mais \d+ mesas?$/ });
+  await expect(async () => {
+    if ((await more.count()) > 0) await more.first().click({ timeout: 1_000 });
+    await expect(more).toHaveCount(0, { timeout: 1_000 });
+  }).toPass();
+}

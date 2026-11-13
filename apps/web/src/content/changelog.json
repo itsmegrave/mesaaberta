@@ -97,7 +97,7 @@
       {
         "kind": "improved",
         "title": "Lista de mesas em seções",
-        "description": "A lista de mesas agora tem o título Todas as mesas, e cada seção abre e fecha. Começa já mostra até 3 mesas, e um card Ver mais traz as outras."
+        "description": "A lista de mesas agora tem o título Todas as mesas, e cada seção abre e fecha. Cada seção mostra até 3 mesas, e um card Ver mais traz as outras."
       },
       {
         "kind": "fixed",

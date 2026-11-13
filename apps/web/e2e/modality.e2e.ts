@@ -7,6 +7,7 @@ import {
   setSeats,
   signIn,
   uniqueTitle,
+  showAllTables,
 } from './support/app';
 import { createUser, database } from './support/users';
 
@@ -36,6 +37,7 @@ test('an in-person table shows its area to everyone and its address only to the 
   await expect(visitor.getByText('Rua das Flores')).toHaveCount(0);
 
   await visitor.goto('/tables?modality=in_person');
+  await showAllTables(visitor);
   await expect(
     visitor.getByRole('group', { name: 'Modalidade' }).getByRole('button', { name: 'Presencial' }),
   ).toHaveAttribute('aria-pressed', 'true');
@@ -44,6 +46,7 @@ test('an in-person table shows its area to everyone and its address only to the 
   );
 
   await visitor.goto('/tables?modality=online');
+  await showAllTables(visitor);
   await expect(visitor.getByRole('article').filter({ hasText: title })).toHaveCount(0);
 });
 

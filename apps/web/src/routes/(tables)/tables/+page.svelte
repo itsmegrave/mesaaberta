@@ -117,7 +117,6 @@
             title={m.tables_all_title()}
             summary={m.tables_found({ count })}
             tables={data.tables}
-            limit={Infinity}
             priority={!data.startingSoon?.length}
           />
         {/if}
