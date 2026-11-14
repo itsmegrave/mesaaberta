@@ -8,6 +8,7 @@ import { matchAnswerSchema, matchCardSchema } from '@mesaaberta/core/matches/sch
 import {
   answerMatch,
   endMatch,
+  homeMatchesOf,
   listMatches,
   matchCardOf,
   matchPreviewOf,
@@ -71,6 +72,17 @@ export function matchRoutes(open: Open = openDb) {
         graph: c.req.query('graph') === '1',
       }),
     ),
+  );
+
+  // Combinar's section on Início: an invitation, or new matches and the cards waiting; `null` when
+  // there is nothing to say (under 18, or a card switched off). `?graph=1` as for the deck.
+  app.get('/home', async (c) =>
+    c.json({
+      section: await homeMatchesOf(c.get('db'), c.get('actorId'), {
+        supabaseUrl: supabaseUrlOf(c.env),
+        graph: c.req.query('graph') === '1',
+      }),
+    }),
   );
 
   // Quem já jogou comigo: a page of the people the actor shared a played table with.

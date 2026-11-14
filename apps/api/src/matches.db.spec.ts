@@ -97,6 +97,8 @@ describe('api Combinar routes over a database', () => {
       }),
     });
     expect(await (await call('/deck', ana)).json()).toEqual({ state: 'no_card' });
+    // Início invites someone who never made a card.
+    expect(await (await call('/home', ana)).json()).toEqual({ section: { state: 'invite' } });
   });
 
   it('keeps minors and people without the confirmation out', async () => {
@@ -104,6 +106,7 @@ describe('api Combinar routes over a database', () => {
     expect(minor.status).toBe(400);
     expect(await minor.json()).toMatchObject({ field: 'adult', message: 'adult_only' });
     expect(await (await call('/deck', teen)).json()).toEqual({ state: 'not_adult' });
+    expect(await (await call('/home', teen)).json()).toEqual({ section: null });
     const unconfirmed = await call('/card', bia, 'POST', card(['gm'], { adult: false }));
     expect(await unconfirmed.json()).toMatchObject({ field: 'adult', message: 'adult_required' });
     // Presencial needs a city on the profile.
@@ -139,6 +142,10 @@ describe('api Combinar routes over a database', () => {
     });
     expect(deck.people[0].commonSystems).toHaveLength(1);
     expect(deck.people[0].score).toBeGreaterThan(deck.people[1].score);
+    // Início counts the same deck.
+    expect(await (await call('/home', ana)).json()).toEqual({
+      section: { state: 'ready', fresh: [], freshTotal: 0, waiting: 2, answersLeft: 50 },
+    });
   });
 
   it('keeps a yes secret until it is mutual, then makes the match and tells both', async () => {
@@ -171,6 +178,13 @@ describe('api Combinar routes over a database', () => {
     const list = await (await call('/', ana)).json();
     expect(list).toMatchObject({ total: 1, pages: 1, items: [{ person: { username: 'bia' } }] });
     expect((await call('/?page=2', ana)).status).toBe(404);
+    // A new match shows on Início for both.
+    expect(await (await call('/home', bia)).json()).toMatchObject({
+      section: { state: 'ready', fresh: [{ username: 'ana', avatarUrl: null }], freshTotal: 1 },
+    });
+    expect(await (await call('/home', ana)).json()).toMatchObject({
+      section: { fresh: [{ username: 'bia' }], freshTotal: 1, waiting: 1 },
+    });
   });
 
   it('hides a pass, brings it back with Voltar a última, and refuses someone not in the deck', async () => {
@@ -218,6 +232,8 @@ describe('api Combinar routes over a database', () => {
       [],
     );
     expect(await (await call('/deck', dora)).json()).toEqual({ state: 'off' });
+    // A card switched off: Início does not ask again.
+    expect(await (await call('/home', dora)).json()).toEqual({ section: null });
     expect((await (await call('/deck', ana)).json()).people).toEqual([]);
     expect((await (await call('/card', dora)).json()).card).toMatchObject({ enabled: false });
   });

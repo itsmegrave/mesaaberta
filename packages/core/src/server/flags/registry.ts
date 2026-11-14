@@ -187,6 +187,10 @@ export const flagDefaults = {
   // Authentication > Passkeys setting must be on). Off: no button, no list, and the passkey
   // actions refuse. Visitors are evaluated anonymously; the settings by the person's id.
   use_passkeys: false,
+  // Combinar on the signed-in Início, a new feature (created on for everyone): an invitation for
+  // someone who never made a card, or their new matches and the cards waiting today. Needs
+  // `use_matchmaking` too. Off: Início has no Combinar section. Targeted by the person's id.
+  use_home_matches: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

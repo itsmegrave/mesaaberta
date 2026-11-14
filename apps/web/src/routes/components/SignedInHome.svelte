@@ -1,8 +1,8 @@
 <script lang="ts">
   import { page } from '$app/state';
   // Início for a signed-in member (`use_signed_in_home`): what waits on them, their next sessions,
-  // Sua conta and news from people they follow, then tables from their systems, from people they
-  // follow, and Novas mesas. Each block shows only with something in it, but the two rows of
+  // Combinar, Sua conta and news from people they follow, then tables from their systems, from
+  // people they follow, and Novas mesas. Each block shows only with something in it, but the two rows of
   // discovery, which turn into a way to start.
   import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
@@ -16,6 +16,7 @@
   import { m } from '#lib/paraglide/messages.js';
   import HomeAccount from './ui/HomeAccount.svelte';
   import HomeFeed from './ui/HomeFeed.svelte';
+  import HomeMatches from './ui/HomeMatches.svelte';
   import HomeFollowSuggestions from './ui/HomeFollowSuggestions.svelte';
   import HomeSessions from './ui/HomeSessions.svelte';
   import HomeWaiting from './ui/HomeWaiting.svelte';
@@ -80,6 +81,9 @@
           now={data.now}
           open={data.sessions.thisWeek > 0}
         />
+      {/if}
+      {#if data.combinar}
+        <HomeMatches section={data.combinar} />
       {/if}
     </div>
     <div class="flex min-w-0 flex-col gap-4 md:gap-6">
