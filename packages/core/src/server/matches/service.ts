@@ -31,6 +31,9 @@ import { participantRatings } from '../ratings/players';
 import { neighboursOf, peopleInCommon } from './graph';
 import {
   fitOf,
+  HOME_MATCHES_DAYS,
+  HOME_MATCHES_SHOWN,
+  HOME_MATCHES_WAITING_MAX,
   isAdultRange,
   MATCH_ANSWER_DAYS,
   MATCH_CARD_SYSTEMS,
@@ -226,6 +229,31 @@ function fits(me: Me) {
   );
 }
 
+/** Who the person shared a played table with in the last MATCH_PLAYED_DAYS: out of their deck. */
+function recentlyPlayed(near: Awaited<ReturnType<typeof neighboursOf>> | null, now: Date) {
+  const playedSince = now.getTime() - MATCH_PLAYED_DAYS * DAY_MS;
+  return (near?.played ?? [])
+    .filter((pair) => pair.lastAt.getTime() > playedSince)
+    .map((pair) => pair.b);
+}
+
+/**
+ * The cards in the person's deck: the ones that fit theirs, that they have not answered in
+ * MATCH_PASS_DAYS (yes or no), whose owner has not passed on them in that time, and (with the
+ * graph) nobody they played with lately.
+ */
+function inDeck(me: Me, now: Date, recent: string[]) {
+  const passSince = new Date(now.getTime() - MATCH_PASS_DAYS * DAY_MS).toISOString();
+  return and(
+    fits(me),
+    // Not answered by them in the last MATCH_PASS_DAYS: then the card comes back as a reminder.
+    sql`not exists (select 1 from ${matchAnswers} where ${matchAnswers.fromId} = ${me.id} and ${matchAnswers.toId} = ${profiles.id} and ${matchAnswers.createdAt} > ${passSince}::timestamptz)`,
+    // Nor passed on them in that time: nobody is told, the card just never comes.
+    sql`not exists (select 1 from ${matchAnswers} where ${matchAnswers.fromId} = ${profiles.id} and ${matchAnswers.toId} = ${me.id} and not ${matchAnswers.yes} and ${matchAnswers.createdAt} > ${passSince}::timestamptz)`,
+    recent.length ? sql`not (${profiles.id} = any(${`{${recent.join(',')}}`}::uuid[]))` : undefined,
+  );
+}
+
 /** The person's card when it is on and they are an adult; else why the deck cannot open. */
 async function meFor(db: AnyDb, profileId: string) {
   const [row] = await db
@@ -305,7 +333,6 @@ export async function matchDeck(
   const found = await meFor(db, profileId);
   if (found.state !== 'ready') return { state: found.state };
   const { me } = found;
-  const passSince = new Date(now.getTime() - MATCH_PASS_DAYS * DAY_MS).toISOString();
 
   const [answered, myAvailability] = await Promise.all([
     answersToday(db, profileId, now),
@@ -323,10 +350,7 @@ export async function matchDeck(
   // The graph (`use_play_graph`): whoever played with the person lately stays out, and people
   // joined to the person's own come first.
   const near = graph ? await neighboursOf(db, profileId, now) : null;
-  const playedSince = now.getTime() - MATCH_PLAYED_DAYS * DAY_MS;
-  const recent = (near?.played ?? [])
-    .filter((pair) => pair.lastAt.getTime() > playedSince)
-    .map((pair) => pair.b);
+  const recent = recentlyPlayed(near, now);
 
   const mine = sql`(select count(*) from ${profileFavoriteSystems} where ${profileFavoriteSystems.profileId} = ${me.id})`;
   const theirs = sql`(select count(*) from profile_favorite_systems f where f.profile_id = ${profiles.id})`;
@@ -357,18 +381,7 @@ export async function matchDeck(
     })
     .from(matchCards)
     .innerJoin(profiles, eq(profiles.id, matchCards.profileId))
-    .where(
-      and(
-        fits(me),
-        // Not answered by them in the last MATCH_PASS_DAYS: then the card comes back as a reminder.
-        sql`not exists (select 1 from ${matchAnswers} where ${matchAnswers.fromId} = ${me.id} and ${matchAnswers.toId} = ${profiles.id} and ${matchAnswers.createdAt} > ${passSince}::timestamptz)`,
-        // Nor passed on them in that time: nobody is told, the card just never comes.
-        sql`not exists (select 1 from ${matchAnswers} where ${matchAnswers.fromId} = ${profiles.id} and ${matchAnswers.toId} = ${me.id} and not ${matchAnswers.yes} and ${matchAnswers.createdAt} > ${passSince}::timestamptz)`,
-        recent.length
-          ? sql`not (${profiles.id} = any(${`{${recent.join(',')}}`}::uuid[]))`
-          : undefined,
-      ),
-    )
+    .where(inDeck(me, now, recent))
     .orderBy(desc(score), desc(matchCards.updatedAt), asc(profiles.username))
     // With the graph, a wider pick, so people in common can move up before the cut.
     .limit(near ? MATCH_DECK_SIZE * 3 : size);
@@ -783,6 +796,98 @@ export async function listMatches(
     total,
     pages,
     items: rows.map((row, i) => ({ id: row.matchId, createdAt: row.createdAt, person: people[i] })),
+  };
+}
+
+export type HomeMatchPerson = { username: string; avatarUrl: string | null };
+/**
+ * Combinar on Início: `invite` for someone who never made a card; `ready` for someone whose card
+ * is on, with their new matches and how many cards wait in their deck today.
+ */
+export type HomeMatches =
+  | { state: 'invite' }
+  | {
+      state: 'ready';
+      fresh: HomeMatchPerson[];
+      freshTotal: number;
+      waiting: number;
+      answersLeft: number;
+    };
+
+/**
+ * Combinar's section on the signed-in Início. Null when there is nothing to say: under 18, or a
+ * card the person switched off (they chose to leave; Início does not ask again). Someone with no
+ * age range yet is invited: the setup asks for it. Two rounds of at most three statements.
+ */
+export async function homeMatchesOf(
+  db: AnyDb,
+  profileId: string,
+  {
+    now = new Date(),
+    supabaseUrl,
+    graph = false,
+  }: { now?: Date; supabaseUrl?: string; graph?: boolean } = {},
+): Promise<HomeMatches | null> {
+  const [row] = await db
+    .select({ ageRange: profiles.ageRange, city: profiles.city, card: matchCards })
+    .from(profiles)
+    .leftJoin(matchCards, eq(matchCards.profileId, profiles.id))
+    .where(eq(profiles.id, profileId));
+  if (!row || row.ageRange === '13_17') return null;
+  if (!row.card) return { state: 'invite' };
+  if (row.card.enabledAt === null || !isAdultRange(row.ageRange)) return null;
+  const me: Me = { id: profileId, card: row.card, city: row.city };
+
+  const since = new Date(now.getTime() - HOME_MATCHES_DAYS * DAY_MS);
+  const other = sql`case when ${matches.profileA} = ${profileId} then ${matches.profileB} else ${matches.profileA} end`;
+  const [fresh, answered, near] = await Promise.all([
+    db
+      .select({
+        username: profiles.username,
+        avatarPath: profiles.avatarPath,
+        avatarUrl: profiles.avatarUrl,
+        total: sql<number>`count(*) over ()`.mapWith(Number),
+      })
+      .from(matches)
+      .innerJoin(profiles, eq(profiles.id, other))
+      .where(
+        and(
+          or(eq(matches.profileA, profileId), eq(matches.profileB, profileId)),
+          isNull(matches.endedAt),
+          gt(matches.createdAt, since),
+          eq(profiles.status, 'active'),
+          isNotNull(profiles.username),
+          sql`not ${blockedWith(profileId)}`,
+        ),
+      )
+      .orderBy(desc(matches.createdAt))
+      .limit(HOME_MATCHES_SHOWN),
+    answersToday(db, profileId, now),
+    graph ? neighboursOf(db, profileId, now) : Promise.resolve(null),
+  ]);
+  const answersLeft = Math.max(0, MATCH_DAILY_ANSWERS - answered);
+  // The deck as /matches deals it, only counted (and capped: past HOME_MATCHES_WAITING_MAX Início says "more than").
+  const [waiting] =
+    answersLeft > 0
+      ? await db.select({ n: count() }).from(
+          db
+            .select({ id: profiles.id })
+            .from(matchCards)
+            .innerJoin(profiles, eq(profiles.id, matchCards.profileId))
+            .where(inDeck(me, now, recentlyPlayed(near, now)))
+            .limit(HOME_MATCHES_WAITING_MAX + 1)
+            .as('deck'),
+        )
+      : [{ n: 0 }];
+  return {
+    state: 'ready',
+    fresh: fresh.map((person) => ({
+      username: person.username!,
+      avatarUrl: pictureOf(supabaseUrl, person),
+    })),
+    freshTotal: fresh[0]?.total ?? 0,
+    waiting: waiting?.n ?? 0,
+    answersLeft,
   };
 }
 

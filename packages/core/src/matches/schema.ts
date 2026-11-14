@@ -64,6 +64,12 @@ export const MATCH_ANSWER_DAYS = 180;
 export const MATCH_DECK_SIZE = 20;
 /** The matches list's page size. */
 export const MATCHES_PAGE_SIZE = 20;
+/** How far back Início's Combinar section counts a match as new. */
+export const HOME_MATCHES_DAYS = 7;
+/** How many of the new matches Início shows by face; the rest are a count. */
+export const HOME_MATCHES_SHOWN = 3;
+/** Início counts the cards waiting up to this; past it, it says "more than". */
+export const HOME_MATCHES_WAITING_MAX = 99;
 /** How many favorite systems a card names; the rest is a count. */
 export const MATCH_CARD_SYSTEMS = 4;
 

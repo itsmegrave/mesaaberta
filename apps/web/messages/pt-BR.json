@@ -2833,6 +2833,45 @@
   "home_feed_badge": "{person} ganhou a conquista {badge}",
   "home_feed_badge_unnamed": "{person} ganhou uma conquista",
   "home_feed_manage": "Quem você segue",
+  "home_matches_invite_summary": "Encontre gente para jogar",
+  "home_matches_invite_text": "Monte seu cartão, conte como gosta de jogar e veja quem combina com você. Quando o sim vem dos dois lados, vocês combinam.",
+  "home_matches_fresh": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 combinação nova",
+        "count=*": "{count} combinações novas"
+      }
+    }
+  ],
+  "home_matches_fresh_text": "Disseram sim para você também. Mande uma mensagem e combine a mesa.",
+  "home_matches_fresh_more": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "e mais 1",
+        "count=*": "e mais {count}"
+      }
+    }
+  ],
+  "home_matches_fresh_action": "Ver combinações",
+  "home_matches_waiting": [
+    {
+      "declarations": ["input count"],
+      "selectors": ["count"],
+      "match": {
+        "count=1": "1 carta esperando por você",
+        "count=*": "{count} cartas esperando por você"
+      }
+    }
+  ],
+  "home_matches_waiting_many": "Mais de {count} cartas esperando por você",
+  "home_matches_waiting_text": "Tem gente querendo jogar. Diga sim para quem você quer na mesa.",
+  "home_matches_waiting_action": "Ver cartas",
+  "home_matches_quiet": "Nenhuma carta nova por enquanto",
+  "home_matches_quiet_text": "Volte mais tarde: chega gente nova toda semana.",
   "home_row_systems": "Dos seus sistemas",
   "home_row_systems_edit": "Editar sistemas",
   "home_row_systems_more": "Todas as mesas desses sistemas",

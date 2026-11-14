@@ -1,5 +1,18 @@
 [
   {
+    "date": "2026-11-14",
+    "title": "Combinar no Início",
+    "summary": "O Início agora tem uma seção do Combinar: suas combinações novas e as cartas esperando por você, ou um convite para montar seu cartão.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Combinar no Início",
+        "description": "Quem já está no Combinar vê no Início as combinações da última semana e quantas cartas esperam por uma resposta hoje. Quem ainda não montou o cartão recebe um convite para começar. Quem pausou o cartão não vê a seção.",
+        "href": "/matches"
+      }
+    ]
+  },
+  {
     "date": "2026-11-13",
     "title": "Combinar no menu principal",
     "summary": "Dá para entrar com passkey, sem senha. E o Combinar ganhou lugar próprio no menu, ao lado de Minhas mesas, e no rodapé das páginas.",

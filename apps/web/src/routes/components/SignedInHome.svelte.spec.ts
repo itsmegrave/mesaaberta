@@ -87,6 +87,7 @@ const home = (over: Record<string, unknown> = {}) => ({
   systemsCatalog: null,
   following: 8,
   newTableDays: 14,
+  combinar: null,
   ...over,
 });
 
@@ -196,5 +197,51 @@ describe('the signed-in Início', () => {
     await expect
       .element(page.getByRole('button', { name: /Esperando você/ }))
       .toHaveAttribute('aria-expanded', 'true');
+  });
+  it('invites someone without a Combinar card to make one', async () => {
+    show({ combinar: { state: 'invite' } });
+
+    const panel = page.getByRole('button', { name: /Combinar/ });
+    await expect.element(panel).toHaveAttribute('aria-expanded', 'true');
+    await expect.element(page.getByText('Encontre gente para jogar')).toBeVisible();
+    await expect
+      .element(page.getByRole('link', { name: 'Montar meu cartão' }))
+      .toHaveAttribute('href', '/matches/card');
+  });
+
+  it('shows new matches and the cards waiting', async () => {
+    show({
+      combinar: {
+        state: 'ready',
+        fresh: [{ username: 'helena', avatarUrl: null }],
+        freshTotal: 2,
+        waiting: 12,
+        answersLeft: 50,
+      },
+    });
+
+    await expect
+      .element(page.getByText('2 combinações novas · 12 cartas esperando por você'))
+      .toBeVisible();
+    await expect
+      .element(page.getByRole('link', { name: /@helena/ }))
+      .toHaveAttribute('href', '/u/helena');
+    await expect.element(page.getByText('e mais 1')).toBeVisible();
+    await expect
+      .element(page.getByRole('link', { name: 'Ver combinações' }))
+      .toHaveAttribute('href', '/matches/list');
+    await expect
+      .element(page.getByRole('link', { name: 'Ver cartas' }))
+      .toHaveAttribute('href', '/matches');
+  });
+
+  it('folds Combinar when nothing is new', async () => {
+    show({
+      combinar: { state: 'ready', fresh: [], freshTotal: 0, waiting: 0, answersLeft: 50 },
+    });
+    await expect
+      .element(page.getByRole('button', { name: /Combinar/ }))
+      .toHaveAttribute('aria-expanded', 'false');
+    await expect.element(page.getByText('Nenhuma carta nova por enquanto')).toBeVisible();
   });
 });
