@@ -28,6 +28,9 @@
     // "local" checks a session token's signature in the Worker instead of asking Supabase Auth on
     // every request (see handle-auth.ts). "remote" asks Supabase, as before: the rollback.
     "SESSION_CHECK": "local",
+    // Days a sign-in lasts from when the person last signed in; then they sign in again. Blank: no
+    // limit (Supabase's own session settings need the Pro plan).
+    "SESSION_MAX_AGE_DAYS": "30",
     // "true" turns on the daily RPG campaign discovery (04:00 UTC).
     "CROWDFUNDING_IMPORT_ENABLED": "false",
     // Blank key: every feature flag returns its default from the registry.

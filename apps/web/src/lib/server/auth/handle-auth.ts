@@ -14,6 +14,12 @@ type AuthEnv = {
    * asks Supabase (`getUser`), as before.
    */
   SESSION_CHECK?: string;
+  /**
+   * Days a sign-in lasts, counted from when the person last signed in (the token's `amr`), however
+   * often the session refreshes. Past that they are signed out and sign in again. Blank or not a
+   * positive number: no limit (Supabase's own session settings need the Pro plan).
+   */
+  SESSION_MAX_AGE_DAYS?: string;
 };
 
 /**
@@ -30,8 +36,9 @@ type AuthEnv = {
 export const createHandleAuth =
   (createClient: typeof createServerClient = createServerClient): Handle =>
   async ({ event, resolve }) => {
-    const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SESSION_CHECK } = (event.locals.env ??
-      {}) as AuthEnv;
+    const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SESSION_CHECK, SESSION_MAX_AGE_DAYS } = (event
+      .locals.env ?? {}) as AuthEnv;
+    const maxAgeDays = Number(SESSION_MAX_AGE_DAYS);
 
     const supabase =
       SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY
@@ -57,16 +64,26 @@ export const createHandleAuth =
       (verified ??= (async () => {
         if (!supabase) return null;
 
-        const user =
+        const found =
           SESSION_CHECK === 'local'
             ? await claimedUser(supabase)
             : await supabase.auth
                 .getUser()
                 .then(({ data, error }) => (error ? null : data.user))
-                .then(async (found) =>
-                  found && (await sessionIsForSite(supabase)) ? found : null,
-                );
-        if (!user) return null;
+                .then(async (verifiedUser) => {
+                  const payload = verifiedUser ? await sessionPayload(supabase) : null;
+                  return verifiedUser && payload && isSiteSession(payload)
+                    ? { user: verifiedUser, claims: payload }
+                    : null;
+                });
+        if (!found) return null;
+        const { user, claims } = found;
+        if (sessionTooOld(claims, maxAgeDays)) {
+          // Ends this session (its refresh token too) and clears the cookies; a failure still
+          // leaves the request anonymous.
+          await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+          return null;
+        }
 
         event.locals.userId = user.id;
         return user;
@@ -94,11 +111,11 @@ export const handleAuth = createHandleAuth();
  */
 async function claimedUser(supabase: {
   auth: Pick<ReturnType<typeof createServerClient>['auth'], 'getClaims'>;
-}): Promise<User | null> {
+}): Promise<{ user: User; claims: Record<string, unknown> } | null> {
   const { data, error } = await supabase.auth.getClaims();
   const claims = data?.claims;
   if (error || !claims?.sub || !isSiteSession(claims)) return null;
-  return {
+  const user = {
     id: claims.sub,
     email: claims.email,
     phone: claims.phone,
@@ -108,6 +125,27 @@ async function claimedUser(supabase: {
     is_anonymous: claims.is_anonymous,
     created_at: '',
   } as User;
+  return { user, claims: claims as Record<string, unknown> };
+}
+
+/**
+ * Whether the person signed in more than `maxAgeDays` ago, by the latest authentication in the
+ * token's `amr` (seconds since the epoch; a refresh keeps it, a new sign-in renews it). Without a
+ * limit, or without `amr`, a session is never too old.
+ */
+export function sessionTooOld(
+  claims: { amr?: unknown },
+  maxAgeDays: number,
+  now: number = Date.now(),
+): boolean {
+  if (!Number.isFinite(maxAgeDays) || maxAgeDays <= 0 || !Array.isArray(claims.amr)) return false;
+  const times = claims.amr
+    .map((entry: unknown) =>
+      entry && typeof entry === 'object' ? (entry as { timestamp?: unknown }).timestamp : undefined,
+    )
+    .filter((time): time is number => typeof time === 'number' && Number.isFinite(time));
+  if (times.length === 0) return false;
+  return now - Math.max(...times) * 1000 > maxAgeDays * 86_400_000;
 }
 
 /**
@@ -124,14 +162,13 @@ export function isSiteSession(claims: { aud?: unknown; client_id?: unknown }): b
   return audiences.includes('authenticated');
 }
 
-/** The same check on the cookie session that `getUser` just verified with Supabase. */
-async function sessionIsForSite(supabase: {
+/** The claims of the cookie session that `getUser` just verified with Supabase. */
+async function sessionPayload(supabase: {
   auth: Pick<ReturnType<typeof createServerClient>['auth'], 'getSession'>;
-}): Promise<boolean> {
+}): Promise<Record<string, unknown> | null> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
-  const payload = token ? decodePayload(token) : null;
-  return payload !== null && isSiteSession(payload);
+  return token ? decodePayload(token) : null;
 }
 
 /** The payload of a JWT, unverified (only for a token Supabase has just vouched for). */
