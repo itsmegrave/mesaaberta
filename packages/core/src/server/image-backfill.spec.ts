@@ -3,7 +3,12 @@ import { eq, sql } from 'drizzle-orm';
 import { encode as encodePng } from 'fast-png';
 import { systemLogos, systems } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../../../../apps/web/src/lib/server/db/test-db';
-import { IMAGE_COLUMNS, picturesToConvert, runImageBackfill } from './image-backfill';
+import {
+  IMAGE_COLUMNS,
+  leftoverOriginals,
+  picturesToConvert,
+  runImageBackfill,
+} from './image-backfill';
 import { logger } from './logger';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
@@ -152,10 +157,21 @@ describe('originals earlier runs kept', () => {
       .update(systemLogos)
       .set({ path: 'tables/old.png' })
       .where(eq(systemLogos.path, 'systems/a.png'));
-    // The conversion of `old.png` runs first; with its file refused, the row keeps it.
-    upload.mockResolvedValue({ error: { message: 'refused' } });
-    await run();
-    upload.mockResolvedValue({ error: null });
-    expect(remove.mock.calls.map(([paths]) => paths[0])).not.toContain('tables/old.png');
+    const leftovers = (await leftoverOriginals(test.db as never, 20)).map((r) => r.path).sort();
+    expect(leftovers).toEqual(['u/face.jpg']);
+  });
+
+  it('moves a row to the WebP an earlier run stored, without converting it again', async () => {
+    await test.db
+      .update(systemLogos)
+      .set({ path: 'tables/old.png' })
+      .where(eq(systemLogos.path, 'systems/a.png'));
+
+    expect(await run()).toEqual({ converted: 1, failed: 0, removed: 2 });
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(upload).not.toHaveBeenCalled();
+    expect(await logoPaths()).toEqual(['systems/b.webp', 'tables/old.webp']);
+    const removed = remove.mock.calls.map(([paths]) => paths[0]).sort();
+    expect(removed).toEqual(['tables/old.png', 'u/face.jpg']);
   });
 });
