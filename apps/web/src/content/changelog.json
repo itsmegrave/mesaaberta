@@ -9,6 +9,12 @@
         "title": "Combinar no Início",
         "description": "Quem já está no Combinar vê no Início as combinações da última semana e quantas cartas esperam por uma resposta hoje. Quem ainda não montou o cartão recebe um convite para começar. Quem pausou o cartão não vê a seção.",
         "href": "/matches"
+      },
+      {
+        "kind": "fixed",
+        "title": "Data de one-shot no formulário",
+        "description": "Ao abrir uma one-shot, o calendário agora pede o dia da sessão, e não o dia da primeira sessão.",
+        "href": "/tables/new"
       }
     ]
   },

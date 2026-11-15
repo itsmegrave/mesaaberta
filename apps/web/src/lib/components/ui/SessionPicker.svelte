@@ -21,6 +21,7 @@
     withDuration = true,
     name = 'startsAtLocal',
     label = m.session_day(),
+    emptySummary = m.session_summary_empty(),
     hint,
   }: {
     startsAt: string;
@@ -37,6 +38,8 @@
     name?: string;
     /** What the calendar picks: the table form's first session by default. */
     label?: string;
+    /** The sentence shown before a day is picked, when the length is picked too. */
+    emptySummary?: string;
     /** A line under the label, read with the calendar. */
     hint?: string;
   } = $props();
@@ -62,7 +65,7 @@
   const other = $derived(custom || (!!length && !PRESETS.includes(length)));
 
   const summary = $derived.by(() => {
-    if (!day) return withDuration ? m.session_summary_empty() : m.session_summary_at_empty();
+    if (!day) return withDuration ? emptySummary : m.session_summary_at_empty();
     const date = new Intl.DateTimeFormat(getLocale(), {
       weekday: 'long',
       day: 'numeric',
