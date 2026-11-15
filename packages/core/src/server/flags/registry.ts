@@ -191,6 +191,10 @@ export const flagDefaults = {
   // someone who never made a card, or their new matches and the cards waiting today. Needs
   // `use_matchmaking` too. Off: Início has no Combinar section. Targeted by the person's id.
   use_home_matches: false,
+  // The street from the CEP on "Cadastrar lugar" and "Editar lugar", a new feature (created on for
+  // everyone): once the CEP is found, an empty "Rua e número" is filled with the street it is on.
+  // Off: only the neighbourhood, city and state come from the CEP. Targeted by the person's id.
+  use_cep_street: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

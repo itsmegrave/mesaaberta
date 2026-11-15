@@ -22,6 +22,7 @@ import type { findEditablePlace } from '@mesaaberta/core/server/places/service';
 import { readFromApi, revivedDates } from '#lib/server/api-read.js';
 import { handlePlaceForm } from '#lib/server/places/form-action.js';
 import { placeTagOptions } from '#lib/server/places/tags.js';
+import { cepStreetEnabled } from '#lib/server/places/cep-street.js';
 import type { Actions, PageServerLoad } from './$types';
 
 /** The place this person may edit; anything else (unknown, removed, somebody else's) is a 404. */
@@ -59,13 +60,15 @@ export const load: PageServerLoad = async ({ locals, url, params }) => {
             throw cause;
           })
       : null;
-  const [partner, hosts] = await Promise.all([
+  const [partner, hosts, cepStreet] = await Promise.all([
     section<NonNullable<Awaited<ReturnType<typeof placePartnerState>>>>('partner'),
     section<Awaited<ReturnType<typeof listPlaceHosts>>>('hosts'),
+    cepStreetEnabled(locals),
   ]);
   return {
     partner,
     hosts,
+    cepStreet,
     ...(await placeTagOptions(locals, profile.id, place.features)),
     slug: place.slug,
     imageUrl: imageUrl(supabaseUrlOf(locals.env), place.imagePath),

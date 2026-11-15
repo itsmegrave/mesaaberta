@@ -317,6 +317,9 @@ export const postalCodes = pgTable(
   'postal_codes',
   {
     cep: text('cep').primaryKey(),
+    // The street (logradouro) the CEP is on, without a number. Empty when the CEP covers a whole
+    // town; null when the row was kept before streets were (the next lookup fills it in).
+    street: text('street'),
     neighbourhood: text('neighbourhood'),
     city: text('city').notNull(),
     state: text('state').notNull(),

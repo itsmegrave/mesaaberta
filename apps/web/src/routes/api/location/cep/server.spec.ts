@@ -28,7 +28,7 @@ describe('authenticated CEP endpoint', () => {
   it('normalizes and returns an address after the per-user limit', async () => {
     const address = {
       status: 'found' as const,
-      place: { neighbourhood: null, city: 'São Paulo', state: 'SP' },
+      place: { street: 'Praça da Sé', neighbourhood: null, city: 'São Paulo', state: 'SP' },
     };
     vi.mocked(lookupCep).mockResolvedValue(address);
     const { result, setHeaders } = run('01001-000');

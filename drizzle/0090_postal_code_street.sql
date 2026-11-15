@@ -1,0 +1,1 @@
+ALTER TABLE "postal_codes" ADD COLUMN "street" text;
