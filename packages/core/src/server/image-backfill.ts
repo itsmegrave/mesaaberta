@@ -120,6 +120,24 @@ export async function leftoverOriginals(db: AnyDb, limit: number) {
   }
 }
 
+/**
+ * Whether Storage already holds `path` in that bucket, read from Supabase Storage's own table. Where
+ * there is none (another store, the tests' database) the answer is no, and the picture is converted.
+ */
+export async function isStored(db: AnyDb, bucket: Bucket, path: string) {
+  try {
+    const result = await db.execute(
+      sql`select exists(select 1 from storage.objects where bucket_id = ${bucket} and name = ${path}) as stored`,
+    );
+    const rows = (Array.isArray(result) ? result : (result as { rows: unknown[] }).rows) as {
+      stored: boolean;
+    }[];
+    return rows[0]?.stored === true;
+  } catch {
+    return false;
+  }
+}
+
 type Deps = {
   log: Logger;
   open?: typeof createDb;
@@ -132,7 +150,7 @@ type Deps = {
 /**
  * One run of the conversion: reads a few stored PNG and JPEG pictures, stores each again as a WebP
  * no bigger than its place needs (`compressed`), points the rows at the new file and deletes the
- * original, which may carry the photo's metadata (EXIF, GPS) and was public. It also deletes the
+ * original, which may carry the photo's metadata (EXIF, GPS) and was public. It first deletes the
  * originals earlier runs kept. Runs from the worker's ten-minute cron until nothing is left, and
  * costs two queries when there is nothing to do.
  */
@@ -149,10 +167,27 @@ export async function runImageBackfill(
 
   const { db, close } = open(connectionString);
   try {
+    // The leftovers first: one cheap Storage call each, so a conversion that runs out of time
+    // (the encoder is the slow part) can't keep them waiting.
+    for (const { path, bucket } of await leftoverOriginals(db as AnyDb, ORIGINALS_CLEANUP_BATCH)) {
+      const target = bucketOf(bucket);
+      if (!target) break;
+      if (await removeOriginal(db as AnyDb, target, bucket, path)) result.removed += 1;
+    }
     for (const { path, bucket } of await picturesToConvert(db, batch)) {
       try {
         const target = bucketOf(bucket);
         if (!target) return result;
+        // A run that stored the WebP but stopped before the rows moved: move them, without encoding
+        // the picture again.
+        const webpPath = path.replace(/\.(png|jpe?g)$/i, '') + '.webp';
+        if (await isStored(db as AnyDb, bucket, webpPath)) {
+          await repointPicture(db as AnyDb, bucket, path, webpPath);
+          result.converted += 1;
+          if (await removeOriginal(db as AnyDb, target, bucket, path)) result.removed += 1;
+          log.info('images.webp_reused', { bucket });
+          continue;
+        }
         const response = await fetcher(`${publicUrl}/${bucket}/${path}`, {
           signal: AbortSignal.timeout(15_000),
         });
@@ -184,11 +219,6 @@ export async function runImageBackfill(
         result.failed += 1;
         log.warn('images.convert_failed', { code: 'image_convert_failed', bucket, error });
       }
-    }
-    for (const { path, bucket } of await leftoverOriginals(db as AnyDb, ORIGINALS_CLEANUP_BATCH)) {
-      const target = bucketOf(bucket);
-      if (!target) break;
-      if (await removeOriginal(db as AnyDb, target, bucket, path)) result.removed += 1;
     }
   } finally {
     await close();
