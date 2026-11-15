@@ -29,6 +29,8 @@ export const IMAGE_COLUMNS = [
 
 /** Pictures one run converts: a few seconds of work each, well inside a cron's time. */
 export const IMAGE_BACKFILL_BATCH = 5;
+/** Leftover originals one run deletes: one Storage call each, so more than conversions. */
+export const ORIGINALS_CLEANUP_BATCH = 20;
 
 export type ImageBackfillEnv = DatabaseEnv & {
   /** "off" stops the conversion (a kill switch). Anything else, or unset, runs it. */
@@ -73,6 +75,51 @@ export async function repointPicture(db: AnyDb, bucket: Bucket, from: string, to
   });
 }
 
+/** Whether any picture column (of that bucket) still points at `path`. */
+async function stillUsed(db: AnyDb, bucket: Bucket, path: string) {
+  const parts = IMAGE_COLUMNS.filter((c) => c.bucket === bucket).map(
+    ({ table, column }) =>
+      sql`select 1 from ${sql.identifier(table)} where ${sql.identifier(column)} = ${path}`,
+  );
+  const result = await db.execute(sql`select exists(${sql.join(parts, sql` union all `)}) as used`);
+  const rows = (Array.isArray(result) ? result : (result as { rows: unknown[] }).rows) as {
+    used: boolean;
+  }[];
+  return rows[0]?.used ?? true;
+}
+
+/**
+ * Originals an earlier run converted but kept (before this deleted them): a PNG or JPEG in a picture
+ * bucket that no row points at any more, next to its `.webp`. Read from Supabase Storage's own
+ * table; where there is none (another store, the tests' database) there is nothing to find.
+ */
+export async function leftoverOriginals(db: AnyDb, limit: number) {
+  const buckets = [...new Set(IMAGE_COLUMNS.map((c) => c.bucket))];
+  type Row = { path: string; bucket: Bucket };
+  try {
+    const result = await db.execute(
+      sql`select o.name as path, o.bucket_id as bucket from storage.objects o
+          where o.bucket_id in (${sql.join(
+            buckets.map((b) => sql`${b}`),
+            sql`, `,
+          )})
+            and lower(o.name) ~ '\.(png|jpe?g)$'
+            and exists (select 1 from storage.objects w where w.bucket_id = o.bucket_id
+                        and w.name = regexp_replace(o.name, '\.[^.]+$', '.webp'))
+          limit ${limit * 4}`,
+    );
+    const rows = (Array.isArray(result) ? result : (result as { rows: Row[] }).rows) as Row[];
+    const unused: Row[] = [];
+    for (const row of rows) {
+      if (unused.length >= limit) break;
+      if (!(await stillUsed(db, row.bucket, row.path))) unused.push(row);
+    }
+    return unused;
+  } catch {
+    return [];
+  }
+}
+
 type Deps = {
   log: Logger;
   open?: typeof createDb;
@@ -84,15 +131,16 @@ type Deps = {
 
 /**
  * One run of the conversion: reads a few stored PNG and JPEG pictures, stores each again as a WebP
- * no bigger than its place needs (`compressed`), and points the rows at the new file. The old file
- * stays where it was, so a link someone kept still opens. Runs from the worker's ten-minute cron
- * until nothing is left, and costs one query when there is nothing to do.
+ * no bigger than its place needs (`compressed`), points the rows at the new file and deletes the
+ * original, which may carry the photo's metadata (EXIF, GPS) and was public. It also deletes the
+ * originals earlier runs kept. Runs from the worker's ten-minute cron until nothing is left, and
+ * costs two queries when there is nothing to do.
  */
 export async function runImageBackfill(
   env: ImageBackfillEnv,
   { log, open = createDb, storage, fetcher = fetch, batch = IMAGE_BACKFILL_BATCH }: Deps,
 ) {
-  const result = { converted: 0, failed: 0 };
+  const result = { converted: 0, failed: 0, removed: 0 };
   if (env.IMAGE_BACKFILL === 'off') return result;
   const connectionString = connectionStringFrom(env);
   const publicUrl = storageUrlOf(env);
@@ -125,6 +173,7 @@ export async function runImageBackfill(
         if (error) throw new Error(`upload refused: ${error.message}`);
         await repointPicture(db as AnyDb, bucket, path, webp.path);
         result.converted += 1;
+        if (await removeOriginal(db as AnyDb, target, bucket, path)) result.removed += 1;
         log.info('images.converted', {
           bucket,
           imageType: contentType,
@@ -136,8 +185,28 @@ export async function runImageBackfill(
         log.warn('images.convert_failed', { code: 'image_convert_failed', bucket, error });
       }
     }
+    for (const { path, bucket } of await leftoverOriginals(db as AnyDb, ORIGINALS_CLEANUP_BATCH)) {
+      const target = bucketOf(bucket);
+      if (!target) break;
+      if (await removeOriginal(db as AnyDb, target, bucket, path)) result.removed += 1;
+    }
   } finally {
     await close();
   }
   return result;
+
+  /** Deletes a converted original once no row points at it; a refusal waits for a later run. */
+  async function removeOriginal(db: AnyDb, target: BucketStorage, bucket: Bucket, path: string) {
+    if (await stillUsed(db, bucket, path)) return false;
+    const { error } = await target.remove([path]);
+    if (error) {
+      log.warn('images.original_not_removed', {
+        code: 'image_original_not_removed',
+        bucket,
+        error: error.message,
+      });
+      return false;
+    }
+    return true;
+  }
 }

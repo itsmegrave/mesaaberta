@@ -38,7 +38,10 @@ export async function runScheduled(
       logoSearch(env, { log }),
       imageBackfill(env, { log }),
     ]);
-    if (images.status === 'fulfilled' && images.value.converted + images.value.failed > 0)
+    if (
+      images.status === 'fulfilled' &&
+      images.value.converted + images.value.failed + images.value.removed > 0
+    )
       log.info('images.backfill_run', images.value);
     if (images.status === 'rejected')
       log.warn('images.backfill_failed', { code: 'image_backfill_failed', error: images.reason });

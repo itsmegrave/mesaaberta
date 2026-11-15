@@ -32,7 +32,7 @@ it('runs the logo search and the WebP conversion on the ten-minute cron, and not
   const sweeper = vi.fn(),
     importer = vi.fn(),
     logoSearch = vi.fn(async () => ({ searched: 0, found: 0 })),
-    imageBackfill = vi.fn(async () => ({ converted: 0, failed: 0 }));
+    imageBackfill = vi.fn(async () => ({ converted: 0, failed: 0, removed: 0 }));
   await runScheduled(
     { cron: '*/10 * * * *', scheduledTime: 42 },
     {},

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { encode as encodePng } from 'fast-png';
 import { systemLogos, systems } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../../../../apps/web/src/lib/server/db/test-db';
@@ -16,7 +16,8 @@ const PNG = encodePng({
   depth: 8,
 });
 const upload = vi.fn(async () => ({ error: null as { message: string } | null }));
-const storage = () => ({ upload, remove: vi.fn(async () => ({ error: null })) });
+const remove = vi.fn(async (_paths: string[]) => ({ error: null as { message: string } | null }));
+const storage = () => ({ upload, remove });
 const env = { DATABASE_URL: 'postgres://test', SUPABASE_URL: 'https://storage.test' };
 const fetcher = vi.fn(async () => new Response(PNG));
 
@@ -42,6 +43,7 @@ afterAll(() => test?.close());
 
 beforeEach(async () => {
   upload.mockClear();
+  remove.mockClear();
   fetcher.mockClear();
   await test.db.delete(systemLogos);
   await test.db.delete(systems);
@@ -59,8 +61,8 @@ beforeEach(async () => {
 });
 
 describe('runImageBackfill', () => {
-  it('stores a PNG again as WebP and points the row at it', async () => {
-    expect(await run()).toEqual({ converted: 1, failed: 0 });
+  it('stores a PNG again as WebP, points the row at it and deletes the original', async () => {
+    expect(await run()).toEqual({ converted: 1, failed: 0, removed: 1 });
 
     expect(fetcher).toHaveBeenCalledWith(
       'https://storage.test/storage/v1/object/public/table-images/systems/a.png',
@@ -72,23 +74,31 @@ describe('runImageBackfill', () => {
       cacheControl: '86400',
     });
     expect(await logoPaths()).toEqual(['systems/a.webp', 'systems/b.webp']);
+    expect(remove).toHaveBeenCalledWith(['systems/a.png']);
+  });
+
+  it('keeps the conversion when Storage refuses to delete the original, for a later run', async () => {
+    remove.mockResolvedValueOnce({ error: { message: 'busy' } });
+    expect(await run()).toEqual({ converted: 1, failed: 0, removed: 0 });
+    expect(await logoPaths()).toEqual(['systems/a.webp', 'systems/b.webp']);
   });
 
   it('has nothing left to do once every picture is WebP', async () => {
     await run();
     upload.mockClear();
-    expect(await run()).toEqual({ converted: 0, failed: 0 });
+    expect(await run()).toEqual({ converted: 0, failed: 0, removed: 0 });
     expect(upload).not.toHaveBeenCalled();
   });
 
   it('leaves the row alone when Storage refuses the new file, so the next run tries again', async () => {
     upload.mockResolvedValueOnce({ error: { message: 'bucket not found' } });
-    expect(await run()).toEqual({ converted: 0, failed: 1 });
+    expect(await run()).toEqual({ converted: 0, failed: 1, removed: 0 });
+    expect(remove).not.toHaveBeenCalled();
     expect(await logoPaths()).toEqual(['systems/a.png', 'systems/b.webp']);
   });
 
   it('does nothing with the kill switch off', async () => {
-    expect(await run({ IMAGE_BACKFILL: 'off' })).toEqual({ converted: 0, failed: 0 });
+    expect(await run({ IMAGE_BACKFILL: 'off' })).toEqual({ converted: 0, failed: 0, removed: 0 });
     expect(fetcher).not.toHaveBeenCalled();
   });
 });
@@ -106,5 +116,46 @@ describe('picturesToConvert', () => {
       .set({ path: '/tools/foundry.png' })
       .where(eq(systemLogos.path, 'systems/a.png'));
     expect(await picturesToConvert(test.db as never, 50)).toEqual([]);
+  });
+});
+
+describe('originals earlier runs kept', () => {
+  // Supabase Storage's own table, as much of it as the query reads.
+  beforeAll(async () => {
+    await test.db.execute(sql`create schema if not exists storage`);
+    await test.db.execute(
+      sql`create table if not exists storage.objects (bucket_id text not null, name text not null)`,
+    );
+  });
+  beforeEach(async () => {
+    await test.db.execute(sql`delete from storage.objects`);
+    await test.db.execute(sql`insert into storage.objects (bucket_id, name) values
+      ('table-images', 'systems/b.webp'), ('table-images', 'tables/old.png'),
+      ('table-images', 'tables/old.webp'), ('table-images', 'tables/alone.jpg'),
+      ('profile-avatars', 'u/face.jpg'), ('profile-avatars', 'u/face.webp')`);
+  });
+
+  it('deletes an original once its WebP is there and no row points at it', async () => {
+    await test.db
+      .update(systemLogos)
+      .set({ path: 'systems/a.webp' })
+      .where(eq(systemLogos.path, 'systems/a.png'));
+
+    expect(await run()).toEqual({ converted: 0, failed: 0, removed: 2 });
+    const removed = remove.mock.calls.map(([paths]) => paths[0]).sort();
+    // `alone.jpg` has no WebP next to it, so it is not a leftover and stays.
+    expect(removed).toEqual(['tables/old.png', 'u/face.jpg']);
+  });
+
+  it('keeps an original a row still points at', async () => {
+    await test.db
+      .update(systemLogos)
+      .set({ path: 'tables/old.png' })
+      .where(eq(systemLogos.path, 'systems/a.png'));
+    // The conversion of `old.png` runs first; with its file refused, the row keeps it.
+    upload.mockResolvedValue({ error: { message: 'refused' } });
+    await run();
+    upload.mockResolvedValue({ error: null });
+    expect(remove.mock.calls.map(([paths]) => paths[0])).not.toContain('tables/old.png');
   });
 });
