@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import { apiOver } from '../db/test-api';
-import { createHandleAuth } from './handle-auth';
+import { createHandleAuth, sessionTooOld } from './handle-auth';
 
 const env = { SUPABASE_URL: 'https://x.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_x' };
 
@@ -255,5 +255,67 @@ describe('handleAuth with SESSION_CHECK=local', () => {
   it('is nobody when the token does not verify', async () => {
     const { event } = await run(vi.fn(async () => ({ data: null, error: new Error('bad') })));
     expect(await event.locals.getUser()).toBeNull();
+  });
+});
+
+describe('SESSION_MAX_AGE_DAYS', () => {
+  const day = 86_400_000;
+  const now = Date.UTC(2026, 10, 15);
+  const signedIn = (daysAgo: number) => ({
+    amr: [{ method: 'password', timestamp: Math.floor((now - daysAgo * day) / 1000) }],
+  });
+
+  it('counts from the latest sign-in in the token', () => {
+    expect(sessionTooOld(signedIn(31), 30, now)).toBe(true);
+    expect(sessionTooOld(signedIn(29), 30, now)).toBe(false);
+    const reauthenticated = { amr: [...signedIn(40).amr, ...signedIn(2).amr] };
+    expect(sessionTooOld(reauthenticated, 30, now)).toBe(false);
+  });
+
+  it('has no limit when blank or not a positive number, and never locks out a token without amr', () => {
+    for (const days of [Number(''), Number(undefined), 0, -5, Number('soon')])
+      expect(sessionTooOld(signedIn(400), days, now)).toBe(false);
+    expect(sessionTooOld({}, 30, now)).toBe(false);
+  });
+
+  it('signs out a session older than the limit', async () => {
+    const old = Math.floor((Date.now() - 31 * day) / 1000);
+    const signOut = vi.fn(async () => ({ error: null }));
+    const getClaims = vi.fn(async () => ({
+      data: {
+        claims: { sub: 'u-1', aud: 'authenticated', amr: [{ method: 'otp', timestamp: old }] },
+      },
+      error: null,
+    }));
+    const createClient = vi.fn(() => ({ auth: { getUser: vi.fn(), getClaims, signOut } }));
+    const event = {
+      locals: { env: { ...env, SESSION_CHECK: 'local', SESSION_MAX_AGE_DAYS: '30' } },
+      cookies: { getAll: () => [], set: vi.fn() },
+    } as unknown as RequestEvent;
+    await createHandleAuth(createClient as never)({ event, resolve: async () => new Response() });
+
+    expect(await event.locals.getUser()).toBeNull();
+    expect(event.locals.userId).toBeUndefined();
+    expect(signOut).toHaveBeenCalledWith({ scope: 'local' });
+  });
+
+  it('does the same when asking Supabase', async () => {
+    const old = Math.floor((Date.now() - 31 * day) / 1000);
+    const getUser = vi.fn().mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
+    const getSession = sessionWith({
+      sub: 'u1',
+      aud: 'authenticated',
+      amr: [{ method: 'password', timestamp: old }],
+    });
+    const signOut = vi.fn(async () => ({ error: null }));
+    const createClient = vi.fn(() => ({ auth: { getUser, getSession, signOut } }));
+    const event = {
+      locals: { env: { ...env, SESSION_MAX_AGE_DAYS: '30' } },
+      cookies: { getAll: () => [], set: vi.fn() },
+    } as unknown as RequestEvent;
+    await createHandleAuth(createClient as never)({ event, resolve: async () => new Response() });
+
+    expect(await event.locals.getUser()).toBeNull();
+    expect(signOut).toHaveBeenCalledOnce();
   });
 });
