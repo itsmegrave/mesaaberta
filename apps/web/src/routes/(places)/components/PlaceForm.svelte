@@ -1,10 +1,12 @@
 <script lang="ts">
   // "Cadastrar lugar" and "Editar lugar": the same form. What the place is, where it is (the CEP
-  // gives the neighbourhood, city and state), when it opens and what it offers, a photo and links.
+  // gives the neighbourhood, city and state, and with `use_cep_street` fills an empty street), when
+  // it opens and what it offers, a photo and links.
   // The card it will have sits beside it (below it on a phone), with the tags its address, kind and
   // picked tags make. An admin approves what is sent; an edit by whoever sent it goes back to them.
   // "Onde jogar" is only for places open to the public: a new place starts with that rule (and where
   // a home game goes instead), warns when the address reads like a home, and needs a box ticked.
+  import { untrack } from 'svelte';
   import CepLookup from '#lib/components/CepLookup.svelte';
   import CheckboxPills from '#lib/components/ui/CheckboxPills.svelte';
   import EditorForm from '#lib/components/ui/EditorForm.svelte';
@@ -28,10 +30,11 @@
   import { guardDraft } from '#lib/forms/guard.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
   import { networkLabels } from '#lib/profile/social-presentation.js';
+  import { streetFromCep } from '#lib/places/cep-street.js';
   import { placeKindIcons, placeKindLabels, placeTagLabel } from '#lib/places/labels.js';
   import { errorText, formProblem } from '#lib/tables/form-values.js';
   import { toast } from '#lib/toaster.js';
-  import type { CepPlace } from '@mesaaberta/core/location/cep';
+  import type { CepAddress } from '@mesaaberta/core/location/cep';
   import { PARTNER_NETWORKS } from '@mesaaberta/core/partners/schema';
   import { newPlaceSchema, placeSchema } from '@mesaaberta/core/places/schema';
   import { looksResidential } from '@mesaaberta/core/places/residence';
@@ -73,6 +76,7 @@
     action,
     tagOptions,
     catalog = false,
+    cepStreet = false,
   }: {
     initial: FormResult<Values>;
     mode: 'new' | 'edit';
@@ -92,6 +96,8 @@
      * Comodidades as pills.
      */
     catalog?: boolean;
+    /** Fill an empty "Rua e número" with the street the CEP is on (`use_cep_street`). */
+    cepStreet?: boolean;
   } = $props();
 
   const editing = $derived(mode === 'edit');
@@ -175,7 +181,22 @@
   // --- the preview ---------------------------------------------------------------------------------
 
   // Where the CEP is, once it is found: the card's area and the location tags.
-  let located = $state<CepPlace | null>(null);
+  let located = $state<CepAddress | null>(null);
+
+  // The street the CEP is on goes into an empty "Rua e número" (see `streetFromCep`); the number is
+  // the person's to add.
+  let filledStreet = $state<string | null>(null);
+  $effect(() => {
+    if (!cepStreet || !located) return;
+    const suggested = located.street;
+    untrack(() => {
+      const next = streetFromCep($draft.street, filledStreet, suggested);
+      if (!next) return;
+      if ($draft.street !== next.street) $draft.street = next.street;
+      filledStreet = next.filled;
+    });
+  });
+  const streetFilled = $derived(filledStreet !== null && $draft.street === filledStreet);
   // The picked file is shown as it will look; until one is picked, the photo the place has now.
   let picked = $state<string | null>(null);
   function pick(files: File[]) {
@@ -324,7 +345,7 @@
       <FormField
         id="postalCode"
         label={m.form_postal_code()}
-        hint={m.place_form_cep_hint()}
+        hint={cepStreet ? m.place_form_cep_hint_street() : m.place_form_cep_hint()}
         error={postalCodeError}
       >
         {#snippet children(aria)}
@@ -346,6 +367,7 @@
     <FormField
       id="street"
       label={m.place_form_street()}
+      hint={streetFilled ? m.place_form_street_from_cep() : undefined}
       error={err('street')}
       counter={{ count: $draft.street.length, max: PLACE_LIMITS.street }}
     >

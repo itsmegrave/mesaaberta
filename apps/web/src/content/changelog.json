@@ -1,5 +1,18 @@
 [
   {
+    "date": "2026-11-15",
+    "title": "Endereço do lugar pelo CEP",
+    "summary": "Ao cadastrar ou editar um lugar em Onde jogar, a rua agora vem preenchida pelo CEP.",
+    "changes": [
+      {
+        "kind": "improved",
+        "title": "Rua preenchida pelo CEP",
+        "description": "Em Cadastrar lugar, digite o CEP e a rua aparece sozinha em Rua e número, junto com o bairro, a cidade e o estado. É só conferir e acrescentar o número. Se você já tiver escrito a rua, ela continua como está.",
+        "href": "/pp/new"
+      }
+    ]
+  },
+  {
     "date": "2026-11-14",
     "title": "Combinar no Início",
     "summary": "O Início agora tem uma seção do Combinar: suas combinações novas e as cartas esperando por você, ou um convite para montar seu cartão.",

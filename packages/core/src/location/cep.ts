@@ -10,6 +10,9 @@ export const formatCep = (cep: string) => `${cep.slice(0, 5)}-${cep.slice(5)}`;
 /** What a CEP resolves to. */
 export type CepPlace = { neighbourhood: string | null; city: string; state: string };
 
+/** A CEP's place and the street it is on, without a number (null when it covers a whole town). */
+export type CepAddress = CepPlace & { street: string | null };
+
 /** The public area text for a place: "Boa Viagem, Recife - PE", or the city alone. */
 export const areaOf = ({ neighbourhood, city, state }: CepPlace) =>
   `${neighbourhood ? `${neighbourhood}, ` : ''}${city} - ${state}`;

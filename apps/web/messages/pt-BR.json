@@ -3622,6 +3622,8 @@
   "place_form_description_hint": "O que acontece lá: mesas fixas, eventos, acervo para consulta.",
   "place_form_address": "Endereço",
   "place_form_cep_hint": "O bairro, a cidade e o estado vêm do CEP.",
+  "place_form_cep_hint_street": "A rua, o bairro, a cidade e o estado vêm do CEP.",
+  "place_form_street_from_cep": "Rua preenchida pelo CEP. Confira e acrescente o número.",
   "place_form_city_pending": "Cidade pelo CEP",
   "place_form_street": "Rua e número",
   "place_form_complement": "Complemento",

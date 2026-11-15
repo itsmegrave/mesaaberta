@@ -4,7 +4,7 @@
   import { createQuery } from '@tanstack/svelte-query';
   import { queryClient } from '#lib/query/context.js';
   import { cepLookup } from '#lib/query/lookups.js';
-  import { areaOf, normalizeCep, type CepPlace } from '@mesaaberta/core/location/cep';
+  import { areaOf, normalizeCep, type CepAddress } from '@mesaaberta/core/location/cep';
   import { m } from '#lib/paraglide/messages.js';
   let {
     value,
@@ -13,8 +13,8 @@
   }: {
     value: string;
     area?: string;
-    /** The neighbourhood, city and state the CEP is in, once found (null until then). */
-    place?: CepPlace | null;
+    /** The street, neighbourhood, city and state the CEP is in, once found (null until then). */
+    place?: CepAddress | null;
   } = $props();
   const client = queryClient();
   let debounced = $state<string | null>(null);
