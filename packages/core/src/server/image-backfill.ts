@@ -185,7 +185,7 @@ export async function runImageBackfill(
           await repointPicture(db as AnyDb, bucket, path, webpPath);
           result.converted += 1;
           if (await removeOriginal(db as AnyDb, target, bucket, path)) result.removed += 1;
-          log.info('images.converted', { bucket, reused: true });
+          log.info('images.webp_reused', { bucket });
           continue;
         }
         const response = await fetcher(`${publicUrl}/${bucket}/${path}`, {
