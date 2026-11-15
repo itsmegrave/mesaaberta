@@ -77,7 +77,9 @@ async function locate(db: AnyDb, raw: string, request: typeof fetch): Promise<Lo
   if (!postalCode) throw new Invalid('postalCode', 'invalid');
   const found = await lookupCep(db, postalCode, request);
   if (found.status !== 'found') throw new Invalid('postalCode', found.status);
-  return { postalCode, ...found.place };
+  // The street the CEP suggests is only a hint for the form: the place keeps what was typed.
+  const { neighbourhood, city, state } = found.place;
+  return { postalCode, neighbourhood, city, state };
 }
 
 /** The tags picked: catalog slugs or suggestions, or the Comodidades an older form sent. */

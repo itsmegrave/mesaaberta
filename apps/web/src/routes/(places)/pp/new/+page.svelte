@@ -21,5 +21,11 @@
   <p class="mt-2 max-w-sm text-base text-muted md:mt-3 md:max-w-lg md:text-xl">
     {m.place_new_lede()}
   </p>
-  <PlaceForm {initial} mode="new" tagOptions={data.tagOptions} catalog={data.catalog} />
+  <PlaceForm
+    {initial}
+    mode="new"
+    tagOptions={data.tagOptions}
+    catalog={data.catalog}
+    cepStreet={data.cepStreet}
+  />
 </section>

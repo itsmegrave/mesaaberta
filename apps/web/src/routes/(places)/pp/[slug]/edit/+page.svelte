@@ -37,6 +37,7 @@
     cancelHref="/pp/{data.slug}"
     tagOptions={data.tagOptions}
     catalog={data.catalog}
+    cepStreet={data.cepStreet}
   />
   {#if data.partner || data.hosts}
     <!-- Their own forms, so after the edit form; as wide as the form's fields (see Editar parceiro). -->
