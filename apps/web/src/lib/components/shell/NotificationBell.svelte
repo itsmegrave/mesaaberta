@@ -1,6 +1,7 @@
 <script lang="ts">
   import CountBadge from '#lib/components/ui/CountBadge.svelte';
   import { Popover, Portal } from '@skeletonlabs/skeleton-svelte';
+  import { afterNavigate } from '$app/navigation';
   import { page, updated } from '$app/state';
   import AppUpdateNotice from './AppUpdateNotice.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
@@ -41,6 +42,13 @@
   // Skeleton keeps a closed popover's content in the page, only hidden. The list is drawn while the
   // menu is open, so its text never doubles what the page itself says.
   let open = $state(false);
+  // The layout stays mounted, so the list would stay open over the page a notification leads to.
+  // Any navigation closes it, and so does opening a notification whose link is this same page
+  // (that one only refreshes the page). Marking everything read keeps it open.
+  afterNavigate(({ type }) => {
+    if (type !== 'enter') open = false;
+  });
+  const close = () => (open = false);
 
   const locale = getLocale();
   const feed = '/notifications';
@@ -65,6 +73,7 @@
 </script>
 
 <Popover
+  {open}
   positioning={{ placement, offset: { mainAxis: 8 } }}
   onOpenChange={(details) => (open = details.open)}
 >
@@ -144,6 +153,7 @@
                   action="open"
                   id={item.id}
                   next={here}
+                  onSuccess={close}
                   buttonClass="btn flex h-auto w-full items-start justify-start gap-3 rounded-lg p-2 text-left font-normal whitespace-normal hover:preset-tonal"
                 >
                   <NotificationIcon
