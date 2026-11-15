@@ -1896,6 +1896,7 @@
     }
   ],
   "session_day": "Dia da primeira sessão",
+  "session_day_one_shot": "Dia da sessão",
   "session_hour": "Hora",
   "session_minute": "Minutos",
   "session_duration": "Duração",
@@ -1904,6 +1905,7 @@
   "session_duration_custom": "Duração em horas",
   "session_summary": "{date}, às {time}, por {hours} h ({zone})",
   "session_summary_empty": "Escolha o dia da primeira sessão.",
+  "session_summary_empty_one_shot": "Escolha o dia da sessão.",
   "session_summary_at": "{date}, às {time} · No seu fuso ({offset})",
   "session_summary_at_empty": "Escolha o dia e o horário.",
   "tables_filter_show": [

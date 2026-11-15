@@ -371,6 +371,10 @@
           bind:duration={$draft.durationHours}
           timezone={$draft.timezone}
           min={today}
+          label={$draft.kind === 'one_shot' ? m.session_day_one_shot() : m.session_day()}
+          emptySummary={$draft.kind === 'one_shot'
+            ? m.session_summary_empty_one_shot()
+            : m.session_summary_empty()}
           invalid={!!invalid('startsAtLocal') || !!invalid('durationHours')}
           describedby={err('startsAtLocal') ? 'startsAtLocal-error' : undefined}
         />

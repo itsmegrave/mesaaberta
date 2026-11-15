@@ -27,6 +27,12 @@
         "kind": "fixed",
         "title": "Notificações fecham ao abrir uma",
         "description": "Ao tocar em uma notificação ou em Ver todas, a lista de notificações agora fecha em vez de ficar aberta por cima da página seguinte."
+      },
+      {
+        "kind": "fixed",
+        "title": "Data de one-shot no formulário",
+        "description": "Ao abrir uma one-shot, o calendário agora pede o dia da sessão, e não o dia da primeira sessão.",
+        "href": "/tables/new"
       }
     ]
   },
