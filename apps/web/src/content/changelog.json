@@ -9,6 +9,11 @@
         "title": "Combinar no Início",
         "description": "Quem já está no Combinar vê no Início as combinações da última semana e quantas cartas esperam por uma resposta hoje. Quem ainda não montou o cartão recebe um convite para começar. Quem pausou o cartão não vê a seção.",
         "href": "/matches"
+      },
+      {
+        "kind": "fixed",
+        "title": "Notificações fecham ao abrir uma",
+        "description": "Ao tocar em uma notificação ou em Ver todas, a lista de notificações agora fecha em vez de ficar aberta por cima da página seguinte."
       }
     ]
   },
