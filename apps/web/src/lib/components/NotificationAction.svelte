@@ -17,6 +17,8 @@
     buttonClass?: string;
     /** The button's content. */
     children: Snippet;
+    /** Runs once the action went through, before the page moves on. */
+    onSuccess?: () => void;
   };
 
   let {
@@ -27,6 +29,7 @@
     class: className = 'm-0',
     buttonClass = '',
     children,
+    onSuccess,
   }: Props = $props();
 </script>
 
@@ -40,4 +43,5 @@
   class={className}
   {buttonClass}
   {children}
+  {onSuccess}
 />
