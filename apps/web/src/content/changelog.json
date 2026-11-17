@@ -9,6 +9,11 @@
         "title": "Rua preenchida pelo CEP",
         "description": "Em Cadastrar lugar, digite o CEP e a rua aparece sozinha em Rua e número, junto com o bairro, a cidade e o estado. É só conferir e acrescentar o número. Se você já tiver escrito a rua, ela continua como está.",
         "href": "/pp/new"
+      },
+      {
+        "kind": "improved",
+        "title": "Envio de arquivo em Conexões",
+        "description": "Para a administração: em Admin › Conexões, a Nova publicação do Instagram tem uma área para arrastar ou escolher o arquivo, com a prévia da imagem ou do vídeo, o nome e o tamanho, e um botão para trocar ou tirar."
       }
     ]
   },

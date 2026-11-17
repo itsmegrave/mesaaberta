@@ -108,6 +108,8 @@ export default defineConfig({
               ? [process.env.CSP_EXTRA_IMG_SRC as `http://${string}.${string}`]
               : []),
           ],
+          // A video picked for upload (FileDrop) plays its preview from a blob URL before it is sent.
+          'media-src': ['self', 'blob:'],
           'font-src': ['self'],
           'connect-src': [
             'self',
