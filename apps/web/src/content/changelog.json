@@ -14,11 +14,6 @@
         "kind": "improved",
         "title": "Avaliações no painel da administração",
         "description": "Para a administração: a visão geral agora conta as avaliações da plataforma, as dadas a quem mestrou e as dadas a quem jogou, e quantas chegaram nos últimos 30 dias."
-      },
-      {
-        "kind": "improved",
-        "title": "Envio de arquivo em Conexões",
-        "description": "Para a administração: em Admin › Conexões, a Nova publicação do Instagram tem uma área para arrastar ou escolher o arquivo, com a prévia da imagem ou do vídeo, o nome e o tamanho, e um botão para trocar ou tirar."
       }
     ]
   },
