@@ -9,6 +9,11 @@
         "title": "Rua preenchida pelo CEP",
         "description": "Em Cadastrar lugar, digite o CEP e a rua aparece sozinha em Rua e número, junto com o bairro, a cidade e o estado. É só conferir e acrescentar o número. Se você já tiver escrito a rua, ela continua como está.",
         "href": "/pp/new"
+      },
+      {
+        "kind": "improved",
+        "title": "Avaliações no painel da administração",
+        "description": "Para a administração: a visão geral agora conta as avaliações da plataforma, as dadas a quem mestrou e as dadas a quem jogou, e quantas chegaram nos últimos 30 dias."
       }
     ]
   },

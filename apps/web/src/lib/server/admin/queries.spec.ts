@@ -4,7 +4,9 @@ import {
   events,
   gameTables,
   platforms,
+  playerRatings,
   profiles,
+  ratings,
   registrations,
   systems,
   tags,
@@ -36,6 +38,7 @@ it('returns zero counts on an empty platform', async () => {
   });
   expect(data.seats).toEqual({ confirmed: 0, pending: 0 });
   expect(data.queue).toEqual({ pending: 0, failed: 0 });
+  expect(data.ratings).toEqual({ total: 0, new30d: 0, ofGms: 0, ofPlayers: 0 });
 });
 
 it('aggregates statuses independently, counts distinct GMs, omits private fields', async () => {
@@ -139,4 +142,29 @@ it('names what waits on an admin and lists the newest tables', async () => {
     'Mesa 2',
   ]);
   expect(data.recent[0]).toMatchObject({ gm: null, system: expect.any(String) });
+});
+
+it('counts both kinds of rating, and the ones from the last 30 days, without scores or comments', async () => {
+  await test.db.insert(ratings).values([
+    {
+      tableId: id(14),
+      playerId: id(2),
+      gmScore: 5,
+      comment: 'PRIVATE',
+      createdAt: new Date('2026-09-29'),
+    },
+    { tableId: id(14), playerId: id(3), gmScore: 4, createdAt: new Date('2026-08-01') },
+  ]);
+  await test.db
+    .insert(playerRatings)
+    .values({
+      tableId: id(14),
+      playerId: id(2),
+      score: 3,
+      comment: 'PRIVATE',
+      createdAt: new Date('2026-09-15'),
+    });
+  const data = await adminOverview(test.db, now);
+  expect(data.ratings).toEqual({ total: 3, new30d: 2, ofGms: 2, ofPlayers: 1 });
+  expect(JSON.stringify(data)).not.toContain('PRIVATE');
 });

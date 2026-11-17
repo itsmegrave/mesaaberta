@@ -225,6 +225,7 @@ describe('admin pages on a phone', () => {
       data: {
         people: { total: 26, active: 20, suspended: 4, banned: 2, new30d: 3 },
         combinar: { people: 4, matches: 2, playedAfter: 1, alone: 1, groups: 1, largest: 3 },
+        ratings: { total: 7, new30d: 2, ofGms: 5, ofPlayers: 2 },
         tables: {
           total: 8,
           active: 5,
