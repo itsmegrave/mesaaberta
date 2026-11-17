@@ -6,7 +6,9 @@ import {
   gameTables,
   instagramPosts,
   platforms,
+  playerRatings,
   profiles,
+  ratings,
   registrations,
   reports,
   systems,
@@ -20,7 +22,20 @@ const countWhere = (condition: SQL) =>
 
 export async function adminOverview(db: AnyDb, now = new Date()) {
   const since = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const [people, tables, seats, queue, platformSuggestions, tagSuggestions] = await Promise.all([
+  const recently = (column: typeof ratings.createdAt | typeof playerRatings.createdAt) =>
+    countWhere(
+      sql`${column} >= ${since.toISOString()}::timestamptz and ${column} <= ${now.toISOString()}::timestamptz`,
+    );
+  const [
+    people,
+    tables,
+    seats,
+    queue,
+    platformSuggestions,
+    tagSuggestions,
+    gmRatings,
+    playerRatingRows,
+  ] = await Promise.all([
     db
       .select({
         total: sql<number>`count(*)`.mapWith(Number),
@@ -72,6 +87,20 @@ export async function adminOverview(db: AnyDb, now = new Date()) {
       .select({ count: sql<number>`count(*)`.mapWith(Number) })
       .from(tags)
       .where(eq(tags.status, 'pending')),
+    // Players rating the GM of a table they played at.
+    db
+      .select({
+        total: sql<number>`count(*)`.mapWith(Number),
+        new30d: recently(ratings.createdAt),
+      })
+      .from(ratings),
+    // GMs rating the players they marked present.
+    db
+      .select({
+        total: sql<number>`count(*)`.mapWith(Number),
+        new30d: recently(playerRatings.createdAt),
+      })
+      .from(playerRatings),
   ]);
   const [oldestReport, uncertainPosts, awaitingTables, suggestions, recent] = await Promise.all([
     db
@@ -145,6 +174,13 @@ export async function adminOverview(db: AnyDb, now = new Date()) {
     combinar: await matchGraphStats(db, now),
     tables: tables[0],
     seats: seats[0],
+    // Both kinds of rating on the platform, counted apart: counts only, never scores or comments.
+    ratings: {
+      total: gmRatings[0].total + playerRatingRows[0].total,
+      new30d: gmRatings[0].new30d + playerRatingRows[0].new30d,
+      ofGms: gmRatings[0].total,
+      ofPlayers: playerRatingRows[0].total,
+    },
     queue: queue[0],
     suggestions: { platforms: platformSuggestions[0].count, tags: tagSuggestions[0].count },
     updatedAt: now,

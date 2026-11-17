@@ -90,6 +90,15 @@
       ],
     },
     {
+      title: m.admin_ratings(),
+      rows: [
+        [m.admin_ratings_total(), data.ratings.total],
+        [m.admin_ratings_of_gms(), data.ratings.ofGms],
+        [m.admin_ratings_of_players(), data.ratings.ofPlayers],
+        [m.admin_ratings_new(), data.ratings.new30d],
+      ],
+    },
+    {
       title: m.admin_operations(),
       rows: [
         [m.admin_platform_suggestions(), data.suggestions.platforms],
@@ -259,9 +268,12 @@
   </dl>
 
   <div class="mt-8 grid gap-4 md:grid-cols-3">
-    {#each groups as group (group.title)}
-      <section class="rounded-lg border border-surface-200-800 bg-panel p-5">
-        <h2 class="text-lg font-semibold">{group.title}</h2>
+    {#each groups as group, index (group.title)}
+      <section
+        aria-labelledby="group-{index}"
+        class="rounded-lg border border-surface-200-800 bg-panel p-5"
+      >
+        <h2 id="group-{index}" class="text-lg font-semibold">{group.title}</h2>
         <dl class="mt-4 space-y-3">
           {#each group.rows as [label, value] (label)}
             <div class="flex items-baseline justify-between gap-4">

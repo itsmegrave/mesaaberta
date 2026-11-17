@@ -9,6 +9,7 @@ const show = (over = {}) =>
     data: {
       people: { total: 26, active: 20, suspended: 4, banned: 2, new30d: 3 },
       combinar: { people: 4, matches: 2, playedAfter: 1, alone: 1, groups: 1, largest: 3 },
+      ratings: { total: 7, new30d: 2, ofGms: 5, ofPlayers: 2 },
       tables: {
         total: 8,
         active: 8,
@@ -86,6 +87,17 @@ describe('admin overview', () => {
 
     await expect.element(page.getByText('Eventos na fila')).toBeVisible();
     await expect.element(page.getByText('Eventos que falharam')).toBeVisible();
+  });
+
+  it('counts the ratings on the platform, both ways', async () => {
+    show();
+
+    const card = page.getByRole('region', { name: 'Avaliações' });
+    await expect.element(card.getByText('Avaliações na plataforma')).toBeVisible();
+    await expect.element(card.getByText('7', { exact: true })).toBeVisible();
+    await expect.element(card.getByText('Dadas a quem mestrou')).toBeVisible();
+    await expect.element(card.getByText('Dadas a quem jogou')).toBeVisible();
+    await expect.element(card.getByText('Novas nos últimos 30 dias')).toBeVisible();
   });
 
   it('counts the active tables when some are not', async () => {
