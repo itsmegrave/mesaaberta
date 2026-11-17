@@ -116,10 +116,7 @@
             <p class="text-sm text-muted">{upload().getFileSize(file)}</p>
           </div>
           <div class="flex shrink-0 items-center gap-2">
-            <FileUpload.Trigger
-              class={buttonClass('secondary')}
-              aria-describedby={describedby}
-            >
+            <FileUpload.Trigger class={buttonClass('secondary')} aria-describedby={describedby}>
               <Icon name="upload" size={18} />{m.file_drop_replace()}
             </FileUpload.Trigger>
             <FileUpload.ClearTrigger
