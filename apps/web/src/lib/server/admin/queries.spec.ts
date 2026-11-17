@@ -155,15 +155,13 @@ it('counts both kinds of rating, and the ones from the last 30 days, without sco
     },
     { tableId: id(14), playerId: id(3), gmScore: 4, createdAt: new Date('2026-08-01') },
   ]);
-  await test.db
-    .insert(playerRatings)
-    .values({
-      tableId: id(14),
-      playerId: id(2),
-      score: 3,
-      comment: 'PRIVATE',
-      createdAt: new Date('2026-09-15'),
-    });
+  await test.db.insert(playerRatings).values({
+    tableId: id(14),
+    playerId: id(2),
+    score: 3,
+    comment: 'PRIVATE',
+    createdAt: new Date('2026-09-15'),
+  });
   const data = await adminOverview(test.db, now);
   expect(data.ratings).toEqual({ total: 3, new30d: 2, ofGms: 2, ofPlayers: 1 });
   expect(JSON.stringify(data)).not.toContain('PRIVATE');
