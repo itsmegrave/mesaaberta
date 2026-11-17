@@ -5,7 +5,11 @@ import type { Handler } from '@mesaaberta/core/server/events/types';
 import { eventFilters } from '#lib/admin/event-filters.js';
 
 // The queue itself moved to @mesaaberta/core; this wrapper reads the filters off the query string.
-export { failedEventCount, type EventQueue } from '@mesaaberta/core/server/admin/event-queue';
+export {
+  failedEventCount,
+  reviewEvent,
+  type EventQueue,
+} from '@mesaaberta/core/server/admin/event-queue';
 
 export function eventQueue(
   db: AnyDb,

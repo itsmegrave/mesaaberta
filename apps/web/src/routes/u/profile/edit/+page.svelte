@@ -5,6 +5,8 @@
   import ActionForm from '#lib/components/ActionForm.svelte';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import ProfileForm from '../components/ProfileForm.svelte';
+  import ExtensionCard from './components/ExtensionCard.svelte';
+  import HostedPlaces from './components/HostedPlaces.svelte';
   import SettingsSection from './components/ui/SettingsSection.svelte';
   import UploadDialog from './components/UploadDialog.svelte';
   import { bannerSchema, photoSchema } from '#lib/profile/photo.js';
@@ -16,7 +18,7 @@
 
   const card = 'rounded-lg border border-surface-200-800 bg-panel p-6 md:p-8';
   const heading = 'text-2xl leading-tight font-semibold tracking-tight';
-  const removeButton = 'btn h-12 rounded-lg px-4 font-semibold text-error-alert hover:preset-tonal';
+  const removeButton = 'btn h-11 rounded-lg px-4 font-semibold text-error-alert hover:preset-tonal';
 
   const photoErrors: Record<string, () => string> = {
     empty: m.account_photo_error_empty,
@@ -134,6 +136,14 @@
   {/if}
 </section>
 
+{#each data.extensionCards as { ext, card } (ext)}
+  <ExtensionCard
+    {ext}
+    {card}
+    avatar={{ src: data.avatarUrl, name: data.form.data.name || data.username }}
+  />
+{/each}
+
 <section aria-labelledby="public-fields" class={card}>
   <h3 id="public-fields" class={heading}>{m.account_public_fields()}</h3>
   <p class="mt-2 mb-6 max-w-prose text-muted">{m.account_public_fields_lede()}</p>
@@ -143,7 +153,13 @@
       : data.form}
     action="?/save"
     section="public"
+    showTableRole={data.gmDirectory}
+    tableRoleInferred={data.tableRoleInferred}
     submitLabel={m.account_profile_save()}
     onsaved={() => toast.success(m.account_profile_saved())}
   />
 </section>
+
+{#if data.hostedPlaces.length > 0}
+  <HostedPlaces places={data.hostedPlaces} class={card} />
+{/if}

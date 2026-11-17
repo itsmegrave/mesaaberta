@@ -16,6 +16,8 @@
     gmId = '',
     enabled = true,
     blocked = true,
+    variant = 'secondary',
+    onsuccess,
   }: {
     action: string;
     label: string;
@@ -24,6 +26,9 @@
     gmId?: string;
     enabled?: boolean;
     blocked?: boolean;
+    variant?: 'primary' | 'secondary' | 'danger';
+    /** Runs after the action went through (a dialog closes itself). */
+    onsuccess?: () => void;
   } = $props();
   // svelte-ignore state_referenced_locally
   const form = actionForm({
@@ -38,7 +43,10 @@
     domain:
       action.includes('invitations') || action.includes('invitationBlock') ? 'account' : 'table',
     errorMessage: m.invitation_unavailable,
-    onSuccess: () => toast.success(m.invitation_saved()),
+    onSuccess: () => {
+      toast.success(m.invitation_saved());
+      onsuccess?.();
+    },
     onFailure: (updated) =>
       toast.error(
         updated?.message?.code === 'rate_limited'
@@ -75,8 +83,6 @@
   <input type="hidden" name="enabled" value={String(enabled)} />
   <input type="hidden" name="blocked" value={String(blocked)} />
   <div>
-    <MAButton type="submit" variant="secondary" controller={form} class="font-semibold"
-      >{label}</MAButton
-    >
+    <MAButton type="submit" {variant} controller={form} class="font-semibold">{label}</MAButton>
   </div>
 </MAForm>

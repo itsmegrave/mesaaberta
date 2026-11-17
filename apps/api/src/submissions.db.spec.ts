@@ -14,6 +14,7 @@ let partnerId: string;
 const partner = {
   name: 'Loja Teste',
   description: 'Uma loja',
+  types: ['shop'],
   contactEmail: '',
   siteUrl: 'https://loja.example',
   backlinkUrl: '',

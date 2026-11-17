@@ -1,5 +1,5 @@
 import type { IconName } from '#lib/icons/names.js';
-import { ICONS } from '#lib/icons/registry.js';
+import { ICON_NAMES } from '#lib/icons/sprite.generated.js';
 import { m } from '#lib/paraglide/messages.js';
 
 export type AdminCounts = {
@@ -8,6 +8,11 @@ export type AdminCounts = {
   connections: number;
   events: number;
   partners: number;
+  /** Tools suggested by members, waiting for an admin. */
+  tools: number;
+  places: number;
+  /** Places reports hid: the admins' high alert, counted in red beside "Lugares". */
+  hiddenPlaces: number;
 };
 export type AdminSection = {
   path: string;
@@ -16,13 +21,14 @@ export type AdminSection = {
   label: string;
   icon: IconName;
   count?: number;
+  /** The count is a high alert, drawn in the danger tone. */
+  alert?: boolean;
 };
 export type AdminGroup = { key: string; label: string; sections: AdminSection[] };
 /** An installed extension's own section (the admin layout's `adminSections`). */
 export type ExtensionSection = { path: string; label: string; icon: string };
 
-const iconOf = (name: string): IconName =>
-  Object.hasOwn(ICONS, name) ? (name as IconName) : 'globe';
+const iconOf = (name: string): IconName => (ICON_NAMES.has(name) ? (name as IconName) : 'globe');
 
 /**
  * The admin's sections in their groups, with what waits on an admin counted beside them. One list
@@ -34,6 +40,7 @@ export function adminGroups(
   counts: AdminCounts,
   connectionsPath: string | null,
   extensions: readonly ExtensionSection[] = [],
+  { badges = false }: { badges?: boolean } = {},
 ): AdminGroup[] {
   return [
     {
@@ -59,8 +66,6 @@ export function adminGroups(
       label: m.admin_group_content(),
       sections: [
         { path: '/admin/tables', label: m.admin_tables(), icon: 'game-icons:tavern-sign' },
-        { path: '/admin/users', label: m.admin_profile_list(), icon: 'game-icons:meeple' },
-        { path: '/admin/catalog', label: m.admin_nav_catalog(), icon: 'tag' },
         {
           path: '/admin/crowdfunding',
           label: m.admin_nav_crowdfunding(),
@@ -72,6 +77,24 @@ export function adminGroups(
           icon: 'game-icons:trade',
           count: counts.partners,
         },
+        {
+          path: '/admin/tools',
+          label: m.admin_nav_tools(),
+          icon: 'game-icons:toolbox',
+          count: counts.tools,
+        },
+        {
+          path: '/admin/places',
+          label: m.admin_nav_places(),
+          icon: 'game-icons:position-marker',
+          count: counts.places + counts.hiddenPlaces,
+          alert: counts.hiddenPlaces > 0,
+        },
+        { path: '/admin/users', label: m.admin_profile_list(), icon: 'game-icons:meeple' },
+        { path: '/admin/catalog', label: m.admin_nav_catalog(), icon: 'tag' },
+        ...(badges
+          ? [{ path: '/admin/badges', label: m.admin_nav_badges(), icon: 'sparkles' as const }]
+          : []),
       ],
     },
     {

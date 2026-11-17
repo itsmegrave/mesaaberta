@@ -17,6 +17,9 @@ import {
 import { activeAdmins } from '../auth/policy';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, registrations } from '../db/schema';
+import { SEGMENTS, type Segment } from '../../audience/segments';
+
+export { SEGMENTS, type Segment };
 
 /**
  * The groups of people an extension can aim something at (a poll, Trello #231). GM is not a role:
@@ -28,8 +31,6 @@ import { gameTables, profiles, registrations } from '../db/schema';
  * - `recent`: played or ran a session (a table that went ahead or still will) in the last 90 days.
  * - `new`: the account is younger than 30 days.
  */
-export const SEGMENTS = ['admin', 'gm', 'player', 'recent', 'new'] as const;
-export type Segment = (typeof SEGMENTS)[number];
 export type ViewerSegments = Readonly<Record<Segment, boolean>>;
 
 export const RECENT_DAYS = 90;
@@ -106,13 +107,27 @@ export async function viewerSegments(
     : null;
 }
 
-/** An audience: anyone in at least one `include` segment (everyone when empty), minus `exclude`. */
-export type Audience = { include: readonly Segment[]; exclude: readonly Segment[] };
+/**
+ * An audience: anyone in at least one `include` segment (everyone when empty), minus `exclude`.
+ * `people` (profile ids, picked by hand: those who tried a theme, say) narrows it to those people;
+ * empty or missing, nobody is singled out.
+ */
+export type Audience = {
+  include: readonly Segment[];
+  exclude: readonly Segment[];
+  people?: readonly string[];
+};
 
-/** Whether a person with these segments is in the audience. */
-export function inAudience(segments: ViewerSegments, audience: Audience): boolean {
+/** Whether a person with these segments (and, for a hand-picked audience, this id) is in it. */
+export function inAudience(
+  segments: ViewerSegments,
+  audience: Audience,
+  profileId?: string,
+): boolean {
   const included = audience.include.length === 0 || audience.include.some((s) => segments[s]);
-  return included && !audience.exclude.some((s) => segments[s]);
+  const picked =
+    !audience.people?.length || (profileId !== undefined && audience.people.includes(profileId));
+  return included && picked && !audience.exclude.some((s) => segments[s]);
 }
 
 /** How many people the audience reaches right now (the reach an admin sees before publishing). */
@@ -126,6 +141,13 @@ export async function countAudience(
   const [row] = await db
     .select({ total: count() })
     .from(profiles)
-    .where(and(reachable(), include.length ? or(...include) : undefined, ...exclude));
+    .where(
+      and(
+        reachable(),
+        include.length ? or(...include) : undefined,
+        audience.people?.length ? inArray(profiles.id, [...audience.people]) : undefined,
+        ...exclude,
+      ),
+    );
   return row?.total ?? 0;
 }

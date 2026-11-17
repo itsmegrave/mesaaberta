@@ -63,7 +63,7 @@
           <a
             href={resolve('/u/profile/connect/[provider=provider]', { provider })}
             data-sveltekit-reload
-            class="btn h-12 rounded-lg border-2 border-primary-500 px-5 font-semibold"
+            class="btn h-11 rounded-lg border-2 border-primary-500 px-5 font-semibold"
           >
             {m.account_connections_connect({ provider: labels[provider]() })}
           </a>

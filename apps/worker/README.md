@@ -4,14 +4,17 @@ The background Worker of Trello #120: Cron Triggers today, the Queues consumer l
 event-delivery graph from `@mesaaberta/core`, the same code the web Worker dispatches with after a request.
 
 **Status: owns the crons.** It has no routes. The web Worker's `triggers.crons` is empty, this
-Worker runs the event sweep (`*/5 * * * *`) and the daily import (`0 4 * * *`), and `EVENT_POLLER`
-is off.
+Worker runs the event sweep (`*/5 * * * *`), the daily import (`0 4 * * *`) and the system logo
+search (`*/10 * * * *`, ten systems a run, off with `LOGO_SEARCH=off`; it has no Sentry monitor). The
+same ten-minute run turns stored PNG and JPEG pictures into WebP, five a run, until none is left
+(off with `IMAGE_BACKFILL=off`; the old files stay in Storage). And
+`EVENT_POLLER` is off.
 
 ## Cutover (done in one release)
 
 1. The private repo deploys this Worker with its secrets (database, Instagram, Resend).
 2. The same release empties `triggers.crons` on the web Worker and sets the two crons here.
-3. Watch one `event sweep` line every five minutes, the daily import, the pending and failed counts
+3. Watch one `sweep.events_swept` line every five minutes, the daily import, the pending and failed counts
    on `/admin/events` and Sentry for `scheduled job failed`.
 
 Rollback is the reverse: crons back on the web Worker (pin the previous release), then delete this
@@ -53,6 +56,43 @@ find nothing left to run. To stop: turn the flag off. Pending rows need no clean
 `src/entry.ts` wraps the handler with `@sentry/cloudflare` and installs the same telemetry sink as the
 web app. The privacy policy (`privateSentryOptions`) is shared through `@mesaaberta/core`. `SENTRY_DSN`
 is a Worker var; unset, Sentry stays off and logs still reach the console.
+
+## Alerts and runbook
+
+**Cron monitors.** With `SENTRY_CRON_MONITORS=true` each run of the two crons sends Sentry a check-in
+when it starts and when it ends (`checkInMonitor` in `src/sentry-monitor.ts`, which flushes the opening
+check-in before the run so the closing one cannot overtake it). Sentry creates the monitors from the config in
+`packages/core/src/server/events/monitors.ts` on the first check-in and opens an issue on the first
+failed, missed or too-long run:
+
+| Monitor               | Cron          | Missed after | Timeout |
+| --------------------- | ------------- | ------------ | ------- |
+| `worker-event-sweep`  | `*/5 * * * *` | 2 min        | 5 min   |
+| `worker-daily-import` | `0 4 * * *`   | 15 min       | 30 min  |
+
+Off by default, since turning it on creates two monitors in the Sentry project. The self-hosted
+scheduler (`src/entry/bun.ts`) does not check in.
+
+**Outbox delay.** After each sweep, `reportDelay` raises `event.backlog.delayed` (code
+`outbox_delayed`, with `delayed` and `delaySeconds`) when events have been due for more than 15
+minutes and still have not run. It needs no setting.
+
+What to do:
+
+- **Sweep missed** (no check-in): look at the Worker's Cron Triggers and recent deploys in the
+  Cloudflare dashboard, and at `/healthz` with the `HEALTHZ_TOKEN` bearer token
+  (`worker.lastRunAt`; see Uptime in the root README). A deploy that dropped `triggers.crons` stops
+  every job; redeploy the pinned release.
+- **Sweep failed or timed out**: filter Sentry logs by the run's `requestId` to find the step that
+  threw (database, a handler, pruning). A database outage resolves itself: due events wait in the
+  outbox and the next run picks them up.
+- **Outbox delayed**: open `/admin/events` on the pending and retrying tabs. Many events of one type
+  point at one handler; its `event.handler.failed` lines say why. A backlog of every type with no
+  failures means the sweep (50 per run) is not keeping up.
+- **Daily import failed or missed**: each source writes `crowdfunding source import` (or `...
+failed`, with its `code`) and a row in `crowdfunding_import_runs`. A source that fails is recorded
+  there and does not fail the run, so the monitor only sees a run that could not start or finish.
+  A missed run waits for the next day's trigger.
 
 ## Self-hosting (Bun / Docker)
 

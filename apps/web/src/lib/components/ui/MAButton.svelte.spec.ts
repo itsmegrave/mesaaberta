@@ -60,6 +60,22 @@ describe('MAButton as a submit button', () => {
     form.remove();
   });
 
+  it('looks busy from the moment it is sending, before the spinner, so a tap is never silent', async () => {
+    render(MAButton, { type: 'submit', children, submitting: true });
+
+    await expect.element(button()).toHaveAttribute('aria-busy', 'true');
+    // Dimmed with a progress cursor (the specs run without the stylesheet, so read the classes).
+    await expect.element(button()).toHaveClass(/opacity-85/);
+    await expect.element(button()).toHaveClass(/cursor-progress/);
+  });
+
+  it('looks like itself again once nothing is pending', async () => {
+    render(MAButton, { type: 'submit', children });
+
+    await expect.element(button()).not.toHaveClass(/opacity-85/);
+    await expect.element(button()).not.toHaveClass(/cursor-progress/);
+  });
+
   it('ignores a second click from the moment the form is sent, before the spinner shows', async () => {
     let submits = 0;
     const form = document.createElement('form');

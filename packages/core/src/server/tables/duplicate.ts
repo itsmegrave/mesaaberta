@@ -1,4 +1,5 @@
 import { and, eq } from 'drizzle-orm';
+import { isContentRating, orderedSafetyTools } from '@mesaaberta/core/tables/safety';
 import type { AnyDb } from '../db/client';
 import { gameTables, profiles, systems } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
@@ -8,6 +9,7 @@ import { isLocalDateTime, tableInputSchema, type TableInput } from '../../tables
 import { instantToLocal, localToInstant } from './schedule';
 import { assertTableSchedule, lockTableFamily, lockTableSchedule } from './schedule-guard';
 import { createTable } from './write';
+import { placeSlugOf } from '../places/picker';
 
 async function sourceFor(db: AnyDb, actor: Actor | null, slug: string) {
   const [source] = await db.select().from(gameTables).where(eq(gameTables.slug, slug));
@@ -29,6 +31,8 @@ export async function loadTableForDuplication(
   sourceSlug: string;
   input: Omit<TableInput, 'startsAtLocal'> & { startsAtLocal: '' };
   imagePath: string | null;
+  /** The source's "Onde jogar" place, for the form's picker; blank when it has none or it is gone. */
+  placeSlug: string;
   heldCatalog: { systems: CatalogItem[]; platforms: CatalogItem[]; tags: CatalogItem[] };
 }> {
   const source = await sourceFor(db, actor, sourceSlug);
@@ -41,6 +45,7 @@ export async function loadTableForDuplication(
     sourceId: source.id,
     sourceSlug: source.slug,
     imagePath: source.imagePath,
+    placeSlug: await placeSlugOf(db, source.placeId),
     heldCatalog: {
       systems:
         system.status === 'pending'
@@ -58,6 +63,11 @@ export async function loadTableForDuplication(
       kind: source.kind,
       capacity: source.capacity,
       minPlayers: source.minPlayers,
+      plannedSessions: source.plannedSessions,
+      safetyTools: orderedSafetyTools(source.safetyTools),
+      contentRating:
+        source.contentRating && isContentRating(source.contentRating) ? source.contentRating : null,
+      sessionSize: source.sessionSize,
       startsAtLocal: '',
       timezone: source.timezone,
       durationMinutes: source.durationMinutes,
@@ -73,6 +83,7 @@ export async function loadTableForDuplication(
       locationNeighbourhood: source.locationNeighbourhood,
       locationCity: source.locationCity,
       locationState: source.locationState,
+      placeId: source.placeId,
       platforms: catalog.platforms.map((entry) => entry.slug),
       tags: catalog.tags.map((entry) => entry.slug),
       removeImage: false,

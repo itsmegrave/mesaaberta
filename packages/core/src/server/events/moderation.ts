@@ -1,7 +1,16 @@
 import { eq } from 'drizzle-orm';
 import { activeAdmins } from '../auth/policy';
 import type { AnyDb } from '../db/client';
-import { crowdfundings, gameTables, notifications, partners, profiles } from '../db/schema';
+import {
+  crowdfundings,
+  gameTables,
+  notifications,
+  partners,
+  places,
+  profiles,
+  tools,
+} from '../db/schema';
+import { ownersOf } from '../partners/owners';
 import { NOTIFICATION_KINDS, type NotificationType } from '../../notifications/kinds';
 import type { Handler, StoredEvent } from './types';
 
@@ -15,15 +24,26 @@ type ModerationEvent = Extract<
       | 'TableClosedByModeration'
       | 'CrowdfundingRemoved'
       | 'PartnerApproved'
-      | 'PartnerRemoved';
+      | 'PartnerRemoved'
+      | 'PlaceApproved'
+      | 'PlaceRemoved'
+      | 'ToolApproved'
+      | 'ToolRemoved';
   }
 >;
 
 async function recipientsOf(db: AnyDb, event: ModerationEvent) {
   if (event.type === 'CrowdfundingRemoved')
     return event.payload.submitterId ? [event.payload.submitterId] : [];
-  if (event.type === 'PartnerApproved' || event.type === 'PartnerRemoved')
+  // A place's decisions reach whoever sent it (a withdrawal is their own, so nobody is told).
+  if (event.type === 'PlaceApproved' || event.type === 'PlaceRemoved')
     return [event.payload.submitterId];
+  // A tool's decisions reach whoever suggested it (the seeded ones have nobody).
+  if (event.type === 'ToolApproved' || event.type === 'ToolRemoved')
+    return event.payload.submitterId ? [event.payload.submitterId] : [];
+  // Everyone who looks after the partner now, or the submitter when it is gone.
+  if (event.type === 'PartnerApproved' || event.type === 'PartnerRemoved')
+    return ownersOf(db, { id: event.payload.partnerId, submitterId: event.payload.submitterId });
   if (event.type === 'TableClosedByModeration') {
     const [table] = await db
       .select({ gmId: gameTables.gmId })
@@ -40,7 +60,8 @@ async function recipientsOf(db: AnyDb, event: ModerationEvent) {
  * The bell for moderation: a new report reaches every active admin (linked to it in the queue), the
  * reporter hears when it is closed (never what was done or by whom), and a GM whose table an admin
  * closed is told, with no link: a disabled table is a 404, and so is the submitter of a campaign an
- * admin removed, told why. One row per event and
+ * admin removed, told why. A partner's decisions reach every account that looks after it, and when
+ * one of them withdrew it the others hear that instead of a reason. One row per event and
  * recipient, so a retry adds nothing. Nobody is told about what they did themselves.
  */
 export const moderationHandler: Handler = {
@@ -53,6 +74,10 @@ export const moderationHandler: Handler = {
     'CrowdfundingRemoved',
     'PartnerApproved',
     'PartnerRemoved',
+    'PlaceApproved',
+    'PlaceRemoved',
+    'ToolApproved',
+    'ToolRemoved',
   ],
   async handle(event, db) {
     const moderation = event as ModerationEvent;
@@ -62,7 +87,11 @@ export const moderationHandler: Handler = {
         : moderation.type === 'TableClosedByModeration' ||
             moderation.type === 'CrowdfundingRemoved' ||
             moderation.type === 'PartnerApproved' ||
-            moderation.type === 'PartnerRemoved'
+            moderation.type === 'PartnerRemoved' ||
+            moderation.type === 'PlaceApproved' ||
+            moderation.type === 'PlaceRemoved' ||
+            moderation.type === 'ToolApproved' ||
+            moderation.type === 'ToolRemoved'
           ? 'moderation_notice'
           : 'report_resolved';
     const recipients = (await recipientsOf(db, moderation)).filter((id) => id !== event.actorId);
@@ -94,11 +123,45 @@ export const moderationHandler: Handler = {
         .select({ note: partners.removalNote })
         .from(partners)
         .where(eq(partners.id, moderation.payload.partnerId));
+      removal = moderation.payload.reason
+        ? {
+            partnerId: moderation.payload.partnerId,
+            partnerRemoved: moderation.payload.name,
+            reason: moderation.payload.reason,
+            ...(partner?.note ? { note: partner.note } : {}),
+          }
+        : { partnerId: moderation.payload.partnerId, partnerWithdrawn: moderation.payload.name };
+    }
+
+    // A place that was approved (linked to its page), or turned down with the reason and the note.
+    if (moderation.type === 'PlaceApproved') {
+      removal = { placeId: moderation.payload.placeId, placeApproved: moderation.payload.name };
+    } else if (moderation.type === 'PlaceRemoved' && moderation.payload.reason) {
+      const [place] = await db
+        .select({ note: places.removalNote })
+        .from(places)
+        .where(eq(places.id, moderation.payload.placeId));
       removal = {
-        partnerId: moderation.payload.partnerId,
-        partnerRemoved: moderation.payload.name,
-        ...(moderation.payload.reason ? { reason: moderation.payload.reason } : {}),
-        ...(partner?.note ? { note: partner.note } : {}),
+        placeId: moderation.payload.placeId,
+        placeRemoved: moderation.payload.name,
+        reason: moderation.payload.reason,
+        ...(place?.note ? { note: place.note } : {}),
+      };
+    }
+
+    // A tool that was approved (linked to the page), or turned down with the reason and the note.
+    if (moderation.type === 'ToolApproved') {
+      removal = { toolId: moderation.payload.toolId, toolApproved: moderation.payload.name };
+    } else if (moderation.type === 'ToolRemoved') {
+      const [tool] = await db
+        .select({ note: tools.removalNote })
+        .from(tools)
+        .where(eq(tools.id, moderation.payload.toolId));
+      removal = {
+        toolId: moderation.payload.toolId,
+        toolRemoved: moderation.payload.name,
+        reason: moderation.payload.reason,
+        ...(tool?.note ? { note: tool.note } : {}),
       };
     }
 
@@ -113,11 +176,22 @@ export const moderationHandler: Handler = {
           eventId: event.id,
           category: NOTIFICATION_KINDS[type].category,
           type,
-          link: type === 'report_filed_admin' ? `/admin/reports/${reportId}` : null,
+          link:
+            type === 'report_filed_admin'
+              ? `/admin/reports/${reportId}`
+              : moderation.type === 'PlaceApproved'
+                ? `/pp/${moderation.payload.slug}`
+                : moderation.type === 'ToolApproved'
+                  ? '/tools'
+                  : null,
           metadata:
             moderation.type === 'CrowdfundingRemoved' ||
             moderation.type === 'PartnerApproved' ||
-            moderation.type === 'PartnerRemoved'
+            moderation.type === 'PartnerRemoved' ||
+            moderation.type === 'PlaceApproved' ||
+            moderation.type === 'PlaceRemoved' ||
+            moderation.type === 'ToolApproved' ||
+            moderation.type === 'ToolRemoved'
               ? removal
               : moderation.type === 'TableClosedByModeration'
                 ? {

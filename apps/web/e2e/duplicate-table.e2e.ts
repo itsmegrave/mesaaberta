@@ -25,6 +25,11 @@ test('duplicates a concluded owned table with its image, a new date and no inher
   try {
     await db`update game_tables set status = 'concluded', min_players = 3, ical_sequence = 8 where slug = ${originalSlug}`;
     await page.goto('/u/tables');
+    // A concluded table sits in the folded "Encerradas" section.
+    await page
+      .getByRole('button', { name: /Encerradas/ })
+      .first()
+      .click();
     const card = page.locator(`#mesa-${originalSlug}`);
     await card.getByRole('button', { name: /^Mais ações:/ }).click();
     await page.getByRole('menuitem', { name: 'Duplicar mesa' }).click();
@@ -79,7 +84,7 @@ test('requires a fresh date in the native form and refuses another owner source'
   const gm = await createUser('Mestre Fonte');
   await signIn(page, gm);
   const slug = await createTable(page, { title: uniqueTitle('Fonte privada') });
-  await page.goto(`/t/new?duplicate=${slug}`);
+  await page.goto(`/tables/new?duplicate=${slug}`);
   await page.getByRole('button', { name: 'Salvar como rascunho', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`duplicate=${slug}`));
   await expect(page.locator('input[name="startsAtLocal"]')).toHaveValue('');
@@ -88,7 +93,7 @@ test('requires a fresh date in the native form and refuses another owner source'
     const stranger = await createUser('Mestre Terceiro');
     const otherPage = await visitor.newPage();
     await signIn(otherPage, stranger);
-    const response = await otherPage.goto(`/t/new?duplicate=${slug}`);
+    const response = await otherPage.goto(`/tables/new?duplicate=${slug}`);
     expect(response?.status()).toBe(403);
   } finally {
     await visitor.close();

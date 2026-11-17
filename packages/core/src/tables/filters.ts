@@ -19,9 +19,17 @@ export type TableFilters = {
   modality: 'online' | 'in_person' | null;
   platforms: string[];
   tags: string[];
+  /** One person's tables, by @usuário (the link from their card in Quem mestra). */
+  gm: string | null;
 };
 
 const slugsOf = (list: string[]) => list.filter((value) => SLUG.test(value));
+
+// A username has the shape of a slug, at most 30 characters; a leading @ is fine.
+const gmOf = (value: string | null) => {
+  const username = (value ?? '').trim().replace(/^@/, '').toLowerCase();
+  return username.length <= 30 && SLUG.test(username) ? username : null;
+};
 
 /**
  * The filters in a `/tables` address. A link can say anything, so what is not a filter the page
@@ -45,5 +53,6 @@ export async function readTableFilters(url: URL): Promise<TableFilters> {
     modality: data.modality === 'online' || data.modality === 'in_person' ? data.modality : null,
     platforms: slugsOf(data.platform),
     tags: slugsOf(data.tag),
+    gm: gmOf(url.searchParams.get('gm')),
   };
 }

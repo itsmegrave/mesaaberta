@@ -38,7 +38,7 @@ type Invitation = {
   status: 'pending' | 'accepted' | 'declined' | 'expired' | 'cancelled';
   expiresAt: Date;
   gmUsername: string;
-  table: { slug: string; title: string };
+  table: { slug: string; title: string; timezone: string };
 };
 type Data = {
   playing: (typeof playing)[];
@@ -46,14 +46,22 @@ type Data = {
   invitations?: Invitation[];
   page?: number;
   pages?: number;
+  ended?: { playing: (typeof playing)[]; running: Running[] };
 };
 /** The page's own data, worked out as the server read does; the layout's is not used here. */
-const show = ({ page = 1, pages = 1, invitations = [], ...data }: Data) => {
+const show = ({
+  page = 1,
+  pages = 1,
+  invitations = [],
+  ended = { playing: [], running: [] },
+  ...data
+}: Data) => {
   const waiting = data.running.filter((table) => table.requests.length > 0);
   return render(Page, {
     data: {
       ...data,
       invitations,
+      ended,
       page,
       pages,
       totals: { playing: data.playing.length, running: data.running.length },
@@ -103,13 +111,13 @@ describe('Minhas mesas', () => {
         ?.getAttribute('action'),
     ).toBe('/t/cronicas/manage?/close');
   });
-  it('links only pending, unexpired invitations for the player to review', async () => {
+  it('lists only pending, unexpired invitations, with a count and "Responder" for each', async () => {
     const pending: Invitation = {
       id: '00000000-0000-4000-8000-000000000001',
       status: 'pending',
       expiresAt: new Date(Date.now() + 3600000),
       gmUsername: 'ana',
-      table: { slug: 'convite-atual', title: 'Convite atual' },
+      table: { slug: 'convite-atual', title: 'Convite atual', timezone: 'America/Sao_Paulo' },
     };
     show({
       playing: [],
@@ -120,21 +128,22 @@ describe('Minhas mesas', () => {
           ...pending,
           id: 'expired',
           expiresAt: new Date(0),
-          table: { slug: 'expired', title: 'Expirado' },
+          table: { ...pending.table, slug: 'expired', title: 'Expirado' },
         },
         {
           ...pending,
           id: 'accepted',
           status: 'accepted',
-          table: { slug: 'accepted', title: 'Aceito' },
+          table: { ...pending.table, slug: 'accepted', title: 'Aceito' },
         },
       ],
     });
     await expect
-      .element(page.getByRole('link', { name: 'Convite atual' }))
+      .element(page.getByRole('link', { name: 'Responder ao convite para Convite atual' }))
       .toHaveAttribute('href', '/u/profile/invitations/00000000-0000-4000-8000-000000000001');
-    await expect.element(page.getByRole('link', { name: 'Expirado' })).not.toBeInTheDocument();
-    await expect.element(page.getByRole('link', { name: 'Aceito' })).not.toBeInTheDocument();
+    await expect.element(page.getByText('1 convite aguardando resposta')).toBeInTheDocument();
+    await expect.element(page.getByText('@ana convidou você', { exact: false })).toBeVisible();
+    expect(page.getByRole('link', { name: /Responder/ }).elements()).toHaveLength(1);
   });
 
   // The banner's link leaves `#mesa-...` in the address, and that hash opens the GM's tab: clear it
@@ -225,17 +234,16 @@ describe('Minhas mesas', () => {
   describe('a session whose date has passed', () => {
     const awaiting = { ...running, tableStatus: 'awaiting_confirmation' as TableStatus };
 
-    it('asks the GM whether it happened, posting to the table’s manage page and coming back here', async () => {
+    it('asks the GM whether it happened: yes opens the attendance step, no posts and comes back', async () => {
       await page.viewport(1280, 800);
       show({ playing: [], running: [awaiting] });
 
       const prompt = page.getByRole('group', { name: 'A sessão de Crônicas de Arton aconteceu?' });
       await expect.element(prompt).toBeVisible();
-      const yes = prompt.getByRole('button', { name: 'Sim, aconteceu' });
       const no = prompt.getByRole('button', { name: 'Não aconteceu' });
-      expect(yes.element().closest('form')?.getAttribute('action')).toBe(
-        '/t/cronicas/manage?/happened',
-      );
+      await expect
+        .element(prompt.getByRole('link', { name: 'Sim, aconteceu' }))
+        .toHaveAttribute('href', '/t/cronicas/manage?etapa=presenca#session-confirmation');
       expect(no.element().closest('form')?.getAttribute('action')).toBe(
         '/t/cronicas/manage?/notHeld',
       );
@@ -248,17 +256,71 @@ describe('Minhas mesas', () => {
       expect(page.getByText('aconteceu?').elements()).toHaveLength(0);
     });
 
-    it('shows no table status to a player or a GM: statuses are only for admin', async () => {
+    it('tags only a table that is over; a table still on shows no status', async () => {
       await page.viewport(1280, 800);
       show({
-        playing: [{ ...playing, tableStatus: 'concluded' as TableStatus }],
+        playing: [],
         running: [awaiting],
+        ended: { playing: [{ ...playing, tableStatus: 'concluded' as TableStatus }], running: [] },
       });
 
-      for (const word of ['Aguardando confirmação', 'Concluída', 'Mesa concluída', 'Desativada']) {
+      await page.getByRole('button', { name: /Encerradas/ }).click();
+      await expect.element(page.getByText('Mesa concluída')).toBeVisible();
+      for (const word of ['Aguardando confirmação da mestragem', 'Desativada']) {
         expect(page.getByText(word).elements()).toHaveLength(0);
       }
     });
+  });
+
+  it('folds the tables that are over into a closed "Encerradas" section under each list', async () => {
+    await page.viewport(1280, 800);
+    show({
+      playing: [],
+      running: [running],
+      ended: {
+        playing: [],
+        running: [
+          { ...running, slug: 'fim', title: 'Campanha que acabou', tableStatus: 'concluded' },
+        ],
+      },
+    });
+
+    const trigger = page.getByRole('button', { name: /Encerradas/ });
+    await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
+    await expect.element(page.getByText('1 mesa', { exact: true }).last()).toBeVisible();
+    await expect.element(page.getByText('Campanha que acabou')).not.toBeVisible();
+
+    await trigger.click();
+    await expect.element(page.getByText('Campanha que acabou')).toBeVisible();
+    await expect.element(page.getByText('Mesa concluída')).toBeVisible();
+    // Only the running column has ended tables: the playing column has no section.
+    expect(page.getByRole('button', { name: /Encerradas/ }).elements()).toHaveLength(1);
+  });
+
+  it('opens "Encerradas" when a table in it still waits for my rating', async () => {
+    await page.viewport(1280, 800);
+    show({
+      playing: [],
+      running: [],
+      ended: { playing: [{ ...playing, tableStatus: 'concluded', canRate: true }], running: [] },
+    });
+
+    await expect
+      .element(page.getByRole('button', { name: /Encerradas/ }))
+      .toHaveAttribute('aria-expanded', 'true');
+    await expect.element(page.getByRole('link', { name: 'Avaliar' })).toBeVisible();
+  });
+
+  it('says nothing is on, not "never joined", when every table is over', async () => {
+    await page.viewport(1280, 800);
+    show({
+      playing: [],
+      running: [],
+      ended: { playing: [], running: [{ ...running, tableStatus: 'disabled' }] },
+    });
+
+    await expect.element(page.getByText('Nenhuma mesa sua em andamento.')).toBeVisible();
+    expect(page.getByText('Você ainda não abriu nenhuma mesa.').elements()).toHaveLength(0);
   });
 
   it('offers the calendar download from the title’s 3 dots', async () => {

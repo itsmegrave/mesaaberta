@@ -1,6 +1,12 @@
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { gameTables, profiles, registrations, systems } from '@mesaaberta/core/server/db/schema';
+import {
+  gameTables,
+  profiles,
+  registrations,
+  systems,
+  tableSessions,
+} from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import { formatSession } from '@mesaaberta/core/tables/format';
 import { TEMPLATE_VARIABLES } from '@mesaaberta/core/server/mail/templates';
@@ -258,7 +264,7 @@ describe('calendar invite handler', () => {
     expect(sent.bodies[1].text).toBe('Sua solicitação para a mesa "Mesa do Dragão" foi recusada.');
   });
 
-  it('invites only the GM when a table is created', async () => {
+  it('tells only the GM, as their own table and not as a seat, when a table is created', async () => {
     const sent = capture();
 
     await createInviteHandler(env, sent.request, admin('mestre@example.com')).handle(
@@ -269,8 +275,26 @@ describe('calendar invite handler', () => {
     expect(sent.bodies).toHaveLength(1);
     expect(sent.bodies[0]).toMatchObject({
       to: ['mestre@example.com'],
-      subject: 'Convite: Mesa do Dragão',
+      subject: 'Mesa criada: Mesa do Dragão',
+      text: expect.stringContaining('Sua mesa "Mesa do Dragão" foi criada'),
     });
+    expect(sent.bodies[0].text).not.toContain('vaga');
+    expect(Buffer.from(sent.bodies[0].attachments[0].content, 'base64').toString()).toContain(
+      'METHOD:REQUEST',
+    );
+  });
+
+  it("never sends the GM the players' hosted invite template", async () => {
+    const sent = capture();
+    const templated = { ...env, RESEND_TEMPLATE_INVITE: 'tpl-invite' };
+
+    await createInviteHandler(templated, sent.request, admin('mestre@example.com')).handle(
+      tableEvent('TableCreated'),
+      test.db,
+    );
+
+    expect(sent.bodies[0]).not.toHaveProperty('template');
+    expect(sent.bodies[0].subject).toBe('Mesa criada: Mesa do Dragão');
   });
 
   it('invites the approved player, not the GM', async () => {
@@ -312,8 +336,10 @@ describe('calendar invite handler', () => {
       await handler.handle(event(type), test.db);
     expect(sent.bodies).toEqual([]);
     await handler.handle(tableEvent('TableDisabled'), test.db);
-    expect(sent.bodies).toHaveLength(2);
-    expect(sent.bodies.every((body) => body.subject === 'Cancelada: Mesa do Dragão')).toBe(true);
+    expect(sent.bodies.map((body) => body.subject).sort()).toEqual([
+      'Cancelada: Mesa do Dragão',
+      'Mesa cancelada: Mesa do Dragão',
+    ]);
   });
 
   it('sends an updated invite to the GM and every confirmed player when the table changes', async () => {
@@ -323,11 +349,115 @@ describe('calendar invite handler', () => {
 
     await createInviteHandler(env, sent.request, byId).handle(tableEvent('TableUpdated'), test.db);
 
-    expect(sent.bodies.map((body) => body.to[0]).sort()).toEqual([
-      'ana@example.com',
-      'mestre@example.com',
+    const subjects = Object.fromEntries(sent.bodies.map((body) => [body.to[0], body.subject]));
+    expect(subjects).toEqual({
+      'ana@example.com': 'Convite: Mesa do Dragão',
+      'mestre@example.com': 'Mesa atualizada: Mesa do Dragão',
+    });
+  });
+
+  it('moves every invite to the next session when the GM says a session happened and more follow', async () => {
+    await test.db.insert(registrations).values({ tableId, playerId: player, status: 'confirmed' });
+    await test.db
+      .update(gameTables)
+      .set({ startsAt: new Date('2026-11-05T00:00:00Z'), icalSequence: 1 })
+      .where(eq(gameTables.id, tableId));
+    const byId = adminByRecipient({ [gm]: 'mestre@example.com', [player]: 'ana@example.com' });
+    const sent = capture();
+    try {
+      const handler = createInviteHandler(env, sent.request, byId);
+      // The dispatcher only routes the types a handler lists.
+      expect(handler.types).toContain('TableSessionHeld');
+      const event = tableEvent('TableUpdated');
+      await handler.handle(
+        {
+          ...event,
+          type: 'TableSessionHeld',
+          payload: { ...event.payload, nextStartsAt: '2026-11-05T00:00:00.000Z' },
+        } as StoredEvent,
+        test.db,
+      );
+
+      const subjects = Object.fromEntries(sent.bodies.map((body) => [body.to[0], body.subject]));
+      expect(subjects).toEqual({
+        'ana@example.com': 'Convite: Mesa do Dragão',
+        'mestre@example.com': 'Próxima sessão: Mesa do Dragão',
+      });
+      for (const body of sent.bodies) {
+        const ics = Buffer.from(body.attachments[0].content, 'base64').toString();
+        expect(ics).toContain('DTSTART;TZID=America/Sao_Paulo:20261104T210000');
+        expect(ics).toContain('SEQUENCE:1');
+      }
+    } finally {
+      await test.db
+        .update(gameTables)
+        .set({ startsAt: new Date('2026-10-10T22:00:00Z'), icalSequence: 0 })
+        .where(eq(gameTables.id, tableId));
+    }
+  });
+
+  it('tells everyone about a later session moved, with the moved date in the same event', async () => {
+    await test.db.insert(registrations).values({ tableId, playerId: player, status: 'confirmed' });
+    await test.db
+      .update(gameTables)
+      .set({ kind: 'campaign', recurrence: 'FREQ=WEEKLY', icalSequence: 2 })
+      .where(eq(gameTables.id, tableId));
+    await test.db.insert(tableSessions).values([
+      { tableId, startsAt: new Date('2026-10-10T22:00:00Z'), durationMinutes: 180 },
+      {
+        tableId,
+        startsAt: new Date('2026-10-18T22:00:00Z'),
+        durationMinutes: 180,
+        pinned: true,
+        movedFrom: new Date('2026-10-17T22:00:00Z'),
+      },
     ]);
-    for (const body of sent.bodies) expect(body.subject).toBe('Convite: Mesa do Dragão');
+    const byId = adminByRecipient({ [gm]: 'mestre@example.com', [player]: 'ana@example.com' });
+    const sent = capture();
+    try {
+      const handler = createInviteHandler(
+        { ...env, RESEND_TEMPLATE_INVITE: 'tpl-invite' },
+        sent.request,
+        byId,
+      );
+      expect(handler.types).toEqual(
+        expect.arrayContaining(['SessionScheduled', 'SessionMoved', 'SessionCancelled']),
+      );
+      const base = tableEvent('TableUpdated');
+      await handler.handle(
+        {
+          ...base,
+          type: 'SessionMoved',
+          payload: {
+            ...base.payload,
+            sessionId: '00000000-0000-4000-8000-000000000816',
+            startsAt: '2026-10-18T22:00:00.000Z',
+            from: '2026-10-17T22:00:00.000Z',
+          },
+        } as StoredEvent,
+        test.db,
+      );
+
+      expect(sent.bodies.map((body) => body.to[0]).sort()).toEqual([
+        'ana@example.com',
+        'mestre@example.com',
+      ]);
+      for (const body of sent.bodies) {
+        expect(body.subject).toBe('Sessão remarcada: Mesa do Dragão');
+        // Not "your seat is confirmed": the plain copy, never the seat template.
+        expect(body.template).toBeUndefined();
+        expect(body.text).toContain('mudou para');
+        const ics = Buffer.from(body.attachments[0].content, 'base64').toString();
+        expect(ics).toContain('RECURRENCE-ID;TZID=America/Sao_Paulo:20261017T190000');
+        expect(ics).toContain('SEQUENCE:2');
+      }
+    } finally {
+      await test.db.delete(tableSessions);
+      await test.db
+        .update(gameTables)
+        .set({ kind: 'one_shot', recurrence: null, icalSequence: 0 })
+        .where(eq(gameTables.id, tableId));
+    }
   });
 
   it('cancels for the GM and every confirmed player when the table is disabled', async () => {
@@ -337,11 +467,11 @@ describe('calendar invite handler', () => {
 
     await createInviteHandler(env, sent.request, byId).handle(tableEvent('TableDisabled'), test.db);
 
-    expect(sent.bodies.map((body) => body.to[0]).sort()).toEqual([
-      'ana@example.com',
-      'mestre@example.com',
-    ]);
-    for (const body of sent.bodies) expect(body.subject).toBe('Cancelada: Mesa do Dragão');
+    const subjects = Object.fromEntries(sent.bodies.map((body) => [body.to[0], body.subject]));
+    expect(subjects).toEqual({
+      'ana@example.com': 'Cancelada: Mesa do Dragão',
+      'mestre@example.com': 'Mesa cancelada: Mesa do Dragão',
+    });
   });
 
   describe('with hosted Resend templates', () => {

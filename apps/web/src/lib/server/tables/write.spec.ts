@@ -45,6 +45,7 @@ const input = (over: Partial<TableInput> = {}): TableInput => ({
   kind: 'one_shot',
   capacity: 5,
   minPlayers: null,
+  plannedSessions: null,
   startsAtLocal: '2026-10-10T19:00',
   timezone: 'America/Sao_Paulo',
   durationMinutes: 240,
@@ -608,6 +609,22 @@ describe('updateTable', () => {
     await updateTable(test.db, ana, slug, input({ title: 'Com mínimo', minPlayers: null }));
     expect((await rowOf(slug)).minPlayers).toBeNull();
     expect(await loadTableForEdit(test.db, ana, slug, SP)).toMatchObject({ minPlayers: '' });
+  });
+
+  it('saves an adventure’s planned sessions, shows them back, and drops them on another kind', async () => {
+    const { slug } = await createTable(
+      test.db,
+      ana,
+      input({ title: 'Aventura curta', kind: 'adventure', plannedSessions: 4 }),
+      { now },
+    );
+    expect((await rowOf(slug)).plannedSessions).toBe(4);
+    expect(await loadTableForEdit(test.db, ana, slug, SP)).toMatchObject({ plannedSessions: '4' });
+    expect(await findTableBySlug(test.db, slug, now)).toMatchObject({ plannedSessions: 4 });
+
+    await updateTable(test.db, ana, slug, input({ title: 'Aventura curta' }));
+    expect((await rowOf(slug)).plannedSessions).toBeNull();
+    expect(await loadTableForEdit(test.db, ana, slug, SP)).toMatchObject({ plannedSessions: '' });
   });
 
   it('does not tell the players that only the minimum changed', async () => {

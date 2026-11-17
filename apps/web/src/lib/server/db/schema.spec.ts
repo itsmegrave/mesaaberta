@@ -171,6 +171,29 @@ describe('game_tables', () => {
     expect(code).toBe(CHECK_VIOLATION);
   });
 
+  it.each([
+    ['a one-shot', { plannedSessions: 4 }],
+    ['one session', { kind: 'adventure' as const, plannedSessions: 1 }],
+    ['more than twenty', { kind: 'adventure' as const, plannedSessions: 21 }],
+  ])('refuse planned sessions on %s', async (name, overrides) => {
+    const code = await pgErrorCode(
+      test.db
+        .insert(gameTables)
+        .values(table({ slug: `sessoes-${name.replace(/ /g, '-')}`, ...overrides })),
+    );
+
+    expect(code).toBe(CHECK_VIOLATION);
+  });
+
+  it('takes an adventure’s planned sessions', async () => {
+    const [created] = await test.db
+      .insert(gameTables)
+      .values(table({ slug: 'aventura-4', kind: 'adventure', plannedSessions: 4 }))
+      .returning();
+
+    expect(created.plannedSessions).toBe(4);
+  });
+
   it('takes no minimum, or one up to the seats', async () => {
     const [none, full] = await test.db
       .insert(gameTables)

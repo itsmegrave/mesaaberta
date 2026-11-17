@@ -60,6 +60,41 @@ function reminderText(table: string, metadata: Record<string, string>, timeZone:
     : m.notification_session_reminder_day({ table, when });
 }
 
+/** A later session added, moved or cancelled, with its date when the notice has it. */
+function sessionText(
+  type: 'session_scheduled' | 'session_moved' | 'session_cancelled',
+  table: string,
+  metadata: Record<string, string>,
+  timeZone: string,
+) {
+  const at = (iso: string) => formatSession(new Date(iso), timeZone, getLocale());
+  const { startsAt, startsAtFrom } = metadata;
+  if (!startsAt) return m.notification_table_updated({ table });
+  if (type === 'session_moved')
+    return startsAtFrom
+      ? m.notification_session_moved({ table, from: at(startsAtFrom), to: at(startsAt) })
+      : m.notification_table_updated({ table });
+  return type === 'session_scheduled'
+    ? m.notification_session_scheduled({ table, when: at(startsAt) })
+    : m.notification_session_cancelled({ table, when: at(startsAt) });
+}
+
+/** Campanha aberta: someone else changed the player's place in one session. */
+function signupText(
+  type: 'session_signup_seated' | 'session_signup_added' | 'session_signup_removed',
+  table: string,
+  metadata: Record<string, string>,
+  timeZone: string,
+) {
+  const when = metadata.startsAt
+    ? formatSession(new Date(metadata.startsAt), timeZone, getLocale())
+    : '';
+  if (type === 'session_signup_seated')
+    return m.notification_session_signup_seated({ table, when });
+  if (type === 'session_signup_added') return m.notification_session_signup_added({ table, when });
+  return m.notification_session_signup_removed({ table, when });
+}
+
 /** A table change, as specific as the notice's metadata allows; older notices stay generic. */
 function tableChangeText(table: string, metadata: Record<string, string>, timeZone: string) {
   const { startsAtFrom, startsAtTo, changed } = metadata;
@@ -100,6 +135,14 @@ export function notificationText(item: Shown, timeZone = 'America/Sao_Paulo'): s
       return reminderText(table, item.metadata, timeZone);
     case 'session_confirmation':
       return m.notification_session_confirmation({ table });
+    case 'session_scheduled':
+    case 'session_moved':
+    case 'session_cancelled':
+      return sessionText(item.type, table, item.metadata, timeZone);
+    case 'session_signup_seated':
+    case 'session_signup_added':
+    case 'session_signup_removed':
+      return signupText(item.type, table, item.metadata, timeZone);
     case 'player_invited':
       return m.notification_player_invited({ player, table });
     case 'invitation_accepted':
@@ -133,6 +176,20 @@ export function notificationText(item: Shown, timeZone = 'America/Sao_Paulo'): s
         ? m.notification_badge_earned_named({ badge: name })
         : m.notification_badge_earned();
     }
+    case 'followed_table_opened':
+      return m.notification_followed_table_opened({ gm: player, table });
+    case 'followed_seat_opened':
+      return m.notification_followed_seat_opened({ gm: player, table });
+    case 'waitlist_seated':
+      return m.notification_waitlist_seated({ table });
+    case 'waitlist_requested':
+      return m.notification_waitlist_requested({ table });
+    case 'follow_started':
+      return m.notification_follow_started({ player });
+    case 'match_created':
+      return m.notification_match_created({ player });
+    case 'match_reminder':
+      return m.notification_match_reminder({ player });
     case 'catalog_suggestion_approved':
       // A table that waited for its system can be published now.
       if (item.metadata.kind === 'system')
@@ -151,7 +208,84 @@ export function notificationText(item: Shown, timeZone = 'America/Sao_Paulo'): s
       return m.notification_report_filed_admin();
     case 'report_resolved':
       return m.notification_report_resolved();
+    case 'partner_invited':
+      return m.notification_partner_invited({ player, partner: item.metadata.partner ?? '' });
+    case 'partner_invitation_accepted':
+      return m.notification_partner_invitation_accepted({
+        player,
+        partner: item.metadata.partner ?? '',
+      });
+    case 'partner_invitation_declined':
+      return m.notification_partner_invitation_declined({
+        player,
+        partner: item.metadata.partner ?? '',
+      });
+    case 'partner_owner_removed':
+      return m.notification_partner_owner_removed({ player, partner: item.metadata.partner ?? '' });
+    case 'place_host_invited':
+      return m.notification_place_host_invited({ player, place: item.metadata.place ?? '' });
+    case 'place_host_invitation_accepted':
+      return m.notification_place_host_accepted({ player, place: item.metadata.place ?? '' });
+    case 'place_host_invitation_declined':
+      return m.notification_place_host_declined({ player, place: item.metadata.place ?? '' });
+    case 'place_host_removed':
+      return item.metadata.left
+        ? m.notification_place_host_left({ player, place: item.metadata.place ?? '' })
+        : m.notification_place_host_removed({ place: item.metadata.place ?? '' });
+    case 'place_hidden_alert':
+      return m.notification_place_hidden_alert({ place: item.metadata.place ?? '' });
     case 'moderation_notice':
+      if (item.metadata.placeHidden)
+        return m.notification_place_hidden({ place: item.metadata.placeHidden });
+      if (item.metadata.placeRestored)
+        return m.notification_place_restored({ place: item.metadata.placeRestored });
+      if (item.metadata.placeClaimApproved)
+        return m.notification_place_claim_approved({ place: item.metadata.placeClaimApproved });
+      if (item.metadata.placeClaimRejected) {
+        const place = item.metadata.placeClaimRejected;
+        return item.metadata.note
+          ? m.notification_place_claim_rejected_note({ place, note: item.metadata.note })
+          : m.notification_place_claim_rejected({ place });
+      }
+      if (item.metadata.placePartnerApproved)
+        return m.notification_place_partner_approved({
+          place: item.metadata.placePartnerApproved,
+          partner: item.metadata.partner ?? '',
+        });
+      if (item.metadata.placePartnerRejected) {
+        const place = item.metadata.placePartnerRejected;
+        const partner = item.metadata.partner ?? '';
+        return item.metadata.note
+          ? m.notification_place_partner_rejected_note({ place, partner, note: item.metadata.note })
+          : m.notification_place_partner_rejected({ place, partner });
+      }
+      if (item.metadata.placePartnerRemoved)
+        return m.notification_place_partner_removed({
+          place: item.metadata.placePartnerRemoved,
+          partner: item.metadata.partner ?? '',
+        });
+      if (item.metadata.placeOwnerRemoved)
+        return m.notification_place_owner_removed({ place: item.metadata.placeOwnerRemoved });
+      if (item.metadata.partnerWithdrawn)
+        return m.notification_partner_withdrawn({ partner: item.metadata.partnerWithdrawn });
+      if (item.metadata.placeApproved)
+        return m.notification_place_approved({ place: item.metadata.placeApproved });
+      if (item.metadata.placeRemoved) {
+        const place = item.metadata.placeRemoved;
+        const reason = reasonLabel(item.metadata.reason as ReportReason, 'place');
+        return item.metadata.note
+          ? m.notification_place_removed_note({ place, reason, note: item.metadata.note })
+          : m.notification_place_removed({ place, reason });
+      }
+      if (item.metadata.toolApproved)
+        return m.notification_tool_approved({ tool: item.metadata.toolApproved });
+      if (item.metadata.toolRemoved) {
+        const tool = item.metadata.toolRemoved;
+        const reason = reasonLabel(item.metadata.reason as ReportReason, 'place');
+        return item.metadata.note
+          ? m.notification_tool_removed_note({ tool, reason, note: item.metadata.note })
+          : m.notification_tool_removed({ tool, reason });
+      }
       if (item.metadata.partnerApproved)
         return m.notification_partner_approved({ partner: item.metadata.partnerApproved });
       if (item.metadata.partnerRemoved) {
@@ -196,6 +330,10 @@ const ICONS = new Set<string>([
 ]);
 
 /** The notification's own icon when it is one the bell can draw, else its type's. */
+/** A high alert still unread (reports hid a place): drawn in the danger tone, pinned atop the feed. */
+export const isAlert = (item: { type: string; read: boolean }) =>
+  !item.read && item.type === 'place_hidden_alert';
+
 export function notificationIcon(item: Pick<Shown, 'type' | 'icon'>): NotificationIcon {
   if (item.icon && ICONS.has(item.icon)) return item.icon as NotificationIcon;
   return isNotificationType(item.type) ? NOTIFICATION_KINDS[item.type].icon : 'megaphone';

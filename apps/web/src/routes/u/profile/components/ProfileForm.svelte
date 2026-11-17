@@ -1,4 +1,6 @@
 <script lang="ts">
+  import MACheckbox from '#lib/components/ui/MACheckbox.svelte';
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import TextInput from '#lib/components/ui/TextInput.svelte';
   import FieldError from '#lib/components/ui/FieldError.svelte';
   import MATextArea from '#lib/components/ui/MATextArea.svelte';
@@ -25,6 +27,7 @@
   import { fieldErrors, problem, type Problem } from '#lib/forms/field-errors.js';
   import MAForm from '#lib/components/ui/MAForm.svelte';
   import FormField from '#lib/components/ui/FormField.svelte';
+  import RadioGroup from '#lib/components/ui/RadioGroup.svelte';
   import ErrorSummary from '#lib/components/ui/ErrorSummary.svelte';
   import SearchSelect from '#lib/components/ui/SearchSelect.svelte';
   import { timezoneOptions } from '@mesaaberta/core/time/timezone';
@@ -63,6 +66,10 @@
     onsaved?: () => void;
     /** Asks the server if a (well formed) username is free. Replaced in tests. */
     checkUsername?: (username: string, signal: AbortSignal) => Promise<Availability>;
+    /** "Na mesa, você…" in Perfil público, while Quem mestra (`api_directory_gms`) is on. */
+    showTableRole?: boolean;
+    /** The backfill listed this person in Quem mestra: a line under the question says why. */
+    tableRoleInferred?: boolean;
   };
 
   let {
@@ -74,6 +81,8 @@
     cancelHref,
     onsaved,
     checkUsername = usernameAvailability,
+    showTableRole = false,
+    tableRoleInferred = false,
   }: Props = $props();
 
   // svelte-ignore state_referenced_locally
@@ -136,9 +145,16 @@
     slug: option,
   }));
 
-  const input = 'input h-13 w-full rounded-lg border-control border-ink-muted bg-panel px-3';
+  const TABLE_ROLE_OPTIONS = [
+    { value: 'player', label: m.profile_table_role_player() },
+    { value: 'gm', label: m.profile_table_role_gm() },
+    { value: 'both', label: m.profile_table_role_both() },
+    { value: '', label: m.profile_table_role_none() },
+  ] as const;
+
+  const input = 'input h-11 w-full rounded-lg border-control border-ink-muted bg-panel px-3';
   const secondary =
-    'btn h-12 min-w-11 rounded-lg btn-secondary px-3 font-semibold disabled:opacity-50';
+    'btn h-11 min-w-11 rounded-lg btn-secondary px-3 font-semibold disabled:opacity-50';
 
   const ERRORS: Record<string, () => string> = {
     required: m.profile_error_required,
@@ -230,6 +246,7 @@
       ...errors.summary([
         ['name', m.profile_name()],
         ['bio', m.profile_bio()],
+        ['tableRole', m.profile_table_role(), 'table-role'],
         ['ageRange', m.profile_age_range(), 'age-range'],
         ['gender', m.profile_gender()],
         ['genderOther', m.profile_gender_other_label(), 'gender-other'],
@@ -313,6 +330,12 @@
         />
       {/snippet}
     </FormField>
+    {#if section === 'public'}
+      <!-- Off until the person turns it on: the name may have come from Google or Discord. -->
+      <MACheckbox name="showName" value="true" bind:checked={$draft.showName} class="-mt-2 text-sm">
+        {m.profile_show_name()}
+      </MACheckbox>
+    {/if}
   {/if}
 
   {#if section === 'public'}
@@ -337,13 +360,33 @@
         />
       {/snippet}
     </FormField>
+
+    {#if showTableRole}
+      <div>
+        <RadioGroup
+          id="table-role"
+          name="tableRole"
+          legend={m.profile_table_role()}
+          hint={m.profile_table_role_hint()}
+          optional
+          options={TABLE_ROLE_OPTIONS}
+          bind:value={() => $draft.tableRole ?? '', (role) => ($draft.tableRole = role)}
+          error={err('tableRole')}
+        />
+        {#if tableRoleInferred}
+          <p class="mt-2 rounded-lg bg-lamp-wash px-3 py-2 text-sm">
+            {m.profile_table_role_inferred()}
+          </p>
+        {/if}
+      </div>
+    {/if}
   {/if}
 
   {#if shows('about')}
     <div class="grid gap-6 sm:grid-cols-2">
       {#each [{ id: 'age-range', field: 'ageRange', label: m.profile_age_range(), none: m.profile_age_range_none(), items: ageItems }, { id: 'gender', field: 'gender', label: m.profile_gender(), none: m.profile_gender_none(), items: genderItems }] as const as picker (picker.id)}
         <div class="min-w-0">
-          <!-- The same combobox as the timezone. "Prefiro não informar" clears it. -->
+          <!-- The same picker as the timezone. "Prefiro não informar" clears it. -->
           <SearchSelect
             id={picker.id}
             name={picker.field}
@@ -351,13 +394,15 @@
             labelClass="label-text block font-semibold"
             class="grid gap-1"
             items={[{ name: picker.none, slug: NO_ANSWER }, ...picker.items]}
-            value={$draft[picker.field] ? [$draft[picker.field]] : []}
+            bind:value={
+              (): string[] => ($draft[picker.field] ? [$draft[picker.field]] : []),
+              (picked) =>
+                ($draft[picker.field] = (
+                  picked.at(-1) === NO_ANSWER ? '' : (picked.at(-1) ?? '')
+                ) as never)
+            }
             placeholder={picker.none}
             invalid={!!errors.invalid(picker.field)}
-            onchange={(picked) =>
-              ($draft[picker.field] = (
-                picked.at(-1) === NO_ANSWER ? '' : (picked.at(-1) ?? '')
-              ) as never)}
           />
           <FieldError id={picker.id} message={err(picker.field)} />
         </div>
@@ -405,6 +450,7 @@
     <div class="min-w-0">
       <SearchSelect
         id="timezone"
+        search
         name="timezone"
         label={m.profile_timezone()}
         labelClass="label-text block font-semibold"
@@ -461,13 +507,15 @@
       type="submit"
       size="custom"
       {controller}
-      class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold sm:w-auto"
+      class="btn h-11 w-full gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold sm:w-auto"
     >
       {submitLabel ?? m.profile_submit()}
     </MAButton>
     {#if cancelHref}
       <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a canonical href -->
-      <a href={cancelHref} class="link-underline font-semibold text-link">{m.form_cancel()}</a>
+      <a href={cancelHref} class="{buttonClass('secondary', 'md')} font-semibold"
+        >{m.form_cancel()}</a
+      >
     {/if}
   </div>
 </MAForm>

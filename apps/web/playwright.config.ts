@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { healthToken } from './e2e/support/health';
 import { stack } from './e2e/support/stack';
 
 const port = 4173;
@@ -11,8 +12,10 @@ const apiToken = 'mesaaberta-e2e-only';
 const supabase = stack();
 
 const serverVars = [
+  `--var APP_ORIGIN:http://localhost:${port}`,
   `--var API_URL:http://127.0.0.1:${apiPort}`,
   `--var API_INTERNAL_TOKEN:${apiToken}`,
+  `--var HEALTHZ_TOKEN:${healthToken}`,
   `--var SUPABASE_URL:${supabase.API_URL}`,
   `--var SUPABASE_PUBLISHABLE_KEY:${supabase.PUBLISHABLE_KEY}`,
   // The local stack's secret key: account deletion removes the Auth user through the Admin API.
@@ -52,7 +55,18 @@ export default defineConfig({
     {
       command: 'bun apps/api/src/entry/bun.ts',
       cwd: '../..',
-      env: { DATABASE_URL: supabase.DB_URL, API_INTERNAL_TOKEN: apiToken, PORT: String(apiPort) },
+      env: {
+        DATABASE_URL: supabase.DB_URL,
+        API_INTERNAL_TOKEN: apiToken,
+        PORT: String(apiPort),
+        // Public profiles answer picture URLs, built from the same storage the web app uses.
+        SUPABASE_URL: supabase.API_URL,
+        // The auth forms run here only (no web fallback): Supabase Auth and the local Mailpit.
+        SUPABASE_PUBLISHABLE_KEY: supabase.PUBLISHABLE_KEY,
+        MAILPIT_URL: supabase.MAILPIT_URL,
+        // Closing an account deletes its Auth user, from here only.
+        SUPABASE_SECRET_KEY: supabase.SECRET_KEY,
+      },
       url: `http://127.0.0.1:${apiPort}/healthz`,
       reuseExistingServer: false,
       timeout: 30_000,
@@ -82,7 +96,7 @@ export default defineConfig({
       // Playwright starts both servers at once, so this one waits for the first, which builds.
       cwd: '../..',
       command: [
-        `until curl -sf -o /dev/null http://localhost:${port}/healthz; do sleep 1; done &&`,
+        `until curl -sf -o /dev/null -H 'authorization: Bearer ${healthToken}' http://localhost:${port}/healthz; do sleep 1; done &&`,
         `bun run wrangler dev apps/web/.svelte-kit/cloudflare/_worker.js --port ${maintenancePort}`,
         '--persist-to .wrangler/state-maintenance',
         ...serverVars,

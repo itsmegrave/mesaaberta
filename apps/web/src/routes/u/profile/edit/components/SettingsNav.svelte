@@ -8,9 +8,23 @@
   import { profileSections } from '#lib/profile/sections.js';
   import { m } from '#lib/paraglide/messages.js';
 
-  let { path }: { /** The page's path, to mark its section. */ path: string } = $props();
+  let {
+    path,
+    systems = false,
+    following = false,
+    availability = false,
+  }: {
+    /** The page's path, to mark its section. */
+    path: string;
+    /** Whether "Sistemas favoritos" is on for this person (`use_signed_in_home`). */
+    systems?: boolean;
+    /** Whether "Seguindo" is on for this person (`use_follows`). */
+    following?: boolean;
+    /** Whether "Quando posso jogar" is on for this person (`use_profile_availability`). */
+    availability?: boolean;
+  } = $props();
 
-  const sections = profileSections();
+  const sections = $derived(profileSections({ systems, following, availability }));
   const current = $derived(
     sections.find((section) => section.path === path.replace(/\/$/, '')) ?? sections[0],
   );
@@ -75,7 +89,7 @@
     onSelect={({ value }) => void goto(value)}
   >
     <Menu.Trigger
-      class="btn flex h-12 w-full items-center justify-between gap-2 rounded-lg border-2 border-surface-200-800 bg-panel px-4 font-semibold"
+      class="btn flex h-11 w-full items-center justify-between gap-2 rounded-lg border-2 border-surface-200-800 bg-panel px-4 font-semibold"
     >
       <span class="min-w-0 flex-1 truncate text-left"
         >{m.profile_section({ name: current.label })}</span

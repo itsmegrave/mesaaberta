@@ -44,7 +44,7 @@ describe('signUpWithEmail', () => {
     email: 'ana@example.com',
     password: 'correct horse',
     origin,
-    next: '/t/new',
+    next: '/tables/new',
   };
 
   it('asks Supabase to create the account and to send the confirmation link back to our callback', async () => {
@@ -55,8 +55,16 @@ describe('signUpWithEmail', () => {
     expect(call).toHaveBeenCalledWith({
       email: 'ana@example.com',
       password: 'correct horse',
-      options: { emailRedirectTo: `${origin}/auth/callback?next=%2Ft%2Fnew` },
+      options: { emailRedirectTo: `${origin}/auth/callback?next=%2Ftables%2Fnew` },
     });
+  });
+
+  it('hands the CAPTCHA answer to Supabase when the form sent one', async () => {
+    const { deps, call } = await setup('signUp', { data: { user, session: null }, error: null });
+
+    await signUpWithEmail(deps, { ...input, captchaToken: 'turnstile' });
+
+    expect(call.mock.calls[0][0].options).toMatchObject({ captchaToken: 'turnstile' });
   });
 
   it('does not let next point at another site', async () => {
@@ -193,6 +201,7 @@ describe('signInWithEmail', () => {
   it.each([
     ['invalid_credentials', 'invalid'],
     ['email_not_confirmed', 'unconfirmed'],
+    ['captcha_failed', 'captcha_failed'],
     ['over_request_rate_limit', 'rate_limited'],
     ['something_unexpected', 'failed'],
   ])('turns the Supabase error %s into %s', async (code, result) => {

@@ -131,4 +131,18 @@ describe('action form submission', () => {
       }),
     );
   });
+
+  it('refreshes in place when the redirect comes back to the same page', async () => {
+    const here = `${window.location.pathname}${window.location.search}`;
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ type: 'redirect', status: 303, location: here })),
+    );
+    const onSuccess = vi.fn();
+    render(Harness, { onSuccess });
+    await page.getByRole('textbox').fill('Terror');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await vi.waitFor(() => expect(refreshAll).toHaveBeenCalled());
+    expect(onSuccess).toHaveBeenCalled();
+    expect(applyAction).not.toHaveBeenCalled();
+  });
 });

@@ -1,13 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-const { signInForSession, signUpForSession, completeLogin } = vi.hoisted(() => ({
+const { signInForSession, signUpForSession, completeLogin, ensureProfile } = vi.hoisted(() => ({
   signInForSession: vi.fn(),
   signUpForSession: vi.fn(),
   completeLogin: vi.fn(),
+  ensureProfile: vi.fn(),
 }));
 vi.mock('@mesaaberta/core/server/auth/email', () => ({ signInForSession, signUpForSession }));
 vi.mock('@mesaaberta/core/server/auth/login', () => ({ completeLogin }));
+vi.mock('@mesaaberta/core/server/auth/profile', () => ({ ensureProfile }));
 
 import { authRoutes } from './auth';
 
@@ -43,6 +45,26 @@ describe('api auth routes', () => {
     );
 
     expect(response.status).toBe(503);
+  });
+
+  it('asks for a PKCE link and answers the verifier the callback will need', async () => {
+    const supabase = vi.fn(
+      async () => new Response('{}', { headers: { 'content-type': 'application/json' } }),
+    );
+    vi.stubGlobal('fetch', supabase);
+    try {
+      const response = await post({ email: 'a@b.co', origin: 'https://mesaaberta.app' });
+      const answer = (await response.json()) as { result: string; codeVerifier: string };
+
+      expect(answer.result).toBe('sent');
+      // As auth-js stores it: JSON, marked as a recovery flow.
+      expect(JSON.parse(answer.codeVerifier)).toMatch(/^[\w-]{40,}\/recovery$/);
+      const [url, init] = supabase.mock.calls[0] as unknown as [string, RequestInit];
+      expect(url).toContain('/auth/v1/recover');
+      expect(JSON.parse(String(init.body))).toMatchObject({ code_challenge_method: 's256' });
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
 
@@ -82,9 +104,19 @@ describe('api sign-in', () => {
     expect(signInForSession.mock.calls[0][1]).toMatchObject(credentials);
   });
 
+  it('hands the CAPTCHA answer to Supabase, and nothing when the form sent none', async () => {
+    signInForSession.mockResolvedValue({ result: 'captcha_failed', session: null });
+
+    expect((await signIn({ ...credentials, captchaToken: 'turnstile' })).status).toBe(400);
+    expect(signInForSession.mock.calls[0][1]).toMatchObject({ captchaToken: 'turnstile' });
+    await signIn({ ...credentials, captchaToken: { not: 'a string' } });
+    expect(signInForSession.mock.calls[1][1]).toMatchObject({ captchaToken: null });
+  });
+
   it.each([
     ['invalid', 400],
     ['unconfirmed', 400],
+    ['captcha_failed', 400],
     ['suspended', 403],
     ['rate_limited', 429],
     ['failed', 500],
@@ -99,8 +131,13 @@ describe('api sign-in', () => {
 });
 
 describe('api sign-up', () => {
+  // The client the route makes keeps a PKCE verifier, as auth-js does when it asks for the e-mail.
+  const withVerifier = (_url: string, _key: string, flow?: Map<string, string>) => {
+    flow?.set('mesaaberta-auth-code-verifier', '"verifier"');
+    return {} as SupabaseClient;
+  };
   const signUp = (body: unknown, environment: object = env) =>
-    authRoutes(open, () => ({}) as SupabaseClient).request(
+    authRoutes(open, withVerifier).request(
       '/sign-up',
       {
         method: 'POST',
@@ -133,7 +170,10 @@ describe('api sign-up', () => {
     expect(await (await signUp(details)).json()).toEqual({ result: 'signed_in', session });
 
     signUpForSession.mockResolvedValue({ result: 'check_email', session: null });
-    expect(await (await signUp(details)).json()).toEqual({ result: 'check_email' });
+    expect(await (await signUp(details)).json()).toEqual({
+      result: 'check_email',
+      codeVerifier: '"verifier"',
+    });
   });
 
   it.each([
@@ -230,7 +270,7 @@ describe('api finish-login', () => {
       {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-client-ip': '203.0.113.9', ...headers },
-        body: JSON.stringify({ next: '/t/new' }),
+        body: JSON.stringify({ next: '/tables/new' }),
       },
       environment,
     );
@@ -239,17 +279,17 @@ describe('api finish-login', () => {
   beforeEach(() => completeLogin.mockReset());
 
   it('finishes the sign-in for whoever Supabase says the token belongs to', async () => {
-    completeLogin.mockResolvedValue({ result: 'ok', target: '/t/new' });
+    completeLogin.mockResolvedValue({ result: 'ok', target: '/tables/new' });
     const request = fake(user);
 
     const response = await send(request);
 
-    expect(await response.json()).toEqual({ result: 'ok', target: '/t/new' });
+    expect(await response.json()).toEqual({ result: 'ok', target: '/tables/new' });
     expect(String(request.mock.calls[0][0])).toBe('https://supabase.test/auth/v1/user');
     const [deps, who, next] = completeLogin.mock.calls[0];
     expect(deps.ip).toBe('203.0.113.9');
     expect(who).toEqual({ id: 'user-1', user_metadata: { name: 'Ana' } });
-    expect(next).toBe('/t/new');
+    expect(next).toBe('/tables/new');
   });
 
   it.each([
@@ -273,5 +313,45 @@ describe('api finish-login', () => {
       503,
     );
     expect(completeLogin).not.toHaveBeenCalled();
+  });
+});
+
+describe('api ensure-profile', () => {
+  const supabase = (answer: { status: number; body?: object }) =>
+    (async () =>
+      new Response(JSON.stringify(answer.body ?? {}), { status: answer.status })) as typeof fetch;
+  const send = (
+    request: typeof fetch,
+    headers: Record<string, string> = { authorization: 'Bearer jwt-a' },
+  ) =>
+    authRoutes(open, undefined, { request }).request(
+      '/ensure-profile',
+      { method: 'POST', headers },
+      env,
+    );
+
+  beforeEach(() => ensureProfile.mockReset());
+
+  it('answers the profile of whoever Supabase says the token belongs to', async () => {
+    ensureProfile.mockResolvedValue({ id: 'user-1', username: null });
+
+    const response = await send(
+      supabase({ status: 200, body: { id: 'user-1', user_metadata: { name: 'Ana' } } }),
+    );
+
+    expect(await response.json()).toEqual({
+      result: 'ok',
+      profile: { id: 'user-1', username: null },
+    });
+    expect(ensureProfile.mock.calls[0][1]).toEqual({
+      id: 'user-1',
+      user_metadata: { name: 'Ana' },
+    });
+  });
+
+  it('makes nothing without a token or with one Supabase rejects', async () => {
+    expect((await send(supabase({ status: 200, body: { id: 'user-1' } }), {})).status).toBe(401);
+    expect((await send(supabase({ status: 401 }))).status).toBe(401);
+    expect(ensureProfile).not.toHaveBeenCalled();
   });
 });

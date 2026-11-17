@@ -7,6 +7,8 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 declare global {
+  /** The deployed tag, for the browser's Sentry events (`define` in vite.config.ts). */
+  const __SENTRY_RELEASE__: string;
   namespace App {
     interface Error {
       message: string;
@@ -26,14 +28,8 @@ declare global {
       maintenance?: 'blocked' | 'bypass';
       /** Logs with this request's id already attached. */
       log: import('@mesaaberta/core/server/logger').Logger;
-      /** The database, or null while none is configured (see `handleDatabase`). */
-      db: import('@mesaaberta/core/server/db/client').Db | null;
-      /** Seconds this request has spent in database queries (summed; overlapping queries add up). For `Server-Timing`. */
-      dbSeconds?: number;
-      /** Runs `task` after the response, with the request's database, before the connection closes. */
-      afterResponse: (
-        task: (db: import('@mesaaberta/core/server/db/client').Db) => Promise<unknown>,
-      ) => void;
+      /** Runs `task` after the response (see `handleAfterResponse`). The web Worker opens no database. */
+      afterResponse: (task: () => Promise<unknown>) => void;
       /** Queues a product event for the signed-in person, sent after the response. See `createTracker`. */
       track: import('@mesaaberta/core/server/analytics/track').Track;
       /** Supabase Auth with cookie sessions, or null while it is not configured. */
@@ -44,12 +40,6 @@ declare global {
       getProfile: () => Promise<
         typeof import('@mesaaberta/core/server/db/schema').profiles.$inferSelect | null
       >;
-      /** Whether `api_events_fenced_leases` is on for this request's person (read once, lazily). */
-      fencedLeases?: () => Promise<boolean>;
-      /** Whether `api_events_queue_shadow` is on for this request's person (read once, lazily). */
-      queueShadow?: () => Promise<boolean>;
-      /** The handler names this request hands to the queue (one `api_events_queue_*` flag per class); usually none. */
-      queueLive?: () => Promise<readonly string[]>;
       /** Set once someone is signed in; it ends up on the request log line. */
       userId?: string;
     }

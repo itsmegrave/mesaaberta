@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   // The bordered card of an admin list: the toolbar on top, the rows, and a footer with "1–20 de N"
   // and the page numbers. DataTable's desktop table sits in it, and so do the lists that are not a
   // table (the events, the audit log).
@@ -72,7 +73,7 @@
       <p class="pb-6 text-center">
         <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- already canonical -->
         <a
-          class="inline-flex min-h-11 items-center anchor font-semibold"
+          class="{buttonClass('secondary', 'sm')} font-semibold"
           href={clearHref ?? current.url.pathname}>{m.admin_list_clear()}</a
         >
       </p>

@@ -1,12 +1,21 @@
 import '@mesaaberta/core/forms/zod-codes';
 import { z } from 'zod';
+import { isPartnerType, MAX_PARTNER_TYPES, orderedTypes } from '../partners/types';
 
 z.config({ jitless: true });
 
 // Shared by the report forms and the server. Keep in step with the `report_*` enums and checks in
 // src/lib/server/db/schema.ts.
 
-export const REPORT_TARGETS = ['table', 'player', 'crowdfunding', 'partner'] as const;
+export const REPORT_TARGETS = [
+  'table',
+  'player',
+  'crowdfunding',
+  'partner',
+  'message',
+  'person',
+  'place',
+] as const;
 export type ReportTarget = (typeof REPORT_TARGETS)[number];
 
 export const REPORT_REASONS = [
@@ -19,6 +28,9 @@ export const REPORT_REASONS = [
   'scam',
   'off_topic',
   'no_backlink',
+  'place_closed',
+  'wrong_address',
+  'not_public',
 ] as const;
 export type ReportReason = (typeof REPORT_REASONS)[number];
 
@@ -50,6 +62,28 @@ export const PARTNER_REPORT_REASONS = [
   'inappropriate_content',
   'other',
 ] as const satisfies readonly ReportReason[];
+
+/** What a member can give for an "Onde jogar" place, and what an admin can reject or remove one for. */
+export const PLACE_REPORT_REASONS = [
+  'place_closed',
+  'wrong_address',
+  'not_public',
+  'spam',
+  'inappropriate_content',
+  'other',
+] as const satisfies readonly ReportReason[];
+
+/** What a member can give for a message, or for a person they talk to in Mensagens. */
+export const MESSAGE_REPORT_REASONS = [
+  'harassment',
+  'spam',
+  'scam',
+  'inappropriate_content',
+  'other',
+] as const satisfies readonly ReportReason[];
+
+/** How many messages a message or person report copies for the admin: the reported one and those before it. */
+export const REPORT_EXCERPT_SIZE = 6;
 
 // `open` and `reviewing` are still waiting on an admin; the other two are closed.
 export const REPORT_STATUSES = ['open', 'reviewing', 'resolved', 'dismissed'] as const;
@@ -83,6 +117,24 @@ export type CrowdfundingReportInput = z.output<typeof crowdfundingReportSchema>;
 
 /** The report form of a campaign's card: the campaign it is about, with the reason and details. */
 export const reportCrowdfundingSchema = z.object({ id: uuid, ...crowdfundingReportSchema.shape });
+
+/**
+ * What a member sends from a conversation: a message (`messageId`) or the person they talk to
+ * (`profileId`), with the reason and details. The conversation is the page's.
+ */
+export const messageReportSchema = z
+  .object({
+    targetType: z.enum(['message', 'person']),
+    messageId: z.union([z.literal(''), uuid]).default(''),
+    profileId: z.union([z.literal(''), uuid]).default(''),
+    reason: z.enum(MESSAGE_REPORT_REASONS),
+    details: z.string().trim().max(REPORT_DETAILS_MAX),
+  })
+  .refine((input) => (input.targetType === 'message' ? input.messageId : input.profileId), {
+    path: ['targetType'],
+    message: 'required',
+  });
+export type MessageReportInput = z.output<typeof messageReportSchema>;
 
 /** An admin closing a report: accepted (`resolved`) or dismissed, with an optional note. */
 export const closeReportSchema = z.object({
@@ -153,6 +205,53 @@ export const reportPartnerSchema = z.object({ id: uuid, ...partnerReportSchema.s
 /** An action that names only the partner: an admin approving one, or its submitter withdrawing it. */
 export const partnerIdSchema = z.object({ id: uuid });
 export const approvePartnerSchema = partnerIdSchema;
+
+/**
+ * An admin correcting a partner's kinds ("Editar tipos…"): the slugs as one comma-separated text
+ * field, so the decision travels like the others; one to MAX_PARTNER_TYPES known kinds.
+ */
+export const partnerTypesSchema = z.object({
+  id: uuid,
+  types: z
+    .string()
+    .transform((value) => [...new Set(value.split(',').map((slug) => slug.trim()))].filter(Boolean))
+    .refine((types) => types.every(isPartnerType), 'invalid')
+    .refine((types) => types.length > 0, 'required')
+    .refine((types) => types.length <= MAX_PARTNER_TYPES, 'too_many_types')
+    .transform((types) => orderedTypes(types)),
+});
+
+/** How many open reports, from as many members, hide a place until an admin acts (Grave: "more than 5"). */
+export const PLACE_REPORTS_TO_HIDE = 6;
+
+/** What a member gives when they report a place on its page. */
+export const placeReportSchema = z.object({
+  reason: z.enum(PLACE_REPORT_REASONS),
+  details: z.string().trim().max(REPORT_DETAILS_MAX),
+});
+export type PlaceReportInput = z.output<typeof placeReportSchema>;
+
+/** The report form on a place's page: the place it is about, with the reason and details. */
+export const reportPlaceSchema = z.object({ id: uuid, ...placeReportSchema.shape });
+
+/** An admin putting back a place its reports hid: the reports are dismissed with the note. */
+export const restorePlaceSchema = z.object({
+  id: uuid,
+  note: z.string().trim().max(RESOLUTION_NOTE_MAX),
+  reportId: z.union([z.literal(''), uuid]).default(''),
+});
+
+/** An admin approving an "Onde jogar" place that waits for review. */
+export const approvePlaceSchema = z.object({ id: uuid });
+
+/** An admin rejecting a place that waits, or taking one down: the reason and a note the submitter reads. */
+export const removePlaceSchema = z.object({
+  id: uuid,
+  reason: z.enum(PLACE_REPORT_REASONS),
+  note: z.string().trim().max(RESOLUTION_NOTE_MAX),
+  // The report the admin decided it from, when they did (it is accepted with the others about it).
+  reportId: z.union([z.literal(''), uuid]).default(''),
+});
 
 /** An admin taking a partner down, or rejecting one that waits: the reason and a note the submitter reads. */
 export const removePartnerSchema = z.object({

@@ -1,4 +1,3 @@
-import { error } from '@sveltejs/kit';
 import { requireAdmin } from '#lib/server/admin-access.js';
 import { adminCounts } from '#lib/server/admin/counts.js';
 import type { RequestHandler } from './$types';
@@ -8,10 +7,9 @@ import type { RequestHandler } from './$types';
  * `/admin`, so the admin hook does not cover it: the endpoint checks itself, with the same 404.
  */
 export const GET: RequestHandler = async ({ locals }) => {
-  await requireAdmin(locals);
-  if (!locals.db) error(503, 'Database not configured');
+  const admin = await requireAdmin(locals);
 
-  return Response.json(await adminCounts(locals.db), {
+  return Response.json(await adminCounts(locals, admin.id), {
     headers: { 'cache-control': 'private, no-store' },
   });
 };

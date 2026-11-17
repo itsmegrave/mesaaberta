@@ -5,15 +5,18 @@ import {
 import { moderationAction } from './form-action';
 
 /**
- * One admin console action: the decision's schema and service come from core (the api route runs
- * the same ones), `fields` are the text fields the form posts. Only admins get in.
+ * One admin console action: the api Worker makes the decision (`/v1/admin/moderation/<name>`) with
+ * the schema core shares, which also checks the form here; `fields` are the text fields it posts.
+ * Only admins get in.
  */
 function decide(name: ModerationDecisionName, fields: readonly string[]) {
-  const { schema, apply } = moderationDecisions[name];
-  return moderationAction(schema, fields, (db, actor, data) => apply(db, actor, data as never), {
-    admin: true,
-    decision: name,
-  });
+  const { schema } = moderationDecisions[name];
+  return moderationAction(
+    schema,
+    fields,
+    { path: `/v1/admin/moderation/${name}` },
+    { admin: true },
+  );
 }
 
 /** The decisions on one report, for `/admin/reports/[id]`. */
@@ -24,6 +27,8 @@ export const reportActions = {
   closeTable: decide('report.closeTable', ['id', 'note']),
   removeCrowdfunding: decide('report.removeCrowdfunding', ['id', 'reason', 'note', 'reportId']),
   removePartner: decide('report.removePartner', ['id', 'reason', 'note', 'reportId']),
+  removePlace: decide('place.remove', ['id', 'reason', 'note', 'reportId']),
+  restorePlace: decide('place.restore', ['id', 'note', 'reportId']),
   ban: decide('report.ban', ['id', 'duration', 'reason']),
 };
 
@@ -33,15 +38,48 @@ export const accountActions = {
   revoke: decide('account.revoke', ['profileId']),
 };
 
+/** Giving a badge by hand, giving one back or taking it away, from `/admin/users/[id]`. */
+export const badgeActions = {
+  grantBadge: decide('badge.grant', ['profileId', 'badgeId', 'reason']),
+  revokeBadge: decide('badge.revoke', ['profileId', 'badgeId', 'reason']),
+};
+
 /** Taking a campaign down from the crowdfunding list, `/admin/crowdfunding`. */
 export const crowdfundingActions = {
   remove: decide('crowdfunding.remove', ['id', 'reason', 'note']),
 };
 
-/** Approving and rejecting partners from the partners list, `/admin/partners`. */
+/** Approving, rejecting and correcting the kinds of partners from the list, `/admin/partners`. */
 export const partnerActions = {
   approve: decide('partner.approve', ['id']),
   remove: decide('partner.remove', ['id', 'reason', 'note']),
+  setTypes: decide('partner.setTypes', ['id', 'types']),
+};
+
+/** Approving, turning down and removing tools from `/admin/tools`. */
+export const toolActions = {
+  approve: decide('tool.approve', ['id']),
+  remove: decide('tool.remove', ['id', 'reason', 'note']),
+};
+
+/** Approving, rejecting and removing places from the "Onde jogar" queue, `/admin/places`. */
+export const placeActions = {
+  approve: decide('place.approve', ['id']),
+  remove: decide('place.remove', ['id', 'reason', 'note']),
+  restore: decide('place.restore', ['id', 'note']),
+  removeOwner: decide('place.removeOwner', ['id']),
+};
+
+/** Approving and rejecting "Este lugar é seu?" claims, `/admin/places/claims`. */
+export const placeClaimActions = {
+  approve: decide('place.approveClaim', ['id']),
+  reject: decide('place.rejectClaim', ['id', 'note']),
+};
+
+/** Places shown as a partner's, from `/admin/places/links`. */
+export const placeLinkActions = {
+  approve: decide('place.approveLink', ['id']),
+  reject: decide('place.rejectLink', ['id', 'note']),
 };
 
 /** Closing a table from the tables list, `/admin/tables`. */

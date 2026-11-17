@@ -1,9 +1,11 @@
 <script lang="ts">
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import UserLink from '#lib/components/ui/UserLink.svelte';
   import Pill from '#lib/components/ui/Pill.svelte';
   import { m } from '#lib/paraglide/messages.js';
   import ActionForm from '#lib/components/ActionForm.svelte';
   import NextSession from '#lib/components/ui/NextSession.svelte';
+  import { isTableOver, tableStatusLabel, type TableStatus } from '#lib/tables/status.js';
 
   type Item = {
     slug: string;
@@ -11,6 +13,8 @@
     systemName: string;
     gmName: string;
     status: 'pending' | 'confirmed';
+    /** A table that is over shows its state instead of a next session. */
+    tableStatus: TableStatus;
     timezone: string;
     startsAt: Date;
     canRate: boolean;
@@ -20,6 +24,7 @@
   let { item, next }: { item: Item; next: string } = $props();
 
   const page = $derived(`/t/${item.slug}`);
+  const over = $derived(isTableOver(item.tableStatus));
 </script>
 
 <article class="rounded-lg border border-surface-200-800 bg-panel p-6">
@@ -39,13 +44,19 @@
     <span class="sr-only">{m.table_gm()}: </span><UserLink username={item.gmName} />
   </p>
 
-  <NextSession startsAt={item.startsAt} timezone={item.timezone} />
+  {#if over}
+    <p class="mt-4"><Pill tone="outline">{tableStatusLabel(item.tableStatus)}</Pill></p>
+  {:else}
+    <NextSession startsAt={item.startsAt} timezone={item.timezone} />
+  {/if}
 
   {#if item.canRate}
     <p class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-lamp-wash px-4 py-3">
       {#if item.rating}
         {m.dash_your_rating({ gm: item.rating.gmScore })}
-        <a href="{page}#avaliar" class="anchor">{m.dash_change_rating()}</a>
+        <a href="{page}#avaliar" class="{buttonClass('secondary', 'sm')} font-semibold"
+          >{m.dash_change_rating()}</a
+        >
       {:else}
         {m.dash_rate_prompt()}
         <a
@@ -63,7 +74,7 @@
     {next}
     class="mt-5"
     label={item.status === 'pending' ? m.table_cancel_request() : m.table_leave()}
-    buttonClass="btn h-12 rounded-lg border-2 border-primary-500 px-4 font-semibold"
+    buttonClass="btn h-11 rounded-lg border-2 border-primary-500 px-4 font-semibold"
     success={item.status === 'pending' ? m.toast_request_withdrawn() : m.toast_left()}
   />
 </article>

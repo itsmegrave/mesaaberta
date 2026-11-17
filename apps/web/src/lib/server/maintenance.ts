@@ -43,7 +43,7 @@ const isAdmin = async (event: RequestEvent) => {
   try {
     return can(await event.locals.getProfile(), 'admin:access');
   } catch (error) {
-    event.locals.log.error('maintenance: could not read the profile', { error });
+    event.locals.log.error('maintenance.profile_read_failed', { error });
     return false;
   }
 };

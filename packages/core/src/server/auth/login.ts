@@ -34,8 +34,7 @@ export type CompleteLoginResult =
  * The database half of a provider sign-in, once the session exists: makes sure a profile exists,
  * refuses a banned account (a temporary ban that ran out is lifted here), records the connection and
  * answers where to go next (the onboarding step first, if the profile is not complete). It does not
- * touch the session: the caller signs the person out on a refusal. It runs in the web Worker or, behind
- * `api_auth_finish_login`, in the api Worker.
+ * touch the session: the caller signs the person out on a refusal. It runs in the api Worker.
  */
 export async function completeLogin(
   { db, log, ip }: CompleteDeps,
@@ -46,7 +45,7 @@ export async function completeLogin(
   try {
     profile = await ensureProfile(db, user);
   } catch (error) {
-    log.error('login: could not create the profile', { error });
+    log.error('auth.login_profile_not_created', { error });
     return { result: 'profile_failed' };
   }
 
@@ -71,29 +70,44 @@ const REFUSED_AT = {
  * goes back to the login page with an error code, so nobody is left half signed in.
  */
 export async function finishLogin(
-  deps: {
-    supabase: SupabaseClient;
-    db: AnyDb | null;
-    log: Logger;
-    ip: string | null;
-    remote?: (accessToken: string, next: string | null) => Promise<CompleteLoginResult | null>;
-  },
+  deps: SettleDeps,
   { code, next }: { code: string | null; next: string | null },
 ): Promise<string> {
-  const { supabase, db, log, ip, remote } = deps;
+  const { supabase, log } = deps;
 
   if (!code) return '/login?error=missing_code';
 
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
   if (error || !data.user) {
-    log.warn('login: could not exchange the code', { error });
+    log.warn('auth.login_code_exchange_failed', { error });
     return '/login?error=exchange_failed';
   }
 
-  const token = data.session?.access_token;
+  return settleLogin(deps, data.user, data.session?.access_token ?? null, next);
+}
+
+export type SettleDeps = {
+  supabase: SupabaseClient;
+  db: AnyDb | null;
+  log: Logger;
+  ip: string | null;
+  remote?: (accessToken: string, next: string | null) => Promise<CompleteLoginResult | null>;
+};
+
+/**
+ * The shared tail of every sign-in that makes a session here (a provider's code, a passkey): the
+ * database half through `remote` (or `completeLogin` with a database), and on any failure the session
+ * is signed out again, so nobody is left half signed in. Answers where to go next.
+ */
+export async function settleLogin(
+  { supabase, db, log, ip, remote }: SettleDeps,
+  user: AuthUser,
+  token: string | null,
+  next: string | null,
+): Promise<string> {
   let done = remote && token ? await remote(token, next) : null;
-  if (!done && db) done = await completeLogin({ db, log, ip }, data.user, next);
-  if (!done) log.error('login: there is no database to create the profile in');
+  if (!done && db) done = await completeLogin({ db, log, ip }, user, next);
+  if (!done) log.error('auth.login_no_database');
   if (!done) {
     await supabase.auth.signOut();
     return '/login?error=unavailable';

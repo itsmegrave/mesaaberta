@@ -22,8 +22,18 @@ describe('parseRatingForm', () => {
   it("accepts the GM's score from 1 to 5 and an optional comment", () => {
     expect(parseRatingForm(form({ gmScore: '3', comment: 'Ótima noite.' }))).toEqual({
       ok: true,
-      data: { gmScore: 3, comment: 'Ótima noite.' },
+      data: { gmScore: 3, comment: 'Ótima noite.', commentPublic: false },
     });
+  });
+
+  it('shows the comment on the profile only when the box was ticked', () => {
+    const shown = parseRatingForm(
+      form({ gmScore: '5', comment: 'Pode mostrar.', commentPublic: 'true' }),
+    );
+    const kept = parseRatingForm(form({ gmScore: '5', comment: 'Só meu.', commentPublic: 'nope' }));
+
+    expect(shown.ok && shown.data.commentPublic).toBe(true);
+    expect(kept.ok && kept.data.commentPublic).toBe(false);
   });
 
   it('trims the comment, and an empty one becomes null', () => {
@@ -62,6 +72,10 @@ describe('parseRatingForm', () => {
     );
 
     // Tables are not rated: a table score sent anyway is dropped with the rest.
-    expect(result.ok && Object.keys(result.data).sort()).toEqual(['comment', 'gmScore']);
+    expect(result.ok && Object.keys(result.data).sort()).toEqual([
+      'comment',
+      'commentPublic',
+      'gmScore',
+    ]);
   });
 });

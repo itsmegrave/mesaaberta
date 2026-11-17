@@ -1,15 +1,16 @@
-import { routes } from '@mesaaberta/core/routes';
 import type { Handle } from '@sveltejs/kit/hooks';
 import { isHttpError, isRedirect } from '@sveltejs/kit';
 import * as Sentry from '@sentry/sveltekit';
 import type { Fields, Logger } from '@mesaaberta/core/server/logger';
+import { coloOf, sentryReleaseFor } from '@mesaaberta/core/observability/sentry-options';
+import { withRequestId } from '@mesaaberta/contracts';
 
 /** The record a route parameter names, by the path segment before it (`/t/[slug]`). */
 const RESOURCE_TYPES: Record<string, string> = {
-  [routes.tables.slice(1)]: 'table',
-  [routes.messages.slice(1)]: 'conversation',
-  [routes.partners.slice(1)]: 'partner',
-  [routes.crowdfunding.slice(1)]: 'crowdfunding',
+  // Item pages keep their letter (`/t/[slug]`, `/m/[id]`, `/p/[id]`).
+  t: 'table',
+  m: 'conversation',
+  p: 'partner',
   // Admin and API route templates retain their existing collection names.
   tables: 'table',
   users: 'user',
@@ -18,6 +19,8 @@ const RESOURCE_TYPES: Record<string, string> = {
   messages: 'conversation',
   partners: 'partner',
   crowdfunding: 'crowdfunding',
+  // A game system's page, `/s/[slug]`.
+  s: 'system',
 };
 
 /**
@@ -52,10 +55,13 @@ export const handleRequestLog =
   async ({ event, resolve }) => {
     const requestId = event.request.headers.get('cf-ray') ?? crypto.randomUUID();
     const resource = resourceOf(event.route?.id, event.params);
+    // Every line names the route and the release (the tag, as Sentry's issues do; the Worker
+    // version id where there is no tag), so a line and an issue of the same deploy match.
     const base = logger.child({
       requestId,
       environment: import.meta.env.PROD ? 'production' : 'development',
-      release: event.locals.env?.CF_VERSION_METADATA?.id,
+      release: sentryReleaseFor('web', event.locals.env).release,
+      route: event.route?.id ?? '/unmatched',
       ...resource,
     });
     // The user is known only once a later hook verifies the session: read it at each line.
@@ -71,6 +77,9 @@ export const handleRequestLog =
     const started = Date.now();
     Sentry.setTag('requestId', requestId);
     Sentry.setTag('route', event.route?.id ?? '/unmatched');
+    // The Cloudflare data center that served the request, to split latency by region.
+    const colo = coloOf(event.request);
+    if (colo) Sentry.setTag('colo', colo);
     if (resource.resourceType) Sentry.setTag('resourceType', resource.resourceType);
     if (resource.resourceId) Sentry.setTag('resourceId', resource.resourceId);
 
@@ -78,12 +87,13 @@ export const handleRequestLog =
 
     let response: Response;
     try {
-      response = await resolve(event);
+      // Inside, the logger, the api client and the outbox all read the id from the request context.
+      response = await withRequestId(requestId, () => resolve(event));
     } catch (error) {
       if (isRedirect(error) || isHttpError(error)) {
         const status = error.status;
         log[status >= 500 ? 'error' : status >= 400 && status !== 404 ? 'warn' : 'info'](
-          'request',
+          'request.completed',
           {
             event: 'request.completed',
             method: event.request.method,
@@ -113,7 +123,7 @@ export const handleRequestLog =
         : response.status >= 400 && response.status !== 404
           ? 'warn'
           : 'info'
-    ]('request', {
+    ]('request.completed', {
       method: event.request.method,
       route: event.route?.id ?? '/unmatched',
       event: 'request.completed',

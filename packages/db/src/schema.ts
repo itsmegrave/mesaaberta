@@ -1,11 +1,14 @@
-import { TABLE_STATUSES } from './table-status';
+import { TABLE_SESSION_STATUSES, TABLE_STATUSES } from './table-status';
 import { PROFILE_STATUSES } from './profile-status';
+import { EVENT_REVIEWS } from './event-review';
+import type { ReportExcerpt } from './report-excerpt';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
   type AnyPgColumn,
   boolean,
   check,
+  foreignKey,
   date,
   doublePrecision,
   jsonb,
@@ -46,11 +49,17 @@ export const ageRange = pgEnum('age_range', [
   '45_54',
   '55_plus',
 ]);
+// What the person does at the table, in their own words on the profile. `gm` and `both` list them in
+// Quem mestra. Keep in step with TABLE_ROLES in packages/core/src/profile/schema.
+export const tableRole = pgEnum('table_role', ['player', 'gm', 'both']);
 export const joinMode = pgEnum('join_mode', ['auto', 'approval']);
-export const tableKind = pgEnum('table_kind', ['campaign', 'one_shot', 'adventure']);
+// `open`: a westmarch (an open table), a roster larger than any one session. Added last: an enum
+// value is only ever appended.
+export const tableKind = pgEnum('table_kind', ['campaign', 'one_shot', 'adventure', 'open']);
 // `active` is open; `disabled` is the GM cancelling before the session; after the session the GM
 // confirms it: `awaiting_confirmation` until they answer, then `concluded` or `not_held`.
 export const tableStatus = pgEnum('table_status', TABLE_STATUSES);
+export const tableSessionStatus = pgEnum('table_session_status', TABLE_SESSION_STATUSES);
 // Where the table plays: over the internet, or around a real table.
 export const tableModality = pgEnum('table_modality', ['online', 'in_person']);
 // Where a platform or a tag stands in the catalog. Only approved ones are public; the rest are for
@@ -100,6 +109,21 @@ export const profiles = pgTable(
     bannerPath: text('banner_path'),
     // A few lines in the person's own words, shown as plain text on the public profile. Optional.
     bio: text('bio'),
+    // Joga, mestra or both. Null: the person would rather not say (and is not in Quem mestra).
+    tableRole: tableRole('table_role'),
+    // Set by the one-time backfill that put people who already ran a table in Quem mestra, so
+    // Editar perfil can tell them why; cleared once they pick an answer themselves.
+    tableRoleInferred: boolean('table_role_inferred').notNull().default(false),
+    // Off by default: `name` may have come from the sign-in provider, so it is public only once the
+    // person says so, as a line under the @usuário.
+    showName: boolean('show_name').notNull().default(false),
+    // On: the favorite systems show as pills on the public profile. They still shape the person's
+    // own Início either way.
+    showFavoriteSystems: boolean('show_favorite_systems').notNull().default(true),
+    // Whether a notice arrives when someone this person follows opens a table, or a seat opens on a
+    // full table of theirs.
+    followNotifyTables: boolean('follow_notify_tables').notNull().default(true),
+    followNotifySeats: boolean('follow_notify_seats').notNull().default(true),
     // The IANA zone times are shown in (`America/Sao_Paulo`). Null until the person picks one: the
     // browser's zone is used meanwhile (see `viewerTimezone`).
     timezone: text('timezone'),
@@ -107,6 +131,19 @@ export const profiles = pgTable(
     // messages. Table chats are not affected.
     directMessagesEnabled: boolean('direct_messages_enabled').notNull().default(true),
     invitationsEnabled: boolean('invitations_enabled').notNull().default(true),
+    // "Procuro mesa": since when the person says they are looking for a table, and the line they
+    // wrote for GMs. Null: not looking. Listed for `LOOKING_DAYS`, then they have to say it again.
+    lookingForTableAt: timestamp('looking_for_table_at', { withTimezone: true }),
+    lookingForTableNote: text('looking_for_table_note'),
+    // The secret in the person's calendar feed address (`/calendar/<token>.ics`), which a calendar
+    // app reads without signing in. Null: no feed. A new one replaces it, and the old address stops.
+    calendarFeedToken: text('calendar_feed_token'),
+    // "Quando posso jogar": a bit per day and part of the day (Monday morning is bit 0, Sunday
+    // night bit 20), as `@mesaaberta/core/profile/availability` reads it. 0: not said.
+    availability: integer('availability').notNull().default(0),
+    // On: the person's Retrospectiva (`/u/<username>/review/<year>`) opens for anyone with the link.
+    // Off, the default: only they see it, since it tells their history at the tables.
+    yearReviewPublic: boolean('year_review_public').notNull().default(false),
     role: profileRole('role').notNull().default('member'),
     status: profileStatus('status').notNull().default('active'),
     // A ban by the moderation: `status` is `suspended` while it lasts. `bannedUntil` null with a
@@ -121,11 +158,19 @@ export const profiles = pgTable(
     // Unique on the lowercase form, so `Ana` and `ana` cannot both exist even if a caller forgets to
     // normalise. Nulls do not collide: many profiles can be waiting for onboarding.
     uniqueIndex('profiles_username_unique').on(sql`lower(${profile.username})`),
+    uniqueIndex('profiles_calendar_feed_token_unique').on(profile.calendarFeedToken),
     check('profiles_username_format', sql`${profile.username} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
     // Mirrors RESOLUTION_NOTE_MAX in apps/web/src/lib/moderation/reports.
     check('profiles_ban_reason_length', sql`char_length(${profile.banReason}) <= 1000`),
     // Mirrors PROFILE_LIMITS.bio in packages/core/src/profile/schema.
     check('profiles_bio_length', sql`char_length(${profile.bio}) <= 300`),
+    // Mirrors LOOKING_NOTE_MAX in packages/core/src/players/looking.
+    check('profiles_looking_note_length', sql`char_length(${profile.lookingForTableNote}) <= 200`),
+    check('profiles_availability_range', sql`${profile.availability} between 0 and 2097151`),
+    // Procuro mesa reads the people looking, newest first.
+    index('profiles_looking_for_table_idx')
+      .on(profile.lookingForTableAt)
+      .where(sql`${profile.lookingForTableAt} IS NOT NULL`),
     // Expired temporary bans, for the sweep that lifts them.
     index('profiles_banned_until_idx')
       .on(profile.bannedUntil)
@@ -188,12 +233,93 @@ export const systems = pgTable(
   ],
 ).enableRLS();
 
+// What the logo finder (`@mesaaberta/core/server/systems/logos`) came back with for a system,
+// one row per system. Logos are trademarks, so each keeps where it came from and stays `pending`
+// until an admin approves it; only an `approved` logo is shown. `missing` means the search found
+// nothing, so the next run skips it and the admin knows to add one by hand. A rejected logo keeps
+// its source (so the same one is not proposed again) but its file is deleted.
+export const systemLogoStatus = pgEnum('system_logo_status', [
+  'pending',
+  'approved',
+  'rejected',
+  'missing',
+]);
+export const systemLogos = pgTable(
+  'system_logos',
+  {
+    systemId: uuid('system_id')
+      .primaryKey()
+      .references(() => systems.id, { onDelete: 'cascade' }),
+    status: systemLogoStatus('status').notNull(),
+    // In the table-images bucket, under `systems/`. Null when missing or rejected.
+    path: text('path'),
+    // `wikidata`, `commons`, `website` or `upload` (an admin sent the file).
+    method: text('method'),
+    // `high`, `medium` or `low`, from the finder; null for an upload.
+    confidence: text('confidence'),
+    // Where the picture was read from, and the page that shows it with its terms.
+    imageUrl: text('image_url'),
+    sourcePage: text('source_page'),
+    attribution: text('attribution'),
+    license: text('license'),
+    // Why the finder is as sure as it is, or why it found nothing.
+    note: text('note'),
+    wikidataId: text('wikidata_id'),
+    reviewedBy: uuid('reviewed_by').references(() => profiles.id, { onDelete: 'set null' }),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    ...timestamps,
+  },
+  (logo) => [index('system_logos_status_idx').on(logo.status)],
+).enableRLS();
+
+// The systems a person likes to play, which shape their Início. At most
+// FAVORITE_SYSTEMS_MAX each, held by the service, not the database.
+export const profileFavoriteSystems = pgTable(
+  'profile_favorite_systems',
+  {
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    systemId: uuid('system_id')
+      .notNull()
+      .references(() => systems.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (favorite) => [
+    primaryKey({ columns: [favorite.profileId, favorite.systemId] }),
+    index('profile_favorite_systems_system_idx').on(favorite.systemId),
+  ],
+).enableRLS();
+
+// Who follows whom: anyone, quem mestra or quem joga. Only the followed person sees how many
+// follow them.
+export const follows = pgTable(
+  'follows',
+  {
+    followerId: uuid('follower_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    followeeId: uuid('followee_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (follow) => [
+    primaryKey({ columns: [follow.followerId, follow.followeeId] }),
+    index('follows_followee_idx').on(follow.followeeId),
+    check('follows_not_self', sql`${follow.followerId} <> ${follow.followeeId}`),
+  ],
+).enableRLS();
+
 // CEPs already looked up (ViaCEP), so the same one is never asked for twice. Public facts, no
 // personal data: a CEP is an area, not an address.
 export const postalCodes = pgTable(
   'postal_codes',
   {
     cep: text('cep').primaryKey(),
+    // The street (logradouro) the CEP is on, without a number. Empty when the CEP covers a whole
+    // town; null when the row was kept before streets were (the next lookup fills it in).
+    street: text('street'),
     neighbourhood: text('neighbourhood'),
     city: text('city').notNull(),
     state: text('state').notNull(),
@@ -270,10 +396,28 @@ export const gameTables = pgTable(
     locationNeighbourhood: text('location_neighbourhood'),
     locationCity: text('location_city'),
     locationState: text('location_state'),
+    // The "Onde jogar" place an in-person table happens at, when the GM picked one. The CEP and area
+    // above are still copied from it, so the filters and a removed place never break the table.
+    placeId: uuid('place_id').references((): AnyPgColumn => places.id, { onDelete: 'set null' }),
     capacity: integer('capacity').notNull(),
     // The fewest confirmed players the GM wants before the table goes ahead. Optional: null says it
     // makes no difference. Never more than `capacity`.
     minPlayers: integer('min_players'),
+    // How many sessions an adventure plans, so the table can say "sessão 2 de 4". Only adventures
+    // have one; null on the others, and on adventures made before the field existed.
+    plannedSessions: integer('planned_sessions'),
+    // The safety tools the GM uses (Sessão Zero, Linhas e Véus, Carta X...): keys of `SAFETY_TOOLS` in
+    // `@mesaaberta/core/tables/safety`, in that order. Empty: the GM did not say.
+    safetyTools: text('safety_tools')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    // The content rating, ClassInd style: L, 10, 12, 14, 16 or 18. Null: not said. An 18 table is
+    // left out of the list unless the visitor asks for it.
+    contentRating: text('content_rating'),
+    // How many play each session of a westmarch, whose `capacity` is the roster. Null on the
+    // other kinds.
+    sessionSize: integer('session_size'),
     startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
     durationMinutes: integer('duration_minutes').notNull(),
     timezone: text('timezone').notNull(),
@@ -281,6 +425,9 @@ export const gameTables = pgTable(
     recurrence: text('recurrence'),
     until: timestamp('until', { withTimezone: true }),
     status: tableStatus('status').notNull().default('active'),
+    // When the table went public: set on creation for an active table and when a draft is published,
+    // so "Novas mesas" counts a draft from its publication, not from when it was written.
+    publishedAt: timestamp('published_at', { withTimezone: true }),
     // Incremented on every edit so calendar clients replace the invite instead of adding one.
     icalSequence: integer('ical_sequence').notNull().default(0),
     // Set when an admin closed the table over a report (it is `disabled` too). The justification is
@@ -301,16 +448,31 @@ export const gameTables = pgTable(
       table.duplicationRequestKey,
     ),
     index('game_tables_system_id_idx').on(table.systemId),
+    index('game_tables_status_published_idx').on(table.status, table.publishedAt),
     index('game_tables_location_idx').on(table.locationState, table.locationCity),
+    index('game_tables_place_idx').on(table.placeId),
     check('game_tables_postal_code_format', sql`${table.postalCode} ~ '^[0-9]{8}$'`),
     check(
       'game_tables_recurrence_matches_kind',
-      sql`(${table.kind}::text IN ('one_shot', 'adventure') AND ${table.recurrence} IS NULL) OR (${table.kind}::text = 'campaign' AND ${table.recurrence} IS NOT NULL)`,
+      // A westmarch may repeat or not.
+      sql`(${table.kind}::text IN ('one_shot', 'adventure') AND ${table.recurrence} IS NULL) OR (${table.kind}::text = 'campaign' AND ${table.recurrence} IS NOT NULL) OR ${table.kind}::text = 'open'`,
     ),
     check('game_tables_capacity_positive', sql`${table.capacity} > 0`),
     check(
+      'game_tables_session_size_range',
+      sql`${table.sessionSize} IS NULL OR (${table.sessionSize} >= 1 AND ${table.sessionSize} <= ${table.capacity})`,
+    ),
+    check(
       'game_tables_min_players_range',
       sql`${table.minPlayers} IS NULL OR (${table.minPlayers} >= 1 AND ${table.minPlayers} <= ${table.capacity})`,
+    ),
+    check(
+      'game_tables_planned_sessions_range',
+      sql`${table.plannedSessions} IS NULL OR (${table.kind}::text = 'adventure' AND ${table.plannedSessions} BETWEEN 2 AND 20)`,
+    ),
+    check(
+      'game_tables_content_rating_value',
+      sql`${table.contentRating} IS NULL OR ${table.contentRating} IN ('L', '6', '10', '12', '14', '16', '18')`,
     ),
     check('game_tables_duration_positive', sql`${table.durationMinutes} > 0`),
     check(
@@ -366,6 +528,8 @@ export const gameTableTags = pgTable(
 // as the change it describes, then dispatched to handlers after the commit; a sweeper retries what
 // did not finish. Rows are the record of who did what, and when; a finished one is deleted after
 // RETENTION_DAYS (see pruneEvents).
+export const eventReview = pgEnum('event_review', EVENT_REVIEWS);
+
 export const events = pgTable(
   'events',
   {
@@ -399,6 +563,14 @@ export const events = pgTable(
     // Set once a bus adapter (Cloudflare Queues) has accepted the event. Null while the event only
     // lives in the outbox, and for every event written before the bus existed.
     publishedAt: timestamp('published_at', { withTimezone: true }),
+    // An admin's word on a given-up event (`EVENT_REVIEWS`), who said it and when. Not a foreign
+    // key, like `actorId`. Cleared when the event runs again.
+    reviewStatus: eventReview('review_status'),
+    reviewedBy: uuid('reviewed_by'),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    // The `requestId` of the request (or worker run) that recorded the event (Trello #278). Null
+    // for events recorded outside one, and for every event written before it was kept.
+    actionId: text('action_id'),
   },
   (event) => [
     // What the sweeper looks for: events not yet done and not given up on.
@@ -487,6 +659,108 @@ export const registrations = pgTable(
   ],
 ).enableRLS();
 
+// The sessions of a table, one row each: the dates ahead and what became of the ones that passed.
+// `game_tables.starts_at` stays the date of the next one, written in the same transaction (lists,
+// filters, reminders and the sweeper read it), so a scheduled row mirrors it. Tracked from the
+// release of this table on: nothing before it is recovered. It goes with its table.
+export const tableSessions = pgTable(
+  'table_sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tableId: uuid('table_id')
+      .notNull()
+      .references(() => gameTables.id, { onDelete: 'cascade' }),
+    startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
+    durationMinutes: integer('duration_minutes').notNull(),
+    status: tableSessionStatus('status').notNull().default('scheduled'),
+    // The GM's note to the players about this session ("começa às 20h"). Plain text, optional.
+    note: text('note'),
+    // The GM scheduled or moved this one by hand: a change to the table's repeat rule leaves it
+    // where it is. The dates a weekly campaign gets from its rule are not pinned.
+    pinned: boolean('pinned').notNull().default(false),
+    // Where a moved session was before ("Data movida de 29 de novembro"). The first move only.
+    movedFrom: timestamp('moved_from', { withTimezone: true }),
+    ...timestamps,
+  },
+  (session) => [
+    index('table_sessions_table_idx').on(session.tableId, session.startsAt),
+    check('table_sessions_duration_positive', sql`${session.durationMinutes} > 0`),
+    check('table_sessions_note_length', sql`char_length(${session.note}) <= 500`),
+  ],
+).enableRLS();
+
+// Who showed up at one session, as the GM said when confirming it. `registrations.attended` stays
+// the summary (present at least once), which ratings and badges read. Personal data: it goes with
+// the session and with the account.
+export const tableSessionAttendance = pgTable(
+  'table_session_attendance',
+  {
+    sessionId: uuid('session_id')
+      .notNull()
+      .references(() => tableSessions.id, { onDelete: 'cascade' }),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    attended: boolean('attended').notNull(),
+  },
+  (row) => [
+    primaryKey({ columns: [row.sessionId, row.playerId] }),
+    index('table_session_attendance_player_idx').on(row.playerId),
+  ],
+).enableRLS();
+
+// Campanha aberta (`use_session_signup`): who plays one session. A player on the table's roster
+// signs up and plays (`going`) while the session has room (`session_size`), or waits for it
+// (`waiting`, in order of `created_at`); when someone playing leaves, the first who waits takes
+// the place in the same transaction. Quem mestra may add or take out anyone. Personal data: it goes
+// with the session and with the account, and with the player's seat at the table.
+export const sessionSignupStatus = pgEnum('session_signup_status', ['going', 'waiting']);
+
+export const tableSessionSignups = pgTable(
+  'table_session_signups',
+  {
+    sessionId: uuid('session_id')
+      .notNull()
+      .references(() => tableSessions.id, { onDelete: 'cascade' }),
+    tableId: uuid('table_id').notNull(),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    status: sessionSignupStatus('status').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (row) => [
+    primaryKey({ columns: [row.sessionId, row.playerId] }),
+    // Only someone with a place at the table signs up; leaving it takes them off every session.
+    foreignKey({
+      columns: [row.tableId, row.playerId],
+      foreignColumns: [registrations.tableId, registrations.playerId],
+    }).onDelete('cascade'),
+    index('table_session_signups_table_player_idx').on(row.tableId, row.playerId),
+  ],
+).enableRLS();
+
+// The lista de espera of a full table (`use_waitlist`): who asked to be told, in order. When a seat
+// frees up the first in line takes it (or, at a table that approves each player, their request goes
+// to the GM) in the same transaction, and their row goes. Personal data: it goes with the account.
+export const tableWaitlist = pgTable(
+  'table_waitlist',
+  {
+    tableId: uuid('table_id')
+      .notNull()
+      .references(() => gameTables.id, { onDelete: 'cascade' }),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.tableId, t.playerId] }),
+    index('table_waitlist_order_idx').on(t.tableId, t.createdAt),
+    index('table_waitlist_player_idx').on(t.playerId),
+  ],
+).enableRLS();
+
 // What a player thought of the GM of a table they played at: tables are not rated, GMs are. A
 // rating is made once, after the GM confirmed the session happened, and is final: it is not edited,
 // and it outlives the seat (a player who leaves or is removed keeps what they said about a session
@@ -502,6 +776,9 @@ export const ratings = pgTable(
       .references(() => profiles.id),
     gmScore: smallint('gm_score').notNull(),
     comment: text('comment'),
+    // The player chose to show the comment on the GM's public profile, with their @usuário and the
+    // score. Off by default: a comment written before this choice existed stays private.
+    commentPublic: boolean('comment_public').notNull().default(false),
     ...timestamps,
   },
   (rating) => [
@@ -509,8 +786,61 @@ export const ratings = pgTable(
     check('ratings_gm_score_range', sql`${rating.gmScore} BETWEEN 1 AND 5`),
     check('ratings_comment_length', sql`char_length(${rating.comment}) <= 1000`),
     index('ratings_table_idx').on(rating.tableId),
+    index('ratings_player_idx').on(rating.playerId),
   ],
 ).enableRLS();
+
+// What the GM of a table thought of a player they marked present: the other side of `ratings`. The
+// score counts for the player's public score "como participante"; the comment is the GM's own note
+// and nobody else sees it. Made once per player and table, and final. It goes with its table, with
+// the rated player's account, and loses its comment with the GM's (see `closeAccount`).
+export const playerRatings = pgTable(
+  'player_ratings',
+  {
+    tableId: uuid('table_id')
+      .notNull()
+      .references(() => gameTables.id, { onDelete: 'cascade' }),
+    playerId: uuid('player_id')
+      .notNull()
+      .references(() => profiles.id),
+    score: smallint('score').notNull(),
+    comment: text('comment'),
+    ...timestamps,
+  },
+  (rating) => [
+    primaryKey({ columns: [rating.tableId, rating.playerId] }),
+    check('player_ratings_score_range', sql`${rating.score} BETWEEN 1 AND 5`),
+    check('player_ratings_comment_length', sql`char_length(${rating.comment}) <= 1000`),
+    index('player_ratings_player_idx').on(rating.playerId),
+  ],
+).enableRLS();
+
+// The e-mails that asked a GM to close a session they never answered for (`remindToClose`): one row
+// per table, session start and step, so a sweep sends each one once, and a session moved to another
+// date gets its own. `sentAt` of the `7d` row is when the last-chance notice went out: the table is
+// concluded for the GM no sooner than three days after it.
+export const sessionCloseReminders = pgTable(
+  'session_close_reminders',
+  {
+    tableId: uuid('table_id')
+      .notNull()
+      .references(() => gameTables.id, { onDelete: 'cascade' }),
+    startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
+    step: text('step').$type<'1h' | '7d'>().notNull(),
+    sentAt: timestamp('sent_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (reminder) => [
+    primaryKey({ columns: [reminder.tableId, reminder.startsAt, reminder.step] }),
+    check('session_close_reminders_step', sql`${reminder.step} IN ('1h', '7d')`),
+  ],
+).enableRLS();
+
+// An e-mail that went out, by its idempotency key. Resend forgets a key after 24 hours, so a handler
+// whose retry may come later (`sendOnce`) checks here first and records the key once it is sent.
+export const mailDeliveries = pgTable('mail_deliveries', {
+  key: text('key').primaryKey(),
+  sentAt: timestamp('sent_at', { withTimezone: true }).notNull().defaultNow(),
+}).enableRLS();
 
 // A GM's score, worked out from their ratings and kept until it can change: when the month turns
 // (the weights age by months) or when a rating is added or removed (a trigger on `ratings` raises
@@ -607,6 +937,7 @@ export const notifications = pgTable(
       notification.recipientId,
     ),
     index('notifications_recipient_feed_idx').on(notification.recipientId, notification.createdAt),
+    index('notifications_actor_idx').on(notification.actorId),
     // The badge: a person's unread count.
     index('notifications_recipient_unread_idx')
       .on(notification.recipientId, notification.createdAt)
@@ -645,6 +976,7 @@ export const userBadges = pgTable(
     primaryKey({ columns: [badge.profileId, badge.badgeId] }),
     // Who holds a badge, for the admin catalog's counts.
     index('user_badges_badge_idx').on(badge.badgeId),
+    index('user_badges_granted_by_idx').on(badge.grantedBy),
     check('user_badges_badge_id_format', sql`${badge.badgeId} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
     // A reason only comes with a revocation. Mirrors the reason limit of a report's resolution note.
     check(
@@ -727,13 +1059,43 @@ export const messages = pgTable(
   (message) => [
     index('messages_conversation_created_idx').on(message.conversationId, message.createdAt.desc()),
     index('messages_sender_idx').on(message.senderId),
+    index('messages_table_idx').on(message.tableId),
     // Mirrors MESSAGE_MAX_LENGTH in apps/web/src/lib/messages/schema.
     check('messages_body_length', sql`char_length(${message.body}) BETWEEN 1 AND 2000`),
   ],
 ).enableRLS();
 
+// One person blocking another: the blocked one can no longer write to them directly, invite them
+// or follow them, and their direct conversation leaves the blocker's inbox. Table chats they share
+// are left as they are. The blocked person is never told: to them it looks like direct messages off.
+export const profileBlocks = pgTable(
+  'profile_blocks',
+  {
+    blockerId: uuid('blocker_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    blockedId: uuid('blocked_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (block) => [
+    primaryKey({ columns: [block.blockerId, block.blockedId] }),
+    index('profile_blocks_blocked_idx').on(block.blockedId),
+    check('profile_blocks_not_self', sql`${block.blockerId} <> ${block.blockedId}`),
+  ],
+).enableRLS();
+
 // Mirror REPORT_TARGETS, REPORT_REASONS and REPORT_STATUSES in apps/web/src/lib/moderation/reports.
-export const reportTarget = pgEnum('report_target', ['table', 'player', 'crowdfunding', 'partner']);
+export const reportTarget = pgEnum('report_target', [
+  'table',
+  'player',
+  'crowdfunding',
+  'partner',
+  'message',
+  'person',
+  'place',
+]);
 export const reportReason = pgEnum('report_reason', [
   'spam',
   'harassment',
@@ -744,6 +1106,9 @@ export const reportReason = pgEnum('report_reason', [
   'scam',
   'off_topic',
   'no_backlink',
+  'place_closed',
+  'wrong_address',
+  'not_public',
 ]);
 // `open` and `reviewing` wait on an admin; `resolved` and `dismissed` are closed.
 export const reportStatus = pgEnum('report_status', ['open', 'reviewing', 'resolved', 'dismissed']);
@@ -770,6 +1135,12 @@ export const reports = pgTable(
     resolvedBy: uuid('resolved_by'),
     resolutionNote: text('resolution_note'),
     resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    // A `message` or `person` report: the profile it is about (the message's sender, or the
+    // person), so a ban from the report knows whom it hits even after the message is gone.
+    subjectId: uuid('subject_id').references(() => profiles.id, { onDelete: 'set null' }),
+    // A `message` or `person` report: a copy of the messages the reporter saw, taken when they
+    // reported (`ReportExcerpt`). An admin reads this, never the conversation itself.
+    excerpt: jsonb('excerpt').$type<ReportExcerpt>(),
     ...timestamps,
   },
   (report) => [
@@ -779,6 +1150,8 @@ export const reports = pgTable(
       .where(sql`${report.status} IN ('open', 'reviewing')`),
     // The admin queue, filtered by status, newest first.
     index('reports_status_created_idx').on(report.status, report.createdAt),
+    index('reports_subject_idx').on(report.subjectId),
+    index('reports_table_idx').on(report.tableId),
     // Mirror REPORT_DETAILS_MAX and RESOLUTION_NOTE_MAX in apps/web/src/lib/moderation/reports.
     check('reports_details_length', sql`char_length(${report.details}) <= 1000`),
     check('reports_resolution_note_length', sql`char_length(${report.resolutionNote}) <= 1000`),
@@ -859,8 +1232,9 @@ export const crowdfundings = pgTable(
 
 // A community, shop, podcast or event that links to Mesa Aberta and is listed on /partners in return
 // (a link exchange). A member sends it, an admin approves it (`approvedAt`), members report it and an
-// admin removes it (`removedAt`). The submitter is shown to admins only. Any edit by the submitter
-// clears the approval, so the card leaves the page until an admin approves it again.
+// admin removes it (`removedAt`). Who looks after it (`partner_owners`) is shown to admins and to
+// those accounts only. Any edit by an owner clears the approval, so the card leaves the page until
+// an admin approves it again.
 export const partners = pgTable(
   'partners',
   {
@@ -870,6 +1244,12 @@ export const partners = pgTable(
       .references(() => profiles.id),
     name: text('name').notNull(),
     description: text('description'),
+    // What it is: one to three slugs of PARTNER_TYPES (`@mesaaberta/core/partners/types`), in that
+    // list's order. Empty only for a partner sent before there were types, until someone picks.
+    types: text('types')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     // A path in the profile-avatars bucket, under `partners/<submitter id>/`.
     logoPath: text('logo_path').notNull(),
     // The partner's own site, if any. The networks are in `partner_links`.
@@ -901,6 +1281,12 @@ export const partners = pgTable(
     check('partners_name_length', sql`char_length(${partner.name}) BETWEEN 1 AND 60`),
     check('partners_contact_email_length', sql`char_length(${partner.contactEmail}) <= 254`),
     check('partners_description_length', sql`char_length(${partner.description}) <= 140`),
+    // Mirror MAX_PARTNER_TYPES and PARTNER_TYPES.
+    check('partners_types_count', sql`cardinality(${partner.types}) <= 3`),
+    check(
+      'partners_types_known',
+      sql`${partner.types} <@ ARRAY['publisher', 'shop', 'content', 'podcast', 'collective', 'community', 'event', 'venue', 'art', 'translation', 'platform', 'other']::text[]`,
+    ),
     check('partners_coupon_code_length', sql`char_length(${partner.couponCode}) BETWEEN 1 AND 32`),
     check(
       'partners_coupon_description_length',
@@ -931,6 +1317,273 @@ export const partnerLinks = pgTable(
   (link) => [
     index('partner_links_partner_idx').on(link.partnerId, link.position),
     check('partner_links_network', sql`${link.network} <> 'website'`),
+  ],
+).enableRLS();
+
+// A tool of the "Ferramentas" page (/tools): a platform or app tables use to play (a virtual
+// tabletop, a chat, a call, character sheets). Seeded from the table platforms; a member suggests
+// one, it waits for an admin (`approvedAt`), and an admin edits, rejects or removes it
+// (`removedAt`). Who suggested it is shown to admins only.
+export const tools = pgTable(
+  'tools',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    // Made from the name and kept; also the logo file name of a seeded tool.
+    slug: text('slug').notNull(),
+    name: text('name').notNull(),
+    // The first of `kinds`, kept while code that reads only it may still run (expand, then
+    // contract: a later migration drops it). Mirror TOOL_KINDS in `@mesaaberta/core/tools/schema`.
+    kind: text('kind').notNull(),
+    // Every section of the page it shows in ("Mesa virtual" and "Fichas e apoio"), in TOOL_KINDS
+    // order. Empty only for a row an older build wrote: read it as `[kind]`.
+    kinds: text('kinds')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    siteUrl: text('site_url').notNull(),
+    description: text('description').notNull(),
+    // A path in the avatar bucket (`tools/<submitter id>/...`), a site path for a seeded tool
+    // (`/tools/discord.svg`), or null: the card shows the name's first letter.
+    logoPath: text('logo_path'),
+    // The table platform it is, when there is one: the card links to the tables that use it.
+    platformId: uuid('platform_id').references(() => platforms.id, { onDelete: 'set null' }),
+    // Null for the seeded ones.
+    submitterId: uuid('submitter_id').references(() => profiles.id, { onDelete: 'set null' }),
+    approvedAt: timestamp('approved_at', { withTimezone: true }),
+    // The admin who approved it. Not a foreign key, like `partners.approved_by`.
+    approvedBy: uuid('approved_by'),
+    removedAt: timestamp('removed_at', { withTimezone: true }),
+    removedBy: uuid('removed_by'),
+    removalReason: reportReason('removal_reason'),
+    removalNote: text('removal_note'),
+    ...timestamps,
+  },
+  (tool) => [
+    uniqueIndex('tools_slug_unique').on(tool.slug),
+    // One tool per site while it is up: a repeat points at the existing one.
+    uniqueIndex('tools_site_unique')
+      .on(sql`lower(${tool.siteUrl})`)
+      .where(sql`${tool.removedAt} IS NULL`),
+    index('tools_submitter_idx').on(tool.submitterId),
+    index('tools_approved_idx').on(tool.approvedAt, tool.removedAt),
+    check('tools_slug_format', sql`${tool.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+    // Mirror TOOL_KINDS and TOOL_LIMITS in `@mesaaberta/core/tools/schema`.
+    check('tools_kind_known', sql`${tool.kind} IN ('vtt', 'chat', 'call', 'helper')`),
+    check(
+      'tools_kinds_known',
+      sql`${tool.kinds} <@ ARRAY['vtt', 'chat', 'call', 'helper']::text[]`,
+    ),
+    check('tools_name_length', sql`char_length(${tool.name}) BETWEEN 1 AND 60`),
+    check('tools_description_length', sql`char_length(${tool.description}) BETWEEN 1 AND 140`),
+    check('tools_site_url_length', sql`char_length(${tool.siteUrl}) <= 300`),
+    check('tools_removal_note_length', sql`char_length(${tool.removalNote}) <= 1000`),
+  ],
+).enableRLS();
+
+// What an "Onde jogar" place is. Mirror PLACE_KINDS in `@mesaaberta/core/places/types`.
+export const placeKind = pgEnum('place_kind', [
+  'store',
+  'game_cafe',
+  'club',
+  'bar',
+  'cultural_space',
+  'other',
+]);
+
+// A place to play RPG in person (a store, a game café, a club...), listed on /places and shown at
+// /pp/<slug>. A member sends it, an admin approves it (`approvedAt`), anyone reports it and an admin
+// removes it (`removedAt`). The address is public: places are businesses or public spaces. An edit
+// by the submitter clears the approval; an admin's or the owner's does not. Who sent it is shown to
+// admins only.
+export const places = pgTable(
+  'places',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    // Made from the name when it is sent, and kept: it is the public URL (`/pp/<slug>`).
+    slug: text('slug').notNull(),
+    submitterId: uuid('submitter_id')
+      .notNull()
+      .references(() => profiles.id),
+    name: text('name').notNull(),
+    kind: placeKind('kind').notNull(),
+    description: text('description'),
+    // 8 digits, resolved through `postal_codes` into the neighbourhood, city and state below.
+    postalCode: text('postal_code').notNull(),
+    // Street and number. Public, like the rest of a place's address.
+    street: text('street').notNull(),
+    complement: text('complement'),
+    neighbourhood: text('neighbourhood'),
+    city: text('city').notNull(),
+    state: text('state').notNull(),
+    openingHours: text('opening_hours'),
+    // Slugs of PLACE_AMENITIES, in that list's order: the picks among the first six entries of
+    // `place_features`, still written so the release before the catalog reads the same. The
+    // picks themselves are in `place_feature_picks`.
+    amenities: text('amenities')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    siteUrl: text('site_url'),
+    // A path in the table images bucket, or null.
+    imagePath: text('image_path'),
+    // Null while it waits for an admin (or after the submitter edits it).
+    approvedAt: timestamp('approved_at', { withTimezone: true }),
+    // The admin who approved it. Not a foreign key, like `partners.approved_by`.
+    approvedBy: uuid('approved_by'),
+    // The member who claimed the place and an admin accepted: their edits publish at once.
+    ownerId: uuid('owner_id').references(() => profiles.id, { onDelete: 'set null' }),
+    ownerSince: timestamp('owner_since', { withTimezone: true }),
+    // Taken off the public pages for a while (too many reports), until an admin restores or removes it.
+    hiddenAt: timestamp('hidden_at', { withTimezone: true }),
+    hiddenReason: text('hidden_reason', { enum: ['reports'] }),
+    removedAt: timestamp('removed_at', { withTimezone: true }),
+    // The admin who removed or rejected it, or the submitter themself (then there is no reason).
+    removedBy: uuid('removed_by'),
+    removalReason: reportReason('removal_reason'),
+    removalNote: text('removal_note'),
+    ...timestamps,
+  },
+  (place) => [
+    uniqueIndex('places_slug_unique').on(place.slug),
+    // One place per name and CEP while it is up: a repeat points at the existing one.
+    uniqueIndex('places_name_cep_unique')
+      .on(sql`lower(${place.name})`, place.postalCode)
+      .where(sql`${place.removedAt} IS NULL`),
+    index('places_submitter_idx').on(place.submitterId),
+    index('places_owner_idx').on(place.ownerId),
+    index('places_location_idx').on(place.state, place.city),
+    // The public list and the admin's waiting list.
+    index('places_approved_idx').on(place.approvedAt, place.removedAt),
+    check('places_slug_format', sql`${place.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+    check('places_postal_code_format', sql`${place.postalCode} ~ '^[0-9]{8}$'`),
+    check('places_state_format', sql`${place.state} ~ '^[A-Z]{2}$'`),
+    // Mirror PLACE_LIMITS in `@mesaaberta/core/places/types`.
+    check('places_name_length', sql`char_length(${place.name}) BETWEEN 1 AND 80`),
+    check('places_description_length', sql`char_length(${place.description}) <= 280`),
+    check('places_street_length', sql`char_length(${place.street}) BETWEEN 1 AND 120`),
+    check('places_complement_length', sql`char_length(${place.complement}) <= 60`),
+    check('places_opening_hours_length', sql`char_length(${place.openingHours}) <= 120`),
+    // Mirror PLACE_AMENITIES.
+    check(
+      'places_amenities_known',
+      sql`${place.amenities} <@ ARRAY['accessible', 'lends_games', 'bookable_tables', 'free_to_play', 'sells_food', 'open_late']::text[]`,
+    ),
+    check('places_owner_since', sql`(${place.ownerId} IS NULL) = (${place.ownerSince} IS NULL)`),
+    check(
+      'places_hidden_reason',
+      sql`(${place.hiddenAt} IS NULL) = (${place.hiddenReason} IS NULL)`,
+    ),
+    check('places_removal_note_length', sql`char_length(${place.removalNote}) <= 1000`),
+  ],
+).enableRLS();
+
+// One link of a place: a social network, in the order the member put them, like `partner_links`.
+// The site is `places.site_url`, so `network` is never `website` here.
+export const placeLinks = pgTable(
+  'place_links',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    placeId: uuid('place_id')
+      .notNull()
+      .references(() => places.id, { onDelete: 'cascade' }),
+    network: text('network').notNull(),
+    url: text('url').notNull(),
+    position: integer('position').notNull(),
+  },
+  (link) => [
+    index('place_links_place_idx').on(link.placeId, link.position),
+    check('place_links_network', sql`${link.network} <> 'website'`),
+  ],
+).enableRLS();
+
+// The tags of an approved place, made from its own fields every time it is approved (nobody types
+// them): its state, city and neighbourhood (`label` as written), its kind (`label` is the slug; the
+// page names it) and each approved entry of `place_features` it picked (`label` is the entry's
+// name). The list filters on (`kind`, `slug`). `amenity` rows come from before the catalog: the
+// first rebuild of a place replaces them with `feature` rows.
+export const placeTags = pgTable(
+  'place_tags',
+  {
+    placeId: uuid('place_id')
+      .notNull()
+      .references(() => places.id, { onDelete: 'cascade' }),
+    kind: text('kind', {
+      enum: ['state', 'city', 'neighbourhood', 'kind', 'amenity', 'feature'],
+    }).notNull(),
+    label: text('label').notNull(),
+    slug: text('slug').notNull(),
+  },
+  (tag) => [
+    primaryKey({ columns: [tag.placeId, tag.kind, tag.slug] }),
+    index('place_tags_filter_idx').on(tag.kind, tag.slug),
+  ],
+).enableRLS();
+
+// What a place has and what is played there ("Tags" in Onde jogar): Acessível, Wi-Fi, RPG de mesa,
+// Torneios... A catalog like `tags`: admins keep it, and members suggest entries from the place form;
+// a suggestion shows only to whoever suggested it, and on places only once an admin approves it.
+// The first six are the old Comodidades (`places.amenities`), with the same slugs as their tags.
+export const placeFeatures = pgTable('place_features', catalogColumns(), (row) => [
+  uniqueIndex('place_features_slug_unique').on(sql`lower(${row.slug})`),
+  check('place_features_slug_format', sql`${row.slug} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
+]).enableRLS();
+
+// The entries of `place_features` a place picked, in the order picked.
+export const placeFeaturePicks = pgTable(
+  'place_feature_picks',
+  {
+    placeId: uuid('place_id')
+      .notNull()
+      .references(() => places.id, { onDelete: 'cascade' }),
+    featureId: uuid('feature_id')
+      .notNull()
+      .references(() => placeFeatures.id),
+    position: integer('position').notNull(),
+  },
+  (row) => [
+    primaryKey({ columns: [row.placeId, row.featureId] }),
+    index('place_feature_picks_feature_idx').on(row.featureId),
+  ],
+).enableRLS();
+
+// A member who says they speak for a place asks to manage it. An admin approves (the place gets its
+// owner, and the other claims waiting on it are rejected) or rejects with a note. One waiting claim
+// per member and place. The contact is for the admins only.
+export const placeClaims = pgTable(
+  'place_claims',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    placeId: uuid('place_id')
+      .notNull()
+      .references(() => places.id, { onDelete: 'cascade' }),
+    claimantId: uuid('claimant_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    relation: text('relation', { enum: ['owner', 'staff', 'organizer'] }).notNull(),
+    contact: text('contact').notNull(),
+    note: text('note'),
+    status: text('status', { enum: ['pending', 'approved', 'rejected'] })
+      .notNull()
+      .default('pending'),
+    // The admin who decided. Not a foreign key, like `places.approved_by`.
+    decidedBy: uuid('decided_by'),
+    decidedAt: timestamp('decided_at', { withTimezone: true }),
+    decisionNote: text('decision_note'),
+    ...timestamps,
+  },
+  (claim) => [
+    uniqueIndex('place_claims_one_pending')
+      .on(claim.placeId, claim.claimantId)
+      .where(sql`${claim.status} = 'pending'`),
+    index('place_claims_status_idx').on(claim.status, claim.createdAt),
+    index('place_claims_claimant_idx').on(claim.claimantId),
+    check('place_claims_contact_length', sql`char_length(${claim.contact}) BETWEEN 3 AND 120`),
+    check('place_claims_note_length', sql`char_length(${claim.note}) <= 500`),
+    check('place_claims_decision_note_length', sql`char_length(${claim.decisionNote}) <= 1000`),
+    check(
+      'place_claims_decided',
+      sql`(${claim.status} = 'pending') = (${claim.decidedAt} IS NULL)`,
+    ),
   ],
 ).enableRLS();
 
@@ -984,6 +1637,9 @@ export const crowdfundingImportRuns = pgTable(
 export const workerHeartbeats = pgTable('worker_heartbeats', {
   name: text('name').primaryKey(),
   lastRunAt: timestamp('last_run_at', { withTimezone: true }).notNull(),
+  // The build that ran it (`buildInfoOf`); null before a run on code that records it.
+  version: text('version'),
+  revision: text('revision'),
 }).enableRLS();
 
 // Consent-based invitations are not registrations; pending rows reserve seats without membership.
@@ -1039,7 +1695,179 @@ export const gmInviteBlocks = pgTable(
   },
   (t) => [
     primaryKey({ columns: [t.playerId, t.gmId] }),
+    index('gm_invite_blocks_gm_idx').on(t.gmId),
     check('gm_invite_blocks_not_self', sql`${t.playerId} <> ${t.gmId}`),
+  ],
+).enableRLS();
+
+// The member accounts that look after a partner (at most MAX_PARTNER_OWNERS): they edit it, invite
+// other accounts, take accounts off and hear from moderation. All are equal. The submitter is the
+// first row; `partners.submitter_id` only says who sent it. A partner sent before this table, or
+// in the minutes between this migration and the deploy, may have no row: then its submitter is
+// its one owner (`ownersOf`).
+export const partnerOwners = pgTable(
+  'partner_owners',
+  {
+    partnerId: uuid('partner_id')
+      .notNull()
+      .references(() => partners.id, { onDelete: 'cascade' }),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    // Who invited them; null for the submitter. Not a foreign key: the inviter may leave.
+    invitedBy: uuid('invited_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.partnerId, t.profileId] }),
+    index('partner_owners_profile_idx').on(t.profileId),
+  ],
+).enableRLS();
+
+// An owner asks another account to look after the partner too. It counts only once accepted. A
+// pending one past `expires_at` has lapsed even before anything marks it.
+export const partnerInvitations = pgTable(
+  'partner_invitations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    partnerId: uuid('partner_id')
+      .notNull()
+      .references(() => partners.id, { onDelete: 'cascade' }),
+    inviterId: uuid('inviter_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    inviteeId: uuid('invitee_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    status: invitationStatus('status').notNull().default('pending'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    respondedAt: timestamp('responded_at', { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex('partner_invitations_pending_unique')
+      .on(t.partnerId, t.inviteeId)
+      .where(sql`${t.status} = 'pending'`),
+    index('partner_invitations_partner_idx').on(t.partnerId, t.status),
+    index('partner_invitations_invitee_idx').on(t.inviteeId, t.status),
+    index('partner_invitations_inviter_idx').on(t.inviterId),
+    check('partner_invitations_not_self', sql`${t.inviterId} <> ${t.inviteeId}`),
+    check('partner_invitations_expiry', sql`${t.expiresAt} > ${t.createdAt}`),
+  ],
+).enableRLS();
+
+// A place that is also a partner ("Parceiro Mesa Aberta" on its page): someone who looks after both
+// asks, an admin approves. A place has at most one partner (one request waiting, one link up); a
+// partner may have many places. `cancelled` is a request withdrawn or replaced, `removed` a link
+// taken down after it was approved.
+export const placePartnerLinks = pgTable(
+  'place_partner_links',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    placeId: uuid('place_id')
+      .notNull()
+      .references(() => places.id, { onDelete: 'cascade' }),
+    partnerId: uuid('partner_id')
+      .notNull()
+      .references(() => partners.id, { onDelete: 'cascade' }),
+    requestedBy: uuid('requested_by').references(() => profiles.id, { onDelete: 'set null' }),
+    status: text('status', {
+      enum: ['pending', 'approved', 'rejected', 'cancelled', 'removed'],
+    })
+      .notNull()
+      .default('pending'),
+    // The admin who decided. Not a foreign key, like `place_claims.decided_by`.
+    decidedBy: uuid('decided_by'),
+    decidedAt: timestamp('decided_at', { withTimezone: true }),
+    decisionNote: text('decision_note'),
+    ...timestamps,
+  },
+  (link) => [
+    uniqueIndex('place_partner_links_one_pending')
+      .on(link.placeId)
+      .where(sql`${link.status} = 'pending'`),
+    uniqueIndex('place_partner_links_one_approved')
+      .on(link.placeId)
+      .where(sql`${link.status} = 'approved'`),
+    index('place_partner_links_partner_idx').on(link.partnerId, link.status),
+    index('place_partner_links_status_idx').on(link.status, link.createdAt),
+    check(
+      'place_partner_links_decision_note_length',
+      sql`char_length(${link.decisionNote}) <= 1000`,
+    ),
+  ],
+).enableRLS();
+
+// Who looks after a partner and chose to show on its page under "Quem mestra". Each person turns it
+// on for themself; it counts only while they still look after the partner and their profile says
+// they run games.
+export const partnerShownGms = pgTable(
+  'partner_shown_gms',
+  {
+    partnerId: uuid('partner_id')
+      .notNull()
+      .references(() => partners.id, { onDelete: 'cascade' }),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.partnerId, t.profileId] }),
+    index('partner_shown_gms_profile_idx').on(t.profileId),
+  ],
+).enableRLS();
+
+// "Quem mestra na casa": people a place names as its house GMs, shown first under "Quem mestra
+// aqui". Whoever owns the place (or an admin) invites by @username; the person shows only once they
+// accept, and can leave whenever they like.
+export const placeHosts = pgTable(
+  'place_hosts',
+  {
+    placeId: uuid('place_id')
+      .notNull()
+      .references(() => places.id, { onDelete: 'cascade' }),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    // Who invited them. Not a foreign key: the inviter may leave.
+    invitedBy: uuid('invited_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.placeId, t.profileId] }),
+    index('place_hosts_profile_idx').on(t.profileId),
+  ],
+).enableRLS();
+
+// The invites to be a place's house GM. It counts only once accepted. A pending one past
+// `expires_at` has lapsed even before anything marks it.
+export const placeHostInvitations = pgTable(
+  'place_host_invitations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    placeId: uuid('place_id')
+      .notNull()
+      .references(() => places.id, { onDelete: 'cascade' }),
+    inviterId: uuid('inviter_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    inviteeId: uuid('invitee_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    status: invitationStatus('status').notNull().default('pending'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    respondedAt: timestamp('responded_at', { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex('place_host_invitations_pending_unique')
+      .on(t.placeId, t.inviteeId)
+      .where(sql`${t.status} = 'pending'`),
+    index('place_host_invitations_place_idx').on(t.placeId, t.status),
+    index('place_host_invitations_invitee_idx').on(t.inviteeId, t.status),
+    index('place_host_invitations_inviter_idx').on(t.inviterId),
+    check('place_host_invitations_expiry', sql`${t.expiresAt} > ${t.createdAt}`),
   ],
 ).enableRLS();
 
@@ -1156,6 +1984,7 @@ export const pollVotes = pgTable(
   (vote) => [
     primaryKey({ columns: [vote.pollId, vote.profileId, vote.optionId] }),
     index('poll_votes_option_idx').on(vote.pollId, vote.optionId),
+    index('poll_votes_profile_idx').on(vote.profileId),
   ],
 ).enableRLS();
 
@@ -1172,5 +2001,102 @@ export const widgetDismissals = pgTable(
     dismissedAt: timestamp('dismissed_at', { withTimezone: true }).notNull().defaultNow(),
     times: smallint('times').notNull().default(1),
   },
-  (dismissal) => [primaryKey({ columns: [dismissal.widgetId, dismissal.profileId] })],
+  (dismissal) => [
+    primaryKey({ columns: [dismissal.widgetId, dismissal.profileId] }),
+    index('widget_dismissals_profile_idx').on(dismissal.profileId),
+  ],
+).enableRLS();
+
+// Combinar (`/matches`), the "RPG tinder": a person's opt-in card, their answers about other cards,
+// and the matches two yeses make. Systems, availability, city and role stay on the profile.
+
+// What a person is after on Combinar. `players`: people for their table (they run it); `gm`:
+// someone to run a game for them; `group`: forming a group and deciding the rest together. Mirror
+// MATCH_SEEKING in `@mesaaberta/core/matches/schema`.
+export const matchSeeking = pgEnum('match_seeking', ['players', 'gm', 'group']);
+
+// A person's Combinar card. No row: never set up. `enabledAt` null: switched off, out of every deck
+// (the answers they gave are deleted when they switch off). Adults only: `adultConfirmedAt` is when
+// they confirmed being 18 or older, besides an adult `profiles.age_range`.
+export const matchCards = pgTable(
+  'match_cards',
+  {
+    profileId: uuid('profile_id')
+      .primaryKey()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    enabledAt: timestamp('enabled_at', { withTimezone: true }),
+    adultConfirmedAt: timestamp('adult_confirmed_at', { withTimezone: true }).notNull(),
+    seeking: matchSeeking('seeking').array().notNull(),
+    online: boolean('online').notNull().default(true),
+    inPerson: boolean('in_person').notNull().default(false),
+    // The four play-style axes ("naipes"), 0 to 100 towards the first pole: Combate (vs
+    // Interpretação), Regras (vs Narrativa), Campanha (vs One-shot), Sombrio (vs Leve). 50 is the
+    // middle. Mirror MATCH_AXES in `@mesaaberta/core/matches/schema`.
+    axisCombat: smallint('axis_combat').notNull().default(50),
+    axisRules: smallint('axis_rules').notNull().default(50),
+    axisLength: smallint('axis_length').notNull().default(50),
+    axisTone: smallint('axis_tone').notNull().default(50),
+    ...timestamps,
+  },
+  (card) => [
+    index('match_cards_enabled_idx').on(card.enabledAt),
+    check('match_cards_seeking_some', sql`cardinality(${card.seeking}) BETWEEN 1 AND 3`),
+    check('match_cards_format_some', sql`${card.online} OR ${card.inPerson}`),
+    check(
+      'match_cards_axes_range',
+      sql`${card.axisCombat} BETWEEN 0 AND 100 AND ${card.axisRules} BETWEEN 0 AND 100 AND ${card.axisLength} BETWEEN 0 AND 100 AND ${card.axisTone} BETWEEN 0 AND 100`,
+    ),
+  ],
+).enableRLS();
+
+// One person's answer about another's card: `yes` (Quero jogar junto) or not (Agora não). Never
+// shown to the person answered about. An answer hides them for MATCH_PASS_DAYS (a month), then
+// they come back; a yes keeps counting towards a match until it is pruned. Deleted after
+// MATCH_ANSWER_DAYS (the sweep) and when the person switches their card off.
+export const matchAnswers = pgTable(
+  'match_answers',
+  {
+    fromId: uuid('from_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    toId: uuid('to_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    yes: boolean('yes').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (answer) => [
+    primaryKey({ columns: [answer.fromId, answer.toId] }),
+    index('match_answers_to_idx').on(answer.toId),
+    index('match_answers_from_created_idx').on(answer.fromId, answer.createdAt),
+    check('match_answers_not_self', sql`${answer.fromId} <> ${answer.toId}`),
+  ],
+).enableRLS();
+
+// Two people who both said yes. The pair is stored in order (`profileA` < `profileB`), once: an
+// undone match (`endedAt`) is never made again, and neither sees the other in the deck.
+export const matches = pgTable(
+  'matches',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    profileA: uuid('profile_a')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    profileB: uuid('profile_b')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    endedAt: timestamp('ended_at', { withTimezone: true }),
+    // Who undid it. Not a foreign key: it is one of the two.
+    endedBy: uuid('ended_by'),
+    // "Vocês combinaram e ainda não jogaram" bell reminders sent so far, and when the last went
+    // (`remindUnplayedMatches`). Set to the maximum once the two play together.
+    reminders: smallint('reminders').notNull().default(0),
+    remindedAt: timestamp('reminded_at', { withTimezone: true }),
+  },
+  (match) => [
+    uniqueIndex('matches_pair_unique').on(match.profileA, match.profileB),
+    index('matches_b_idx').on(match.profileB),
+    check('matches_ordered_pair', sql`${match.profileA} < ${match.profileB}`),
+  ],
 ).enableRLS();

@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { sentrySvelteKit } from '@sentry/sveltekit/vite';
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
@@ -28,19 +27,22 @@ export default defineConfig({
   ssr: {
     noExternal: [/^@iconify-svelte\//, /^@skeletonlabs\//, /^@tanstack\/svelte-/, /^@zag-js\//],
   },
+  // The browser's maps, written next to each file without a `sourceMappingURL` comment. The deploy
+  // stamps them with debug ids and uploads them with `sentry-cli` (`sourcemaps inject` and
+  // `upload`): the plugin's own upload never runs under Vite 8, whose environment builds leave
+  // its "is this the server build" check false, so no browser map had ever reached Sentry.
+  // The WebP decoder's `.wasm` (imported in a Worker only) must reach Wrangler as written, which
+  // bundles it as a compiled module; Vite would instead try to link it as a WebAssembly ES module.
+  build: { sourcemap: 'hidden', rolldownOptions: { external: [/^@jsquash\/webp\/.*\.wasm$/] } },
+  // The release the browser's events carry (the tag; the deploy sets SENTRY_RELEASE), the same as
+  // the server's `sentryReleaseFor`. Empty outside a deploy.
+  define: { __SENTRY_RELEASE__: JSON.stringify(process.env.SENTRY_RELEASE ?? '') },
   plugins: [
     sentrySvelteKit({
-      // Source maps go to the project named by SENTRY_ORG and SENTRY_PROJECT.
-      org: process.env.SENTRY_ORG,
-      project: process.env.SENTRY_PROJECT,
       adapter: hostSentry.adapter,
       telemetry: false,
       autoInstrument: false,
-      autoUploadSourceMaps:
-        !!process.env.SENTRY_AUTH_TOKEN || existsSync('.env.sentry-build-plugin'),
-      sourcemaps: {
-        assets: hostSentry.sourcemapAssets,
-      },
+      autoUploadSourceMaps: false,
     }),
     tailwindcss(),
     sveltekit({
@@ -60,8 +62,21 @@ export default defineConfig({
         mode: 'nonce',
         directives: {
           'default-src': ['self'],
-          'script-src': ['self', 'https://static.cloudflareinsights.com'],
+          // Turnstile (the CAPTCHA on the email forms) loads its script and its frame from Cloudflare.
+          'script-src': [
+            'self',
+            'https://static.cloudflareinsights.com',
+            'https://challenges.cloudflare.com',
+          ],
+          'frame-src': ['https://challenges.cloudflare.com'],
           'style-src': ['self'],
+          // Svelte server-renders `onload="this.__e=event"` / `onerror=…` on an <img> that has load or
+          // error handlers (Skeleton's Avatar.Image), so it can replay an event that fired before
+          // hydration. Only that exact string is allowed, by hash; anything else stays blocked.
+          'script-src-attr': [
+            'unsafe-hashes',
+            'sha256-7dQwUgLau1NFCCGjfn9FsYptB6ZtWxJin6VohGIu20I=',
+          ],
           // SvelteKit's own screen-reader announcer (`#svelte-announcer`) has an inline `style`
           // attribute. Only that exact string is allowed, by hash. If a SvelteKit upgrade changes
           // it, e2e/security.e2e.ts reports the blocked style: replace the hash with the new one.
@@ -83,6 +98,11 @@ export default defineConfig({
             'https://*.supabase.co',
             // The crop step shows the picked file from a blob URL until it is cut and sent.
             'blob:',
+            // Files in an S3-compatible store (STORAGE_PROVIDER=s3) are read from its public domain,
+            // which the build must know too.
+            ...(process.env.STORAGE_PUBLIC_URL
+              ? [new URL(process.env.STORAGE_PUBLIC_URL).origin as `https://${string}.${string}`]
+              : []),
             // The e2e build adds the local Supabase (see playwright.config.ts). Never set in production.
             ...(process.env.CSP_EXTRA_IMG_SRC
               ? [process.env.CSP_EXTRA_IMG_SRC as `http://${string}.${string}`]
@@ -145,11 +165,12 @@ export default defineConfig({
           hookTimeout: 20_000,
           include: [
             'src/**/*.{test,spec}.{js,ts}',
-            // Beside the web app: the shared packages and the other two apps (this config's
+            // Beside the web app: the shared packages and the other apps (this config's
             // root is apps/web, so they sit one level up).
             '../../packages/**/*.{test,spec}.{js,ts}',
             '../api/**/*.{test,spec}.{js,ts}',
             '../worker/**/*.{test,spec}.{js,ts}',
+            '../mcp/**/*.{test,spec}.{js,ts}',
           ],
           exclude: [
             'src/**/*.svelte.{test,spec}.{js,ts}',

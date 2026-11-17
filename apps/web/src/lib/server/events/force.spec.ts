@@ -184,4 +184,32 @@ describe('forceFailedEvents', () => {
       remaining: 2,
     });
   });
+
+  it('leaves out the events an admin chose to ignore', async () => {
+    const [kept, ignored] = [await record(t0), await record(new Date(t0.getTime() + 1000))];
+    await give(kept);
+    await give(ignored);
+    await test.db
+      .update(events)
+      .set({ reviewStatus: 'ignored', reviewedBy: admin, reviewedAt: t0 })
+      .where(eq(events.id, ignored));
+
+    const result = await forceFailedEvents(test.db, [handler('ok')], admin, later, log);
+
+    expect(result).toEqual({ tried: 1, processed: 1, remaining: 0 });
+    expect((await row(ignored)).processedAt).toBeNull();
+  });
+
+  it('clears the review when one event is forced', async () => {
+    const id = await record();
+    await give(id);
+    await test.db
+      .update(events)
+      .set({ reviewStatus: 'seen', reviewedBy: admin, reviewedAt: t0 })
+      .where(eq(events.id, id));
+
+    await forceEvent(test.db, [handler('ok')], id, admin, later, log);
+
+    expect(await row(id)).toMatchObject({ reviewStatus: null, reviewedBy: null, reviewedAt: null });
+  });
 });

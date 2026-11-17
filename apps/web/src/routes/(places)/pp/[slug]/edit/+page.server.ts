@@ -1,0 +1,134 @@
+import { error, isHttpError } from '@sveltejs/kit';
+import { initialForm } from '#lib/forms/contract.js';
+import { can } from '@mesaaberta/core/server/auth/policy';
+import { formatCep } from '@mesaaberta/core/location/cep';
+import { MAX_PLACE_LINKS } from '@mesaaberta/core/places/types';
+import { requireUser } from '#lib/server/auth/guard.js';
+import { directoryLinksEnabled, requireDirectory } from '#lib/server/directories/flags.js';
+import { moderationAction } from '#lib/server/moderation/form-action.js';
+import {
+  placePartnerEndSchema,
+  placePartnerRequestSchema,
+} from '@mesaaberta/core/places/partner-links';
+import type { placePartnerState } from '@mesaaberta/core/server/places/partner-links';
+import {
+  placeHostInvitationIdSchema,
+  placeHostInviteSchema,
+  placeHostSchema,
+} from '@mesaaberta/core/places/hosts';
+import type { listPlaceHosts } from '@mesaaberta/core/server/places/hosts';
+import { imageUrl, supabaseUrlOf } from '@mesaaberta/core/server/images';
+import type { findEditablePlace } from '@mesaaberta/core/server/places/service';
+import { readFromApi, revivedDates } from '#lib/server/api-read.js';
+import { handlePlaceForm } from '#lib/server/places/form-action.js';
+import { placeTagOptions } from '#lib/server/places/tags.js';
+import { cepStreetEnabled } from '#lib/server/places/cep-street.js';
+import type { Actions, PageServerLoad } from './$types';
+
+/** The place this person may edit; anything else (unknown, removed, somebody else's) is a 404. */
+async function editable(locals: App.Locals, slug: string) {
+  const profile = await locals.getProfile();
+  if (!profile) error(404, 'Not found');
+  try {
+    const place = await readFromApi<Awaited<ReturnType<typeof findEditablePlace>>>(
+      locals,
+      profile.id,
+      `/v1/places/${encodeURIComponent(slug)}/edit`,
+    );
+    return { profile, place: revivedDates(place) };
+  } catch (cause) {
+    if (isHttpError(cause) && (cause.status === 403 || cause.status === 404))
+      error(404, 'Not found');
+    throw cause;
+  }
+}
+
+export const load: PageServerLoad = async ({ locals, url, params }) => {
+  await requireDirectory(locals, 'places');
+  await requireUser(locals, url);
+  const { profile, place } = await editable(locals, params.slug);
+  const links = place.links.slice(0, MAX_PLACE_LINKS);
+  // "Parceiro" and "Quem mestra na casa" (`use_directory_links`): only for its owner and admins,
+  // once it is on the list. The api answers anyone else with a 403 or 404.
+  const linked = place.approvedAt !== null && (await directoryLinksEnabled(locals));
+  const section = <T>(path: string) =>
+    linked
+      ? readFromApi<T>(locals, profile.id, `/v1/places/${encodeURIComponent(place.slug)}/${path}`)
+          .then(revivedDates)
+          .catch((cause) => {
+            if (isHttpError(cause) && (cause.status === 403 || cause.status === 404)) return null;
+            throw cause;
+          })
+      : null;
+  const [partner, hosts, cepStreet] = await Promise.all([
+    section<NonNullable<Awaited<ReturnType<typeof placePartnerState>>>>('partner'),
+    section<Awaited<ReturnType<typeof listPlaceHosts>>>('hosts'),
+    cepStreetEnabled(locals),
+  ]);
+  return {
+    partner,
+    hosts,
+    cepStreet,
+    ...(await placeTagOptions(locals, profile.id, place.features)),
+    slug: place.slug,
+    imageUrl: imageUrl(supabaseUrlOf(locals.env), place.imagePath),
+    // An admin's or the owner's edit is live at once; anyone else's goes back to the queue.
+    reviewAgain: !(profile && can(profile, 'admin:access')) && profile?.id !== place.ownerId,
+    approved: place.approvedAt !== null,
+    form: initialForm({
+      name: place.name,
+      kind: place.kind as string,
+      postalCode: formatCep(place.postalCode),
+      street: place.street,
+      complement: place.complement ?? '',
+      description: place.description ?? '',
+      openingHours: place.openingHours ?? '',
+      tags: place.features.map((feature) => feature.slug),
+      siteUrl: place.siteUrl ?? '',
+      linkNetwork: links.map((link) => link.network as string),
+      linkUrl: links.map((link) => link.url),
+      removeImage: false,
+      image: undefined,
+    }),
+  };
+};
+
+// "Parceiro" and "Quem mestra na casa": the api authorizes (the place's owner, or an admin).
+const placePath = (event: { params: Partial<Record<string, string>> }, end: string) =>
+  `/v1/places/${encodeURIComponent(event.params.slug ?? '')}/${end}`;
+const partnerPath = (event: { params: Partial<Record<string, string>> }, end = '') =>
+  placePath(event, `partner${end}`);
+const allow = (event: { locals: App.Locals }) => directoryLinksEnabled(event.locals);
+
+export const actions: Actions = {
+  save: async (event) => {
+    await requireDirectory(event.locals, 'places');
+    await requireUser(event.locals, event.url);
+    const { place } = await editable(event.locals, event.params.slug);
+    return handlePlaceForm(event, { slug: place.slug });
+  },
+  requestPartner: moderationAction(placePartnerRequestSchema, ['partnerId'], {
+    path: (event) => partnerPath(event),
+    allow,
+  }),
+  cancelPartner: moderationAction(placePartnerEndSchema, [], {
+    path: (event) => partnerPath(event, '/cancel'),
+    allow,
+  }),
+  removePartner: moderationAction(placePartnerEndSchema, [], {
+    path: (event) => partnerPath(event, '/remove'),
+    allow,
+  }),
+  inviteHost: moderationAction(placeHostInviteSchema, ['username'], {
+    path: (event) => placePath(event, 'hosts/invite'),
+    allow,
+  }),
+  cancelHostInvite: moderationAction(placeHostInvitationIdSchema, ['invitationId'], {
+    path: (event) => placePath(event, 'hosts/cancel'),
+    allow,
+  }),
+  removeHost: moderationAction(placeHostSchema, ['profileId'], {
+    path: (event) => placePath(event, 'hosts/remove'),
+    allow,
+  }),
+};

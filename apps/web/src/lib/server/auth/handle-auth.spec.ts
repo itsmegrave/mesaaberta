@@ -2,12 +2,23 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { describe, expect, it, vi } from 'vitest';
 import { profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { createHandleAuth } from './handle-auth';
+import { apiOver } from '../db/test-api';
+import { createHandleAuth, sessionTooOld } from './handle-auth';
 
 const env = { SUPABASE_URL: 'https://x.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_x' };
 
-const setup = (platformEnv: object | undefined, getUser = vi.fn()) => {
-  const createClient = vi.fn(() => ({ auth: { getUser } }));
+/** An unsigned JWT with these claims: the tests stand in for Supabase, which already verified it. */
+const tokenWith = (claims: object) =>
+  `e30.${btoa(JSON.stringify(claims)).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_')}.sig`;
+const sessionWith = (claims: object) =>
+  vi.fn(async () => ({ data: { session: { access_token: tokenWith(claims) } }, error: null }));
+
+const setup = (
+  platformEnv: object | undefined,
+  getUser = vi.fn(),
+  getSession = sessionWith({ sub: 'u1', aud: 'authenticated' }),
+) => {
+  const createClient = vi.fn(() => ({ auth: { getUser, getSession } }));
   const event = {
     locals: { env: platformEnv },
     cookies: { getAll: () => [], set: vi.fn() },
@@ -35,6 +46,35 @@ describe('handleAuth', () => {
     expect(event.locals.supabase).toBeNull();
   });
 
+  it('keeps the session cookies away from page scripts, whatever @supabase/ssr asks', async () => {
+    let setAll: ((cookies: object[]) => void) | undefined;
+    const createClient = vi.fn((_url: string, _key: string, options: never) => {
+      setAll = (options as { cookies: { setAll: typeof setAll } }).cookies.setAll;
+      return { auth: { getUser: vi.fn() } };
+    });
+    const set = vi.fn();
+    const event = {
+      locals: { env },
+      cookies: { getAll: () => [], set },
+    } as unknown as RequestEvent;
+    await createHandleAuth(createClient as never)({ event, resolve: async () => new Response() });
+
+    setAll?.([
+      {
+        name: 'sb-x-auth-token',
+        value: 'base64-token',
+        options: { httpOnly: false, sameSite: 'lax', maxAge: 60, path: '/auth' },
+      },
+    ]);
+
+    expect(set).toHaveBeenCalledWith('sb-x-auth-token', 'base64-token', {
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 60,
+      path: '/',
+    });
+  });
+
   it('returns the user Supabase verified, and records the id for the request log', async () => {
     const getUser = vi.fn().mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
     const { event, run } = setup(env, getUser);
@@ -42,6 +82,19 @@ describe('handleAuth', () => {
 
     expect(await event.locals.getUser()).toEqual({ id: 'u1' });
     expect(event.locals.userId).toBe('u1');
+  });
+
+  it('refuses a token Supabase issued to an OAuth client: approving an app must not sign it in to the site', async () => {
+    const getUser = vi.fn().mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
+    const { event, run } = setup(
+      env,
+      getUser,
+      sessionWith({ sub: 'u1', aud: 'authenticated', client_id: 'some-app' }),
+    );
+    await run();
+
+    expect(await event.locals.getUser()).toBeNull();
+    expect(event.locals.userId).toBeUndefined();
   });
 
   it('asks Supabase once per request however often a route asks who is signed in', async () => {
@@ -80,50 +133,61 @@ describe('handleAuth', () => {
 describe('getProfile', () => {
   const id = '00000000-0000-4000-8000-000000000301';
   const signedIn = () => vi.fn().mockResolvedValue({ data: { user: { id } }, error: null });
+  // The api Worker reads the profile over the test database.
+  const withApi = (db: unknown) => ({ ...env, ...apiOver(db as never) });
 
-  it("returns the signed-in user's profile: the actor the policy decides about", async () => {
+  it("returns the signed-in user's profile from the api: the actor the policy decides about", async () => {
     const test = await createTestDb();
     await test.db.insert(profiles).values({ id, username: 'ana', role: 'admin' });
-    const { event, run } = setup(env, signedIn());
-    event.locals.db = test.db as never;
+    const { event, run } = setup(withApi(test.db), signedIn());
     await run();
 
-    expect(await event.locals.getProfile()).toMatchObject({ id, role: 'admin', status: 'active' });
+    const profile = await event.locals.getProfile();
+    expect(profile).toMatchObject({ id, role: 'admin', status: 'active' });
+    // JSON turned the dates into strings; they come back as dates.
+    expect(profile?.createdAt).toBeInstanceOf(Date);
     await test.close();
   });
 
-  it('is null for an anonymous visitor, without touching the database', async () => {
-    const { event, run } = setup({});
-    event.locals.db = null;
+  it('is null for an anonymous visitor, without asking the api', async () => {
+    const api = vi.fn();
+    const { event, run } = setup({ API: { fetch: api } });
     await run();
 
     expect(await event.locals.getProfile()).toBeNull();
+    expect(api).not.toHaveBeenCalled();
   });
 
   it('is null when someone is signed in but has no profile, rather than a made-up actor', async () => {
     const test = await createTestDb();
-    const { event, run } = setup(env, signedIn());
-    event.locals.db = test.db as never;
+    const { event, run } = setup(withApi(test.db), signedIn());
     await run();
 
     expect(await event.locals.getProfile()).toBeNull();
     await test.close();
   });
 
-  it('is null while no database is configured', async () => {
+  it('is null while there is no api to ask', async () => {
     const { event, run } = setup(env, signedIn());
-    event.locals.db = null;
     await run();
 
     expect(await event.locals.getProfile()).toBeNull();
+  });
+
+  it('fails the request when the api cannot answer, instead of reading as no profile', async () => {
+    const api = vi.fn(async () => Response.json({ error: 'internal_error' }, { status: 500 }));
+    const { event, run } = setup({ ...env, API: { fetch: api } }, signedIn());
+    (event.locals as { log?: unknown }).log = { warn: vi.fn() };
+    await run();
+
+    await expect(event.locals.getProfile()).rejects.toMatchObject({ status: 503 });
   });
 
   it('loads once per request however often it is asked', async () => {
     const test = await createTestDb();
     await test.db.insert(profiles).values({ id, username: 'ana' });
     const getUser = signedIn();
-    const { event, run } = setup(env, getUser);
-    event.locals.db = test.db as never;
+    const { event, run } = setup(withApi(test.db), getUser);
     await run();
 
     const [a, b] = await Promise.all([event.locals.getProfile(), event.locals.getProfile()]);
@@ -131,5 +195,127 @@ describe('getProfile', () => {
     expect(a).toBe(b);
     expect(getUser).toHaveBeenCalledOnce();
     await test.close();
+  });
+});
+
+describe('handleAuth with SESSION_CHECK=local', () => {
+  const run = async (getClaims: ReturnType<typeof vi.fn>) => {
+    const getUser = vi.fn();
+    const createClient = vi.fn(() => ({ auth: { getUser, getClaims } }));
+    const event = {
+      locals: { env: { ...env, SESSION_CHECK: 'local' } },
+      cookies: { getAll: () => [], set: vi.fn() },
+    } as unknown as RequestEvent;
+    await createHandleAuth(createClient as never)({ event, resolve: async () => new Response() });
+    return { event, getUser };
+  };
+
+  it('reads the user from the verified token, without asking Supabase', async () => {
+    const getClaims = vi.fn(async () => ({
+      data: {
+        claims: {
+          sub: 'u-1',
+          email: 'a@b.c',
+          aud: 'authenticated',
+          user_metadata: { full_name: 'Ana' },
+        },
+      },
+      error: null,
+    }));
+    const { event, getUser } = await run(getClaims);
+
+    expect(await event.locals.getUser()).toMatchObject({
+      id: 'u-1',
+      email: 'a@b.c',
+      user_metadata: { full_name: 'Ana' },
+    });
+    expect(event.locals.userId).toBe('u-1');
+    expect(getUser).not.toHaveBeenCalled();
+  });
+
+  it('refuses a verified token that belongs to an OAuth client (the MCP or any approved app)', async () => {
+    const getClaims = vi.fn(async () => ({
+      data: { claims: { sub: 'u-1', aud: 'authenticated', client_id: 'claude' } },
+      error: null,
+    }));
+    const { event } = await run(getClaims);
+    expect(await event.locals.getUser()).toBeNull();
+    expect(event.locals.userId).toBeUndefined();
+  });
+
+  it('refuses a verified token minted for another audience', async () => {
+    const getClaims = vi.fn(async () => ({
+      data: { claims: { sub: 'u-1', aud: 'something-else' } },
+      error: null,
+    }));
+    const { event } = await run(getClaims);
+    expect(await event.locals.getUser()).toBeNull();
+  });
+
+  it('is nobody when the token does not verify', async () => {
+    const { event } = await run(vi.fn(async () => ({ data: null, error: new Error('bad') })));
+    expect(await event.locals.getUser()).toBeNull();
+  });
+});
+
+describe('SESSION_MAX_AGE_DAYS', () => {
+  const day = 86_400_000;
+  const now = Date.UTC(2026, 10, 15);
+  const signedIn = (daysAgo: number) => ({
+    amr: [{ method: 'password', timestamp: Math.floor((now - daysAgo * day) / 1000) }],
+  });
+
+  it('counts from the latest sign-in in the token', () => {
+    expect(sessionTooOld(signedIn(31), 30, now)).toBe(true);
+    expect(sessionTooOld(signedIn(29), 30, now)).toBe(false);
+    const reauthenticated = { amr: [...signedIn(40).amr, ...signedIn(2).amr] };
+    expect(sessionTooOld(reauthenticated, 30, now)).toBe(false);
+  });
+
+  it('has no limit when blank or not a positive number, and never locks out a token without amr', () => {
+    for (const days of [Number(''), Number(undefined), 0, -5, Number('soon')])
+      expect(sessionTooOld(signedIn(400), days, now)).toBe(false);
+    expect(sessionTooOld({}, 30, now)).toBe(false);
+  });
+
+  it('signs out a session older than the limit', async () => {
+    const old = Math.floor((Date.now() - 31 * day) / 1000);
+    const signOut = vi.fn(async () => ({ error: null }));
+    const getClaims = vi.fn(async () => ({
+      data: {
+        claims: { sub: 'u-1', aud: 'authenticated', amr: [{ method: 'otp', timestamp: old }] },
+      },
+      error: null,
+    }));
+    const createClient = vi.fn(() => ({ auth: { getUser: vi.fn(), getClaims, signOut } }));
+    const event = {
+      locals: { env: { ...env, SESSION_CHECK: 'local', SESSION_MAX_AGE_DAYS: '30' } },
+      cookies: { getAll: () => [], set: vi.fn() },
+    } as unknown as RequestEvent;
+    await createHandleAuth(createClient as never)({ event, resolve: async () => new Response() });
+
+    expect(await event.locals.getUser()).toBeNull();
+    expect(event.locals.userId).toBeUndefined();
+    expect(signOut).toHaveBeenCalledWith({ scope: 'local' });
+  });
+
+  it('does the same when asking Supabase', async () => {
+    const old = Math.floor((Date.now() - 31 * day) / 1000);
+    const getUser = vi.fn().mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
+    const getSession = sessionWith({
+      sub: 'u1',
+      aud: 'authenticated',
+      amr: [{ method: 'password', timestamp: old }],
+    });
+    const signOut = vi.fn(async () => ({ error: null }));
+    const createClient = vi.fn(() => ({ auth: { getUser, getSession, signOut } }));
+    const event = {
+      locals: { env: { ...env, SESSION_MAX_AGE_DAYS: '30' } },
+      cookies: { getAll: () => [], set: vi.fn() },
+    } as unknown as RequestEvent;
+    await createHandleAuth(createClient as never)({ event, resolve: async () => new Response() });
+
+    expect(await event.locals.getUser()).toBeNull();
+    expect(signOut).toHaveBeenCalledOnce();
   });
 });

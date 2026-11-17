@@ -27,22 +27,19 @@ describe('table end form adapters', () => {
   it.each([
     ['deleteDraft', 'DELETE', 'draft'],
     ['close', 'POST', 'close'],
-  ] as const)(
-    'adapts %s once and dispatches only committed events',
-    async (action, method, suffix) => {
-      const send = vi.fn(async (_request: Request) => Response.json({ eventIds: ['event'] }));
-      const request = event(send);
-      await expect(endActions[action](request)).rejects.toMatchObject({
-        status: 303,
-        location: '/u/tables',
-      });
-      expect(send).toHaveBeenCalledTimes(1);
-      expect(send.mock.calls[0][0].method).toBe(method);
-      expect(new URL(send.mock.calls[0][0].url).pathname).toBe(
-        `/v1/tables/private%20draft/${suffix}`,
-      );
-      expect(request.locals.afterResponse).toHaveBeenCalledTimes(1);
-      expect(request.locals.flags.isEnabled).not.toHaveBeenCalled();
-    },
-  );
+  ] as const)('adapts %s once and leaves the events to the api', async (action, method, suffix) => {
+    const send = vi.fn(async (_request: Request) => Response.json({ eventIds: ['event'] }));
+    const request = event(send);
+    await expect(endActions[action](request)).rejects.toMatchObject({
+      status: 303,
+      location: '/u/tables',
+    });
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][0].method).toBe(method);
+    expect(new URL(send.mock.calls[0][0].url).pathname).toBe(
+      `/v1/tables/private%20draft/${suffix}`,
+    );
+    expect(request.locals.afterResponse).not.toHaveBeenCalled();
+    expect(request.locals.flags.isEnabled).not.toHaveBeenCalled();
+  });
 });

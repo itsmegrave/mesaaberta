@@ -17,7 +17,7 @@ export type CrowdfundingFilters = {
 };
 
 /**
- * The filters in a `/cf` address. A link can say anything, so what is not a filter the
+ * The filters in a `/crowdfunding` address. A link can say anything, so what is not a filter the
  * page knows is dropped rather than refused: the list still shows, just without it.
  */
 export function readCrowdfundingFilters(params: SearchParamsLike): CrowdfundingFilters {

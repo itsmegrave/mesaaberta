@@ -10,14 +10,17 @@ vi.mock('#lib/server/admin/counts.js', () => ({
     connections: 0,
     events: 3,
     partners: 0,
+    tools: 0,
+    places: 0,
+    hiddenPlaces: 0,
   })),
 }));
 
 const admin = { id: 'admin', role: 'admin', status: 'active' };
 const member = { id: 'member', role: 'member', status: 'active' };
 
-const event = (profile: object | null, db: object | null = {}) =>
-  ({ locals: { db, getProfile: async () => profile } }) as unknown as RequestEvent;
+const event = (profile: object | null) =>
+  ({ locals: { getProfile: async () => profile } }) as unknown as RequestEvent;
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -30,8 +33,13 @@ describe('GET /api/admin/counts', () => {
       connections: 0,
       events: 3,
       partners: 0,
+      tools: 0,
+      places: 0,
+      hiddenPlaces: 0,
     });
     expect(response.headers.get('cache-control')).toBe('private, no-store');
+    // The api counts, as the admin.
+    expect(vi.mocked(adminCounts).mock.lastCall?.[1]).toBe('admin');
   });
 
   it('answers 404 to a member or a visitor, as the admin area does, without counting', async () => {
@@ -40,11 +48,5 @@ describe('GET /api/admin/counts', () => {
         status: 404,
       });
     expect(adminCounts).not.toHaveBeenCalled();
-  });
-
-  it('answers 503 without a database', async () => {
-    await expect(GET(event(admin, null) as Parameters<typeof GET>[0])).rejects.toMatchObject({
-      status: 503,
-    });
   });
 });

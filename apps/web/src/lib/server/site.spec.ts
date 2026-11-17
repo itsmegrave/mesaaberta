@@ -29,12 +29,23 @@ describe('siteOf', () => {
     expect(site.INSTAGRAM_HANDLE).toBeUndefined();
   });
 
+  it.each(['CONTACT_EMAIL', 'PRIVACY_EMAIL', 'INSTAGRAM_HANDLE', 'CALENDAR_UID_DOMAIN'])(
+    'preserves a valid public origin when %s is invalid',
+    (field) => {
+      const site = siteOf({
+        APP_ORIGIN: 'https://mesaaberta.example/',
+        [field]: 'invalid value',
+      } as never);
+      expect(site.APP_ORIGIN).toBe('https://mesaaberta.example');
+    },
+  );
+
   it('logs a malformed variable and falls back instead of failing the page', () => {
     const warn = vi.fn();
     const site = siteOf({ CONTACT_EMAIL: 'not an address' } as never, { warn });
 
     expect(site.CONTACT_EMAIL).toBe('contact@example.invalid');
-    expect(warn).toHaveBeenCalledWith('site configuration invalid', {
+    expect(warn).toHaveBeenCalledWith('site.configuration_invalid', {
       code: 'site_config_invalid',
     });
   });

@@ -1,7 +1,7 @@
 import { page } from 'vitest/browser';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { confirmLeave } from '#lib/forms/leave-guard.svelte.js';
+import { confirmLeave, reloadPage, trackDraft } from '#lib/forms/leave-guard.svelte.js';
 import UnsavedChangesDialog from './UnsavedChangesDialog.svelte';
 
 describe('UnsavedChangesDialog', () => {
@@ -30,5 +30,31 @@ describe('UnsavedChangesDialog', () => {
     await page.getByRole('button', { name: 'Sair sem salvar' }).click();
 
     expect(await answer).toBe(true);
+  });
+
+  it('reloads at once when no draft holds unsaved changes', async () => {
+    const reload = vi.fn();
+    const untrack = trackDraft(() => false);
+
+    expect(await reloadPage(reload)).toBe(true);
+    expect(reload).toHaveBeenCalledOnce();
+    untrack();
+  });
+
+  it('asks before a reload that would lose a draft, and staying keeps it', async () => {
+    render(UnsavedChangesDialog);
+    const reload = vi.fn();
+    const untrack = trackDraft(() => true);
+
+    const staying = reloadPage(reload);
+    await page.getByRole('button', { name: 'Continuar editando' }).click();
+    expect(await staying).toBe(false);
+    expect(reload).not.toHaveBeenCalled();
+
+    const leaving = reloadPage(reload);
+    await page.getByRole('button', { name: 'Sair sem salvar' }).click();
+    expect(await leaving).toBe(true);
+    expect(reload).toHaveBeenCalledOnce();
+    untrack();
   });
 });

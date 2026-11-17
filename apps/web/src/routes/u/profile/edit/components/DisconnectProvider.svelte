@@ -27,7 +27,7 @@
   }}
   errorClass=""
   class="grid justify-items-end gap-2"
-  buttonClass="btn h-12 rounded-lg btn-secondary px-5 font-semibold"
+  buttonClass="btn h-11 rounded-lg btn-secondary px-5 font-semibold"
 >
   {m.account_connections_disconnect({ provider: label })}
 </PostButton>

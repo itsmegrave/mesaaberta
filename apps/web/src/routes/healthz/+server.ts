@@ -1,28 +1,45 @@
-import { checkDatabase } from '@mesaaberta/core/server/db/health';
-import { workerHealth } from '@mesaaberta/core/server/events/heartbeat';
+import { buildInfoOf, type BuildEnv } from '@mesaaberta/core/server/build-info';
+import { sameSecret } from '@mesaaberta/core/server/same-secret';
+import { probeApi } from '#lib/server/api-health.js';
 import type { RequestHandler } from './$types';
 
-type HealthEnv = { DEPLOYMENT_SOURCE_SHA?: string };
+type HealthEnv = BuildEnv & { HEALTHZ_TOKEN?: string };
 
-// Liveness and dependency probe for uptime checks. 503 when the database is configured but does
-// not answer; a deploy with no database configured yet still reports ok. `revision` is the
-// source commit the serving version was built from, set by the deployment pipeline; it is
-// absent on local and self-hosted runs that do not set it. `worker` is the background Worker's last
-// sweep (it has no route to probe): `stale` after 15 minutes without one. It never changes `status`
-// or the HTTP code, so a worker rollback cannot fail the web health gate.
-export const GET: RequestHandler = async ({ locals }) => {
-  const database = await checkDatabase(locals.db, locals.log);
-  const healthy = database !== 'down';
-  const revision = (locals.env as HealthEnv | undefined)?.DEPLOYMENT_SOURCE_SHA?.trim();
-  const worker = database === 'ok' && locals.db ? await workerHealth(locals.db) : undefined;
+/** Whether the request carries `Authorization: Bearer <HEALTHZ_TOKEN>`. Never with no token set. */
+function authorized(request: Request, env: HealthEnv | undefined) {
+  const sent = request.headers.get('authorization')?.match(/^Bearer (.+)$/)?.[1] ?? '';
+  return sameSecret(sent, env?.HEALTHZ_TOKEN?.trim() ?? '');
+}
 
+// Health probe for the uptime monitor and the deploy gate, which both send the `HEALTHZ_TOKEN`
+// secret as a bearer token. Without it the answer is a 401 that touches neither the database nor
+// the api, so the probe is not a cheap way to load them; with no token configured nobody gets in.
+// The api is the one app that opens the database, so it answers for it and for the background
+// Worker (read from its last sweep, `stale` after 15 minutes without one). 503 when the database
+// is configured but does not answer; a deploy with no database configured yet still reports ok,
+// and so does an api that cannot be asked (the database is then `unknown`), so a rollback of one
+// app cannot fail the web health gate. Each app says which build it runs (`version`, the release;
+// `revision`, the source commit), absent on runs whose pipeline does not set them. The top-level
+// `revision` is the web one, which the deploy gate reads.
+export const GET: RequestHandler = async ({ locals, request }) => {
+  const env = locals.env as HealthEnv | undefined;
+  const headers = { 'cache-control': 'no-store' };
+  if (!authorized(request, env)) {
+    return Response.json({ error: 'unauthorized' }, { status: 401, headers });
+  }
+
+  const { api, store } = await probeApi(locals.env);
+  const healthy = store.database !== 'down';
+  const web = buildInfoOf(env);
   return Response.json(
     {
       status: healthy ? 'ok' : 'error',
-      database,
-      ...(revision ? { revision } : {}),
-      ...(worker ? { worker } : {}),
+      database: store.database,
+      ...(web.revision ? { revision: web.revision } : {}),
+      web: { status: 'ok', ...web },
+      api,
+      ...(store.worker ? { worker: store.worker } : {}),
     },
-    { status: healthy ? 200 : 503, headers: { 'cache-control': 'no-store' } },
+    { status: healthy ? 200 : 503, headers },
   );
 };

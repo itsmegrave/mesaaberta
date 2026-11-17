@@ -52,13 +52,24 @@ test('the account menu leads to the profile, where the details are saved and the
   await expect(page.getByRole('main')).not.toContainText('Recife');
 });
 
-test("the timezone on the profile wins over the browser's, on every page", async ({ page }) => {
+test("the timezone on the profile wins over the browser's, on every page", async ({
+  page,
+  isMobile,
+}) => {
   const user = await createUser('Fuso Horario');
   await signIn(page, user, '/u/profile/edit/about');
 
   // Not picked yet: the field offers the browser's zone.
-  const field = page.getByRole('combobox', { name: 'Fuso horário' });
-  await expect(field).toHaveValue('America/Sao Paulo');
+  // A phone shows it on the button that opens the sheet; a wide screen, in the box to type into.
+  if (isMobile) {
+    await expect(page.getByRole('button', { name: /^Fuso horário/ })).toContainText(
+      'America/Sao Paulo',
+    );
+  } else {
+    await expect(page.getByRole('combobox', { name: 'Fuso horário' })).toHaveValue(
+      'America/Sao Paulo',
+    );
+  }
 
   await pickFromSearch(page, 'Fuso horário', 'Asia/Tokyo');
   await page.getByRole('button', { name: 'Salvar', exact: true }).click();
@@ -68,7 +79,7 @@ test("the timezone on the profile wins over the browser's, on every page", async
   await expect(page.getByRole('main')).toContainText('GMT+9');
 
   // A table they open is typed in that zone too: 19:00 in Tokyo, shown back as 19:00 GMT+9.
-  await page.goto('/t/new');
+  await page.goto('/tables/new');
   await expect(page.getByText(/No seu fuso, Asia\/Tokyo \(GMT\+9\)/)).toBeVisible();
   await createTable(page, { title: uniqueTitle('Mesa em Tóquio') });
   await expect(page.getByRole('main')).toContainText(/19:00 GMT\+9/);
@@ -96,12 +107,27 @@ test('closing the account asks for the username, then removes the person and sig
   const user = await createUser('Conta Apagada');
   await signIn(page, user, '/u/profile/edit/data');
 
+  let posts = 0;
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && request.url().includes('?/delete')) posts++;
+  });
+
+  // A wrong @usuário is caught before anything is sent.
   await page.getByLabel('Digite seu @usuário para confirmar').fill('outra-pessoa');
   await page.getByRole('button', { name: 'Apagar minha conta' }).click();
   await expect(page.getByRole('alert')).toContainText('O @usuário digitado não confere.');
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
 
+  // The right one opens a dialog that asks once more; "Cancelar" sends nothing.
   await page.getByLabel('Digite seu @usuário para confirmar').fill(user.username);
   await page.getByRole('button', { name: 'Apagar minha conta' }).click();
+  const dialog = page.getByRole('alertdialog', { name: 'Apagar sua conta?' });
+  await dialog.getByRole('button', { name: 'Cancelar' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(posts).toBe(0);
+
+  await page.getByRole('button', { name: 'Apagar minha conta' }).click();
+  await dialog.getByRole('button', { name: 'Apagar minha conta' }).click();
   await expect(page).toHaveURL(/localhost:\d+\/$/);
   await expect(accountMenu(page, user.username)).toHaveCount(0);
 
@@ -221,9 +247,15 @@ test('a slow submit locks its button: it says it is busy, and a second click sen
     await route.continue();
   });
 
-  await page.getByLabel('Digite seu @usuário para confirmar').fill('outra-pessoa');
-  const submit = page.getByRole('button', { name: 'Apagar minha conta' });
+  await page.getByLabel('Digite seu @usuário para confirmar').fill(user.username);
+  const submit = page.locator('form[action="?/delete"]').getByRole('button', {
+    name: 'Apagar minha conta',
+  });
   await submit.click();
+  await page
+    .getByRole('alertdialog', { name: 'Apagar sua conta?' })
+    .getByRole('button', { name: 'Apagar minha conta' })
+    .click();
 
   await expect(submit).toHaveAttribute('aria-busy', 'true');
   await expect(submit).toHaveAttribute('aria-disabled', 'true');
@@ -231,7 +263,6 @@ test('a slow submit locks its button: it says it is busy, and a second click sen
   await submit.evaluate((button: HTMLButtonElement) => button.click());
 
   release();
-  await expect(page.getByRole('alert')).toContainText('O @usuário digitado não confere.');
-  await expect(submit).not.toHaveAttribute('aria-busy');
+  await expect(page).toHaveURL(/localhost:\d+\/$/);
   expect(posts).toBe(1);
 });

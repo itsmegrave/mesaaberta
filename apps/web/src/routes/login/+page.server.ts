@@ -4,11 +4,18 @@ import { initialForm, validateStringForm } from '#lib/forms/contract.js';
 import { formMessage } from '#lib/forms/server.js';
 import { credentialsSchema } from '#lib/auth/credentials.js';
 import { withoutSecrets } from '#lib/forms/server.js';
-import { SIGN_IN_LIMIT, attemptKey, attemptWait } from '@mesaaberta/core/server/auth/attempt-limit';
-import { signInWithEmail, type SignInResult } from '@mesaaberta/core/server/auth/email';
+import type { SignInResult } from '@mesaaberta/core/server/auth/email';
 import { callApiRaw } from '#lib/server/api-client.js';
 import { afterSignIn } from '@mesaaberta/core/server/auth/onboarding';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
+import {
+  finishPasskeyLogin,
+  parseCredential,
+  signInChallenge,
+} from '@mesaaberta/core/server/auth/passkeys';
+import { passkeyAnswerSchema } from '#lib/auth/passkey.js';
+import { finishLoginViaApi } from '#lib/server/auth/finish-login.js';
+import { captchaField, captchaSiteKey, captchaTokenFrom } from '#lib/server/auth/captcha.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -22,34 +29,36 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     confirmHint: url.searchParams.get('error') === 'exchange_failed',
     suspended: url.searchParams.get('error') === 'suspended',
     form: initialForm({ email: '', password: '', next }),
+    passkeys: await passkeysOn(locals),
+    captchaSiteKey: captchaSiteKey(locals?.env),
   };
 };
+
+/** "Entrar com passkey" (`use_passkeys`), evaluated for the anonymous visitor. */
+const passkeysOn = (locals: App.Locals) =>
+  locals.supabase ? locals.flags.isEnabled('use_passkeys') : Promise.resolve(false);
 
 const STATUS = {
   invalid: 400,
   unconfirmed: 400,
+  captcha_failed: 400,
   suspended: 403,
   failed: 500,
   rate_limited: 429,
 } as const satisfies Record<Exclude<SignInResult, 'ok'>, number>;
 
 /**
- * Signs in through the api Worker (behind `api_auth_sign_in`): it applies the limit, checks the
- * password with Supabase and answers the JWT pair, which is set here as the cookie session (Supabase
- * verifies the token again when it is set). Resolves to the result to show, or to null when the
- * flag is off or the call cannot be used (no binding, a failure, a session that does not set), so
- * the caller runs the same sign-in in this Worker.
+ * Signs in through the api Worker: it applies the limit, checks the password with Supabase and
+ * answers the JWT pair, which is set here as the cookie session (Supabase verifies the token again
+ * when it is set). A call that cannot be used (no binding, a failure, a session that does not set)
+ * is `failed`: the database work lives in the api.
  */
 async function signInViaApi(
   locals: App.Locals,
   ip: string,
-  credentials: { email: string; password: string },
-): Promise<{ result: SignInResult; retryAfter?: number } | null> {
-  if (!locals.supabase) return null;
-  // Nobody is signed in to target, so the visitor's network (hashed) stands in for the user id.
-  const id = await attemptKey('sign_in', ip);
-  if (!(await locals.flags.isEnabled('api_auth_sign_in', { id }))) return null;
-
+  credentials: { email: string; password: string; captchaToken?: string },
+): Promise<{ result: SignInResult; retryAfter?: number }> {
+  if (!locals.supabase) return { result: 'failed' };
   const answer = await callApiRaw(locals.env, '/v1/auth/sign-in', null, locals.log, credentials, {
     'x-client-ip': ip,
   });
@@ -59,18 +68,18 @@ async function signInViaApi(
     session?: { accessToken?: string; refreshToken?: string };
   };
   if (!answer || !remote.result || !(remote.result in STATUS || remote.result === 'ok'))
-    return null;
+    return { result: 'failed' };
   if (remote.result !== 'ok') return { result: remote.result, retryAfter: remote.retryAfter };
 
   const { accessToken, refreshToken } = remote.session ?? {};
-  if (!accessToken || !refreshToken) return null;
+  if (!accessToken || !refreshToken) return { result: 'failed' };
   const { error } = await locals.supabase.auth.setSession({
     access_token: accessToken,
     refresh_token: refreshToken,
   });
   if (error) {
-    locals.log.warn('api sign-in session not set', { code: 'api_session_rejected' });
-    return null;
+    locals.log.warn('auth.sign_in_session_not_set', { code: 'api_session_rejected' });
+    return { result: 'failed' };
   }
   return { result: 'ok' };
 }
@@ -80,41 +89,62 @@ export const actions: Actions = {
   email: async ({ request, locals, getClientAddress, setHeaders }) => {
     if (!locals.supabase) redirect(303, '/login?error=unavailable');
 
-    const form = validateStringForm(await request.formData(), credentialsSchema, [
-      'email',
-      'password',
-      'next',
-    ]);
+    const data = await request.formData();
+    const form = validateStringForm(data, credentialsSchema, ['email', 'password', 'next']);
     const next = safeNext(form.data.next);
     const { email, password } = form.data;
     // Only the email is handed back to refill the form, never the password.
     withoutSecrets(form, ['password']);
     if (!form.valid) return fail(400, { form });
 
-    const viaApi = await signInViaApi(locals, getClientAddress(), { email, password });
-    if (viaApi) {
-      if (viaApi.result === 'ok') redirect(303, await afterSignIn(locals, next));
-      if (viaApi.result === 'rate_limited') {
-        const retryAfter = viaApi.retryAfter ?? 60;
-        setHeaders({ 'Retry-After': String(retryAfter) });
-        return formMessage(form, { code: 'rate_limited', retryAfter }, { status: 429 });
-      }
-      return formMessage(form, { code: viaApi.result }, { status: STATUS[viaApi.result] });
+    const viaApi = await signInViaApi(locals, getClientAddress(), {
+      email,
+      password,
+      ...captchaField(data),
+    });
+    if (viaApi.result === 'ok') redirect(303, await afterSignIn(locals, next));
+    if (viaApi.result === 'rate_limited') {
+      const retryAfter = viaApi.retryAfter ?? 60;
+      setHeaders({ 'Retry-After': String(retryAfter) });
+      return formMessage(form, { code: 'rate_limited', retryAfter }, { status: 429 });
     }
+    return formMessage(form, { code: viaApi.result }, { status: STATUS[viaApi.result] });
+  },
 
-    // Counted per network before Supabase sees it, so a script cannot guess passwords in a loop.
-    const wait = await attemptWait(locals.db, SIGN_IN_LIMIT, getClientAddress());
-    if (wait !== null) {
-      setHeaders({ 'Retry-After': String(wait) });
-      return formMessage(form, { code: 'rate_limited', retryAfter: wait }, { status: 429 });
-    }
+  // Step one of "Entrar com passkey": a challenge from Supabase for the browser's passkey prompt.
+  // No account is named; the browser offers the passkeys it holds for this site.
+  passkeyOptions: async ({ request, locals }) => {
+    if (!locals.supabase || !(await passkeysOn(locals))) return fail(404, { passkey: 'off' });
+    const captcha = captchaTokenFrom(await request.formData());
+    const challenge = await signInChallenge(locals.supabase, locals.log, captcha ?? undefined);
+    if (!challenge) return fail(503, { passkey: 'unavailable' });
+    return { challenge };
+  },
 
-    const result = await signInWithEmail(
-      { supabase: locals.supabase, db: locals.db, log: locals.log, ip: getClientAddress() },
-      { email, password },
+  // Step two: the browser's answer. Supabase checks it and makes the session (the cookies); the
+  // api then finishes the sign-in like a provider's, and any refusal there signs the person out.
+  passkey: async ({ request, locals, getClientAddress }) => {
+    if (!locals.supabase || !(await passkeysOn(locals))) return fail(404, { passkey: 'off' });
+    const form = validateStringForm(await request.formData(), passkeyAnswerSchema, [
+      'challengeId',
+      'credential',
+      'next',
+    ]);
+    const credential = form.valid ? parseCredential(form.data.credential) : null;
+    if (!credential) return fail(400, { passkey: 'invalid' });
+
+    const ip = getClientAddress();
+    const target = await finishPasskeyLogin(
+      {
+        supabase: locals.supabase,
+        db: null,
+        log: locals.log,
+        ip,
+        remote: finishLoginViaApi(locals, ip),
+      },
+      { challengeId: form.data.challengeId, credential, next: form.data.next || null },
     );
-    if (result !== 'ok') return formMessage(form, { code: result }, { status: STATUS[result] });
-
-    redirect(303, await afterSignIn(locals, next));
+    if (!target) return fail(400, { passkey: 'refused' });
+    redirect(303, target);
   },
 };

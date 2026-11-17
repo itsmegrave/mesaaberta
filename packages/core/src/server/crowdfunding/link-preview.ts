@@ -270,27 +270,41 @@ export function readMeta(html: string, base: URL): LinkPreview {
   return { title: clean ? clean : null, imageUrl };
 }
 
-/** The title and picture of the campaign page at `link`, or nothing when it cannot be read. */
-export async function readLinkPreview(
+/**
+ * The HTML of the page at `link` (at most `maxHtmlBytes`) and the address it ended at after the
+ * redirects, guarded like every read here, or null when it cannot be read.
+ */
+export async function readPage(
   link: string,
   deps: { fetcher?: Fetcher; resolve?: Resolver } = {},
-): Promise<LinkPreview> {
+): Promise<{ html: string; finalUrl: URL } | null> {
   const fetcher = deps.fetcher ?? fetch;
   const resolve = deps.resolve ?? resolveOverHttps(fetcher);
-  const empty: LinkPreview = { title: null, imageUrl: null };
   const page = await guardedGet(link, 'text/html', { fetcher, resolve });
-  if (!page) return empty;
+  if (!page) return null;
   if (
     !/^(text\/html|application\/xhtml\+xml)\b/i.test(
       page.response.headers.get('content-type') ?? '',
     )
   ) {
     await page.response.body?.cancel().catch(() => undefined);
-    return empty;
+    return null;
   }
   const bytes = await readCapped(page.response, PREVIEW_LIMITS.maxHtmlBytes);
-  if (!bytes) return empty;
-  return readMeta(new TextDecoder('utf-8', { fatal: false }).decode(bytes), page.finalUrl);
+  if (!bytes) return null;
+  return {
+    html: new TextDecoder('utf-8', { fatal: false }).decode(bytes),
+    finalUrl: page.finalUrl,
+  };
+}
+
+/** The title and picture of the campaign page at `link`, or nothing when it cannot be read. */
+export async function readLinkPreview(
+  link: string,
+  deps: { fetcher?: Fetcher; resolve?: Resolver } = {},
+): Promise<LinkPreview> {
+  const page = await readPage(link, deps);
+  return page ? readMeta(page.html, page.finalUrl) : { title: null, imageUrl: null };
 }
 
 /** The picture at `imageUrl` as bytes, guarded like a page. The caller still judges its type by its bytes. */

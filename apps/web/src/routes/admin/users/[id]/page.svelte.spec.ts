@@ -169,4 +169,60 @@ describe('admin user page', () => {
     await expect.element(page.getByRole('heading', { name: 'Histórico' })).toBeVisible();
     await expect.element(page.getByText('@admin')).toBeVisible();
   });
+
+  it('lists the badges with where each came from, and asks for a reason to revoke or grant', async () => {
+    show({
+      badges: {
+        held: [
+          {
+            badgeId: 'community-helper',
+            awardedAt: new Date('2026-10-20T12:00:00Z'),
+            grantedBy: 'adm',
+            revokedAt: null,
+            revokeReason: null,
+            hidden: false,
+            source: 'grant',
+          },
+          {
+            badgeId: 'first-table',
+            awardedAt: new Date('2026-10-02T12:00:00Z'),
+            grantedBy: null,
+            revokedAt: new Date('2026-10-21T12:00:00Z'),
+            revokeReason: 'Mesa falsa',
+            hidden: false,
+            source: 'rule',
+          },
+        ],
+        grantable: [],
+      },
+    });
+
+    const badges = page.getByRole('region', { name: 'Conquistas' });
+    await expect.element(badges.getByText('Ajuda na comunidade')).toBeVisible();
+    await expect.element(badges.getByText(/Concedida por @adm em/)).toBeVisible();
+    await expect.element(badges.getByText(/Revogada em .*: Mesa falsa/)).toBeVisible();
+    await expect.element(badges.getByRole('button', { name: 'Devolver' })).toBeVisible();
+
+    await badges.getByRole('button', { name: 'Revogar' }).click();
+    const dialog = page.getByRole('alertdialog');
+    await expect.element(dialog.getByText(/Revogar Ajuda na comunidade de @ana/)).toBeVisible();
+    await expect.element(dialog.getByRole('textbox', { name: 'Motivo' })).toBeVisible();
+  });
+
+  it('offers the manual badges the person does not have', async () => {
+    show({ badges: { held: [], grantable: ['community-helper'] } });
+
+    await expect.element(page.getByText('Nenhuma conquista ainda.')).toBeVisible();
+    await page.getByRole('button', { name: 'Conceder Ajuda na comunidade' }).click();
+    await expect
+      .element(page.getByRole('dialog').getByText(/Conceder Ajuda na comunidade a @ana/))
+      .toBeVisible();
+  });
+
+  it('has no badges panel while badges are off', async () => {
+    show({ badges: null });
+
+    await expect.element(page.getByText('Nenhuma conquista ainda.')).not.toBeInTheDocument();
+    expect(page.getByRole('region', { name: 'Conquistas' }).elements()).toHaveLength(0);
+  });
 });

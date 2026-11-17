@@ -28,11 +28,11 @@ export async function deleteAccount(
   // Sent now, while the GM's address still exists; a failure is left to the sweeper.
   for (const id of eventIds) {
     await dispatchEvent(db, handlers, id, new Date(), log).catch((error: unknown) =>
-      log.error('account deletion: dispatch failed', { error, eventId: id }),
+      log.error('account.deletion_dispatch_failed', { error, eventId: id }),
     );
   }
   await anonymiseProfile(db, userId);
   await deleteAuthUser(admin, userId);
-  log.info('account deleted', { tables: eventIds.length });
+  log.info('account.deleted', { tables: eventIds.length });
   return { tables: eventIds.length };
 }

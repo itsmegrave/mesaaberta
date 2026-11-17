@@ -1,48 +1,34 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { extensionViaApi } from './extension-api';
+import { Invalid } from '@mesaaberta/core/server/errors';
+import { requireApi } from '../api-required';
+import { extensionAction } from './extension-api';
 
-const callApiRaw = vi.fn();
+vi.mock('../api-required', () => ({ requireApi: vi.fn() }));
 
-vi.mock('../api-client', () => ({ callApiRaw: (...args: unknown[]) => callApiRaw(...args) }));
-vi.mock('@mesaaberta/core/server/extensions/index', () => ({
-  extensionById: (id: string) =>
-    id === 'fake' ? { id, flags: { api_admin_fake: false } } : id === 'plain' ? { id } : undefined,
-}));
+const locals = {} as App.Locals;
 
-const locals = (enabled: boolean) =>
-  ({
-    env: {},
-    log: { warn: vi.fn() },
-    flags: { isEnabled: vi.fn(async () => enabled) },
-  }) as never as App.Locals;
+beforeEach(() => vi.mocked(requireApi).mockReset());
 
-beforeEach(() => {
-  callApiRaw.mockReset();
-  callApiRaw.mockResolvedValue({ ok: true, status: 200, body: { eventIds: [] } });
-});
+describe('extensionAction', () => {
+  it('has the api run the action as the admin, and answers without the event ids', async () => {
+    vi.mocked(requireApi).mockResolvedValueOnce({ eventIds: [], result: 'queued' });
 
-describe('extensionViaApi', () => {
-  it('asks the api when the extension declares api_admin_<id> and the flag is on', async () => {
-    const l = locals(true);
-
-    expect(await extensionViaApi(l, 'fake', 'admin', 'queue', {})).toEqual({ eventIds: [] });
-    expect(l.flags.isEnabled).toHaveBeenCalledWith('api_admin_fake', {
-      id: 'admin',
-      isAdmin: true,
+    expect(await extensionAction(locals, 'fake', 'admin', 'queue', { tableId: 't' })).toEqual({
+      result: 'queued',
+    });
+    expect(requireApi).toHaveBeenCalledWith(locals, { id: 'admin' }, '/v1/admin/fake/queue', {
+      method: 'POST',
+      body: { tableId: 't' },
     });
   });
 
-  it('runs the action here when the flag is off', async () => {
-    expect(await extensionViaApi(locals(false), 'fake', 'admin', 'queue', {})).toBeNull();
-    expect(callApiRaw).not.toHaveBeenCalled();
-  });
+  it('says invalid for data the action refuses, and lets any other failure surface', async () => {
+    vi.mocked(requireApi).mockRejectedValueOnce(new Invalid('', 'invalid'));
+    expect(await extensionAction(locals, 'fake', 'admin', 'queue', {})).toEqual({ invalid: true });
 
-  it('runs the action here when the extension declares no such flag, or is not installed', async () => {
-    const l = locals(true);
-
-    expect(await extensionViaApi(l, 'plain', 'admin', 'queue', {})).toBeNull();
-    expect(await extensionViaApi(l, 'missing', 'admin', 'queue', {})).toBeNull();
-    expect(l.flags.isEnabled).not.toHaveBeenCalled();
-    expect(callApiRaw).not.toHaveBeenCalled();
+    vi.mocked(requireApi).mockRejectedValueOnce(Object.assign(new Error('down'), { status: 503 }));
+    await expect(extensionAction(locals, 'fake', 'admin', 'queue', {})).rejects.toMatchObject({
+      status: 503,
+    });
   });
 });

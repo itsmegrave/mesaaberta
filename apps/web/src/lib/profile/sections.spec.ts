@@ -13,6 +13,7 @@ const stored: ProfileInput = {
   timezone: 'America/Recife',
   linkNetwork: ['instagram', 'website'],
   linkUrl: ['ana', 'https://example.com'],
+  tableRole: 'gm',
 };
 
 describe('withStoredFields', () => {
@@ -43,5 +44,24 @@ describe('withStoredFields', () => {
     expect(data.get('bio')).toBe('Horror cósmico.');
     expect(data.getAll('linkNetwork')).toEqual(['instagram', 'website']);
     expect(data.getAll('linkUrl')).toEqual(['ana', 'https://example.com']);
+  });
+
+  it('sends "Na mesa, você…" only from Perfil público, so another section never answers it', () => {
+    const sent = new FormData();
+    sent.set('tableRole', 'both');
+    expect(withStoredFields(sent, stored, 'public').get('tableRole')).toBe('both');
+
+    const about = new FormData();
+    about.set('tableRole', 'player');
+    expect(withStoredFields(about, stored, 'about').has('tableRole')).toBe(false);
+  });
+
+  it('leaves out a field whose flag is off, so the save keeps what is stored', () => {
+    const sent = new FormData();
+    sent.set('tableRole', 'player');
+    sent.set('bio', 'Nova bio');
+    const data = withStoredFields(sent, stored, 'public', { hidden: ['tableRole'] });
+    expect(data.has('tableRole')).toBe(false);
+    expect(data.get('bio')).toBe('Nova bio');
   });
 });

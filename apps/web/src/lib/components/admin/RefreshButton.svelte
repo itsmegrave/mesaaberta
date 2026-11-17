@@ -11,7 +11,7 @@
 <MAButton
   size="custom"
   type="button"
-  class="btn h-11 gap-2 rounded-lg preset-tonal-primary px-4"
+  class="btn h-11 gap-2 rounded-lg btn-secondary px-4 font-semibold"
   disabled={query.isFetching}
   onclick={() => query.refetch()}
 >

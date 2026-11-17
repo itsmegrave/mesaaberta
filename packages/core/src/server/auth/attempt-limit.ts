@@ -36,6 +36,9 @@ export const PASSWORD_RESET_LIMIT = {
 /** No limit looks back further than this, so older rows are deleted: the IP is personal data. */
 const KEEP_SECONDS = 24 * 60 * 60;
 
+const expiredBefore = (now: Date) =>
+  lt(authAttempts.createdAt, new Date(now.getTime() - KEEP_SECONDS * 1000));
+
 /** A hash of the action and the address: the table never holds an IP. */
 export async function attemptKey(action: AttemptLimit['action'], ip: string) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${action}:${ip}`));
@@ -60,9 +63,9 @@ export async function recordAttempt(
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`auth-attempt:${key}`}, 0))`,
     );
-    await tx
-      .delete(authAttempts)
-      .where(lt(authAttempts.createdAt, new Date(now.getTime() - KEEP_SECONDS * 1000)));
+    // Only this key's old rows: the rest of the table is the sweeper's (`pruneAuthAttempts`), so a
+    // burst of sign-ins does not turn into a burst of table-wide deletes.
+    await tx.delete(authAttempts).where(and(eq(authAttempts.key, key), expiredBefore(now)));
 
     const inWindow = and(eq(authAttempts.key, key), gt(authAttempts.createdAt, windowStart));
     const [{ used }] = await tx.select({ used: count() }).from(authAttempts).where(inWindow);
@@ -80,6 +83,18 @@ export async function recordAttempt(
 
     await tx.insert(authAttempts).values({ key, createdAt: now });
   });
+}
+
+/**
+ * Deletes every attempt older than a day, whatever its address. Run by the sweeper, so an address
+ * that never comes back is not kept longer than that. Returns how many were deleted.
+ */
+export async function pruneAuthAttempts(db: AnyDb, now: Date = new Date()): Promise<number> {
+  const deleted = await db
+    .delete(authAttempts)
+    .where(expiredBefore(now))
+    .returning({ id: authAttempts.id });
+  return deleted.length;
 }
 
 /**

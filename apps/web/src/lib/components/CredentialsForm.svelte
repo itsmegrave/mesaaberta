@@ -3,6 +3,7 @@
   import FormBanner from '#lib/components/ui/FormBanner.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import MAForm from './ui/MAForm.svelte';
+  import CaptchaField from './CaptchaField.svelte';
   import EmailField from './ui/EmailField.svelte';
   import PasswordField from './ui/PasswordField.svelte';
   import type { CredentialsData } from '#lib/auth/credentials.js';
@@ -12,9 +13,11 @@
     mode: 'login' | 'signup';
     controller: ReturnType<typeof actionForm<CredentialsData>>;
     action?: string;
+    /** Turnstile's site key; without one the form has no CAPTCHA. */
+    captchaSiteKey?: string | null;
   };
 
-  let { mode, controller, action }: Props = $props();
+  let { mode, controller, action, captchaSiteKey = null }: Props = $props();
 
   const messages: Record<string, () => string> = {
     invalid: m.auth_error_invalid,
@@ -22,6 +25,7 @@
     suspended: m.auth_error_suspended,
     weak_password: m.auth_error_weak,
     rate_limited: m.auth_error_rate_limited,
+    captcha_failed: m.auth_error_captcha,
     failed: m.auth_error_failed,
   };
 </script>
@@ -46,12 +50,16 @@
     bind:value={() => controller.values.password, (value) => controller.change('password', value)}
   />
 
+  {#if captchaSiteKey}
+    <CaptchaField siteKey={captchaSiteKey} resetOn={controller.message} />
+  {/if}
+
   <div>
     <MAButton
       type="submit"
       size="custom"
       {controller}
-      class="btn h-12 w-full gap-2 rounded-lg preset-filled-primary-500 text-base font-semibold"
+      class="btn h-11 w-full gap-2 rounded-lg preset-filled-primary-500 text-base font-semibold"
     >
       {mode === 'signup' ? m.signup_submit() : m.login_submit()}
     </MAButton>

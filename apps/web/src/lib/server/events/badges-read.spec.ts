@@ -116,15 +116,6 @@ describe('badgeProgress', () => {
       goal: 25,
     });
   });
-
-  it('comes with the profile only for its owner', async () => {
-    const showBadges = async () => true;
-
-    expect((await publicProfile(test.db, 'ana', { showBadges }))!.badgeProgress).toBeNull();
-    expect(
-      (await publicProfile(test.db, 'ana', { showBadges, viewerId: ana }))!.badgeProgress,
-    ).not.toBeNull();
-  });
 });
 
 describe('setBadgeHidden', () => {

@@ -20,6 +20,9 @@
     describedby,
     withDuration = true,
     name = 'startsAtLocal',
+    label = m.session_day(),
+    emptySummary = m.session_summary_empty(),
+    hint,
   }: {
     startsAt: string;
     /** Hours. */
@@ -33,7 +36,15 @@
     withDuration?: boolean;
     /** The form field that carries `startsAt`. */
     name?: string;
+    /** What the calendar picks: the table form's first session by default. */
+    label?: string;
+    /** The sentence shown before a day is picked, when the length is picked too. */
+    emptySummary?: string;
+    /** A line under the label, read with the calendar. */
+    hint?: string;
   } = $props();
+
+  const hintId = $props.id();
 
   const PRESETS = [2, 3, 4];
   const hours = Array.from({ length: 24 }, (_, hour) => String(hour).padStart(2, '0'));
@@ -54,12 +65,20 @@
   const other = $derived(custom || (!!length && !PRESETS.includes(length)));
 
   const summary = $derived.by(() => {
-    if (!day) return m.session_summary_empty();
+    if (!day) return withDuration ? emptySummary : m.session_summary_at_empty();
     const date = new Intl.DateTimeFormat(getLocale(), {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
     }).format(new Date(`${day}T12:00:00Z`));
+    // A date without its length (the next session of a table): the zone as its offset, "GMT-3".
+    if (!withDuration) {
+      const offset =
+        new Intl.DateTimeFormat('en-US', { timeZone: timezone, timeZoneName: 'shortOffset' })
+          .formatToParts(new Date(`${day}T12:00:00Z`))
+          .find((part) => part.type === 'timeZoneName')?.value ?? timezone;
+      return m.session_summary_at({ date, time: `${hour}:${minute}`, offset });
+    }
     return m.session_summary({
       date,
       time: `${hour}:${minute}`,
@@ -68,8 +87,9 @@
     });
   });
 
+  // The durations are a segmented row of pills on the wash, like SegmentedChoice.
   const segment =
-    'btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold has-checked:border-primary-500 has-checked:bg-primary-500/10 has-focus-visible:outline-4 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500';
+    'btn h-9 rounded-full px-3 text-sm font-semibold has-checked:preset-filled-primary-500 has-focus-visible:outline-4 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary-500';
 </script>
 
 <div class="grid gap-5">
@@ -79,15 +99,18 @@
       locale="pt-BR"
       value={picked ? [picked] : []}
       min={earliest}
-      translations={pickerTranslations(() => m.session_day())}
+      translations={pickerTranslations(() => label)}
       onValueChange={(details) => set(details.value[0]?.toString() ?? '', hour, minute)}
     >
-      <DatePicker.Label class="label-text font-semibold">{m.session_day()}</DatePicker.Label>
+      <DatePicker.Label class="label-text font-semibold">{label}</DatePicker.Label>
+      {#if hint}
+        <p id={hintId} class="text-sm text-muted">{hint}</p>
+      {/if}
       <DatePicker.Content
         class="w-full max-w-sm rounded-lg border-2 p-3 {invalid
           ? 'border-error-500'
           : 'border-surface-200-800'} bg-panel"
-        aria-describedby={describedby}
+        aria-describedby={[hint ? hintId : '', describedby ?? ''].join(' ').trim() || undefined}
       >
         <CalendarDays />
       </DatePicker.Content>
@@ -104,6 +127,7 @@
           labelClass="label-text block font-semibold"
           class="grid gap-1"
           items={field.options.map((option) => ({ name: option, slug: option }))}
+          search={false}
           value={[field.current]}
           placeholder={field.current}
           disabled={!day}
@@ -116,7 +140,7 @@
   {#if withDuration}
     <fieldset class="grid gap-2">
       <legend class="label-text font-semibold">{m.session_duration()}</legend>
-      <div class="flex flex-wrap gap-2">
+      <div class="flex w-fit flex-wrap gap-1 rounded-3xl bg-surface-wash p-1">
         {#each PRESETS as preset (preset)}
           <label class={segment}>
             <input
@@ -151,7 +175,7 @@
             max={TABLE_LIMITS.durationHours.max}
             step={TABLE_LIMITS.durationHours.step}
             bind:value={duration}
-            class="input h-13 max-w-32 rounded-lg border-control border-ink-muted bg-panel px-3"
+            class="input h-11 max-w-32 rounded-lg border-control border-ink-muted bg-panel px-3"
           />
         </label>
       {/if}

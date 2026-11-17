@@ -24,7 +24,7 @@ async function setup(browser: Parameters<typeof asUser>[0]) {
   await host.page.goto(`/t/${slug}/manage`);
   await host.page.getByLabel('@usuário').fill(`@${player.username}`);
   await host.page.getByRole('button', { name: 'Enviar convite', exact: true }).click();
-  await expect(host.page.getByText('0 confirmados · 1 reservadas · 0 disponíveis')).toBeVisible();
+  await expect(host.page.getByText('0 confirmadas · 1 reservada · 0 livres')).toBeVisible();
   await guest.page.goto(`/t/${slug}`);
   const review = guest.page.getByRole('link', { name: 'Revisar meu convite' });
   await expect(review).toBeVisible();
@@ -55,7 +55,7 @@ test('email link requests consent and the reserved last seat becomes confirmed o
   await guest.page.goto(`/t/${slug}`);
   await expect(guest.page.getByText('https://private.example.test/only-confirmed')).toBeVisible();
   await host.page.reload();
-  await expect(host.page.getByText('1 confirmados · 0 reservadas · 0 disponíveis')).toBeVisible();
+  await expect(host.page.getByText('1 confirmada · 0 reservadas · 0 livres')).toBeVisible();
   await guest.context.close();
   await host.context.close();
 });
@@ -82,17 +82,30 @@ test('decline prevents another invitation while allowing a voluntary request', a
 test('profile opt-out and a GM block cancel pending reservations without reviving old links', async ({
   browser,
 }) => {
-  const { host, guest, href } = await setup(browser);
+  const { gm, host, guest, href } = await setup(browser);
   await guest.page.goto('/u/profile/edit/messages');
-  await guest.page.getByRole('button', { name: 'Não receber convites', exact: true }).click();
-  await expect(guest.page.getByText('Você não recebe convites.', { exact: true })).toBeVisible();
+  // Skeleton's Switch is a visually hidden checkbox inside its label: click the label.
+  const receive = guest.page.getByRole('checkbox', { name: 'Receber convites' });
+  const flip = () => guest.page.getByText('Receber convites', { exact: true }).click();
+  await expect(receive).toBeChecked();
+  await flip();
+  await expect(guest.page.getByText('Convite atualizado.')).toBeVisible();
   await guest.page.goto(href);
   await expect(guest.page.getByText('Convite cancelado', { exact: true })).toBeVisible();
-  await guest.page.getByRole('button', { name: 'Bloquear convites desta pessoa' }).click();
+  await guest.page.getByRole('button', { name: `Bloquear convites de @${gm.username}…` }).click();
+  await guest.page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Bloquear convites', exact: true })
+    .click();
+  await expect(guest.page.getByRole('alertdialog')).toHaveCount(0);
   await guest.page.goto('/u/profile/edit/messages');
-  await guest.page.getByRole('button', { name: 'Receber convites', exact: true }).click();
-  await expect(guest.page.getByRole('button', { name: 'Desbloquear convites' })).toBeVisible();
-  await guest.page.getByRole('button', { name: 'Desbloquear convites' }).click();
+  await expect(receive).not.toBeChecked();
+  await flip();
+  await expect(receive).toBeChecked();
+  await expect(guest.page.getByText('Convite atualizado.')).toBeVisible();
+  const unblock = guest.page.getByRole('button', { name: 'Desbloquear', exact: true });
+  await expect(unblock).toBeVisible();
+  await unblock.click();
   await expect(guest.page.getByText('Você não bloqueou convites de ninguém.')).toBeVisible();
   await guest.page.goto(href);
   await expect(guest.page.getByRole('button', { name: 'Aceitar convite' })).toHaveCount(0);

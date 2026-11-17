@@ -3,9 +3,11 @@ import { eq } from 'drizzle-orm';
 import {
   events,
   conversations,
+  follows,
   gameTables,
   messages,
   notifications,
+  profileFavoriteSystems,
   profileSocialLinks,
   profiles,
   ratings,
@@ -30,7 +32,14 @@ let counter = 0;
 beforeAll(async () => {
   test = await createTestDb();
   await test.db.insert(profiles).values([
-    { id: me, username: 'ana', name: 'Ana Souza', ageRange: '25_34', city: 'Recife' },
+    {
+      id: me,
+      username: 'ana',
+      name: 'Ana Souza',
+      ageRange: '25_34',
+      city: 'Recife',
+      tableRole: 'both',
+    },
     { id: other, username: 'bruno' },
   ]);
   await test.db
@@ -93,6 +102,7 @@ describe('exportAccount', () => {
       name: 'Ana Souza',
       ageRange: '25_34',
       city: 'Recife',
+      tableRole: 'both',
     });
     expect(data.socialLinks).toEqual([
       { network: 'github', handle: null, url: 'https://github.com/ana' },
@@ -113,6 +123,34 @@ describe('exportAccount', () => {
     ]);
     // The players at my tables are other people's data.
     expect(JSON.stringify(data)).not.toContain(other);
+  });
+});
+
+describe('exportAccount favorites and follows', () => {
+  it('holds the favorite systems and who the person follows, never who follows them', async () => {
+    const person = id(40);
+    const fan = id(41);
+    await test.db.insert(profiles).values([
+      { id: person, username: 'gabi' },
+      { id: fan, username: 'hugo' },
+    ]);
+    const [system] = await test.db.select().from(systems).limit(1);
+    await test.db.insert(profileFavoriteSystems).values({ profileId: person, systemId: system.id });
+    await test.db.insert(follows).values([
+      { followerId: person, followeeId: other },
+      { followerId: fan, followeeId: person },
+    ]);
+
+    const data = await exportAccount(test.db, person, 'gabi@example.com');
+
+    expect(data.profile).toMatchObject({
+      showFavoriteSystems: true,
+      followNotifyTables: true,
+      followNotifySeats: true,
+    });
+    expect(data.favoriteSystems).toEqual([expect.objectContaining({ system: system.name })]);
+    expect(data.following).toEqual([expect.objectContaining({ username: 'bruno' })]);
+    expect(JSON.stringify(data)).not.toContain('hugo');
   });
 });
 
@@ -246,6 +284,8 @@ describe('anonymiseProfile', () => {
       city: 'Natal',
       avatarUrl: 'https://example.com/a.png',
       avatarPath: 'person/a.png',
+      tableRole: 'gm',
+      tableRoleInferred: true,
     });
     await test.db
       .insert(profileSocialLinks)
@@ -257,6 +297,12 @@ describe('anonymiseProfile', () => {
       title: 'Oi',
     });
     await test.db.insert(userBadges).values({ profileId: person, badgeId: 'first-table' });
+    const [system] = await test.db.select({ id: systems.id }).from(systems).limit(1);
+    await test.db.insert(profileFavoriteSystems).values({ profileId: person, systemId: system.id });
+    await test.db.insert(follows).values([
+      { followerId: person, followeeId: me },
+      { followerId: other, followeeId: person },
+    ]);
 
     await anonymiseProfile(test.db, person);
 
@@ -270,6 +316,8 @@ describe('anonymiseProfile', () => {
       city: null,
       avatarUrl: null,
       avatarPath: null,
+      tableRole: null,
+      tableRoleInferred: false,
       status: 'suspended',
     });
     expect(
@@ -285,6 +333,14 @@ describe('anonymiseProfile', () => {
     expect(await test.db.select().from(userBadges).where(eq(userBadges.profileId, person))).toEqual(
       [],
     );
+    expect(
+      await test.db
+        .select()
+        .from(profileFavoriteSystems)
+        .where(eq(profileFavoriteSystems.profileId, person)),
+    ).toEqual([]);
+    const left = await test.db.select().from(follows);
+    expect(left.some((f) => f.followerId === person || f.followeeId === person)).toBe(false);
   });
 });
 

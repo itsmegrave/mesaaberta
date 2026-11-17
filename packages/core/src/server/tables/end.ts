@@ -6,6 +6,7 @@ import { Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
 import { cancelPendingInvitations } from '../invitations/service';
 import { lockTableFamily, lockTableSchedule } from './schedule-guard';
+import { syncTableSessions } from './sessions';
 
 /** Owner actions: acquire the schedule lock before the table lock, like publish and duplicate. */
 async function lockedOwnedTable(
@@ -76,6 +77,7 @@ export async function closeTable(db: AnyDb, actor: Actor | null, slug: string) {
       .update(gameTables)
       .set({ status: 'disabled', icalSequence: table.icalSequence + 1 })
       .where(eq(gameTables.id, table.id));
+    await syncTableSessions(transaction, [table.id]);
     const cancelledRequests = await tx
       .delete(registrations)
       .where(and(eq(registrations.tableId, table.id), eq(registrations.status, 'pending')))

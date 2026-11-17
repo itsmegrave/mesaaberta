@@ -17,6 +17,7 @@ import {
   playerInvitations,
   partnerLinks,
   partners,
+  places,
   profiles,
   registrations,
   reports,
@@ -25,8 +26,12 @@ import { lockTableRows, lockTableSchedule } from '../tables/schedule-guard';
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import { removeTableMember } from '@mesaaberta/core/server/messages/service';
+import { reportSubject } from './reports';
+import type { PlaceKind } from '../../places/types';
 export { liftExpiredBans } from '@mesaaberta/core/server/moderation/bans';
 import type { EventType } from '@mesaaberta/core/server/events/types';
+import { releaseSessionSeats } from '../tables/session-signups';
+import { syncTableSessions } from '../tables/sessions';
 
 // The admin side of moderation: the report queue and its decisions, suspending accounts, and the
 // audit log. Every function authorizes the actor itself; the routes check again before calling.
@@ -85,6 +90,8 @@ export async function listReports(db: AnyDb, actor: Actor | null, params: URLSea
       crowdfunding: crowdfundings.name,
       // The partner a partner report is about: it has no table either.
       partner: partners.name,
+      // The "Onde jogar" place a place report is about.
+      place: places.name,
       reporter: reporter.username,
     })
     .from(reports)
@@ -92,12 +99,19 @@ export async function listReports(db: AnyDb, actor: Actor | null, params: URLSea
     .leftJoin(gameTables, eq(gameTables.id, reports.tableId))
     .leftJoin(gm, eq(gm.id, gameTables.gmId))
     .innerJoin(reporter, eq(reporter.id, reports.reporterId))
-    .leftJoin(reported, and(eq(reports.targetType, 'player'), eq(reported.id, reports.targetId)))
+    .leftJoin(
+      reported,
+      or(
+        and(eq(reports.targetType, 'player'), eq(reported.id, reports.targetId)),
+        eq(reported.id, reports.subjectId),
+      ),
+    )
     .leftJoin(
       crowdfundings,
       and(eq(reports.targetType, 'crowdfunding'), eq(crowdfundings.id, reports.targetId)),
     )
     .leftJoin(partners, and(eq(reports.targetType, 'partner'), eq(partners.id, reports.targetId)))
+    .leftJoin(places, and(eq(reports.targetType, 'place'), eq(places.id, reports.targetId)))
     .where(where)
     .orderBy(direction(reports.createdAt), direction(reports.id))
     .limit(filters.pageSize)
@@ -194,8 +208,39 @@ export async function reportDetail(db: AnyDb, actor: Actor | null, id: string) {
         .orderBy(partnerLinks.position)
     : [];
 
+  // The place a place report is about: where it is, who sent it (admins only), whether it is up or
+  // hidden, and how many reports still wait on it.
+  const [place] =
+    row.report.targetType === 'place'
+      ? await db
+          .select({
+            id: places.id,
+            slug: places.slug,
+            name: places.name,
+            kind: places.kind,
+            street: places.street,
+            neighbourhood: places.neighbourhood,
+            city: places.city,
+            state: places.state,
+            approvedAt: places.approvedAt,
+            hiddenAt: places.hiddenAt,
+            removedAt: places.removedAt,
+            submitter: { id: profiles.id, username: profiles.username },
+            openReports:
+              sql<number>`(select count(*) from ${reports} where ${reports.targetType} = 'place' and ${reports.targetId} = ${places.id} and ${inArray(reports.status, [...OPEN_REPORT_STATUSES])})`.mapWith(
+                Number,
+              ),
+          })
+          .from(places)
+          .leftJoin(profiles, eq(profiles.id, places.submitterId))
+          .where(eq(places.id, row.report.targetId))
+      : [];
+
+  // The person a player, message or person report is about (`reportSubject`). A message or person
+  // report may come from a direct conversation, with no table: then there is no seat.
+  const subjectId = reportSubject(row.report);
   const [player] =
-    row.report.targetType === 'player' && row.table
+    subjectId && (row.table || row.report.targetType !== 'player')
       ? await db
           .select({
             id: reported.id,
@@ -206,9 +251,12 @@ export async function reportDetail(db: AnyDb, actor: Actor | null, id: string) {
           .from(reported)
           .leftJoin(
             registrations,
-            and(eq(registrations.playerId, reported.id), eq(registrations.tableId, row.table.id)),
+            and(
+              eq(registrations.playerId, reported.id),
+              eq(registrations.tableId, row.table?.id ?? sql`null`),
+            ),
           )
-          .where(eq(reported.id, row.report.targetId))
+          .where(eq(reported.id, subjectId))
       : [];
 
   // Who a ban from this report would hit: the reported player. A table report bans no one from
@@ -223,12 +271,15 @@ export async function reportDetail(db: AnyDb, actor: Actor | null, id: string) {
     player: player ?? null,
     crowdfunding: campaign ?? null,
     partner: partner ? { ...partner, links: partnerLinkRows } : null,
+    place: place ? { ...place, kind: place.kind as PlaceKind } : null,
     can: {
       review: row.report.status === 'open',
       close: open,
       closeTable: open && row.report.targetType === 'table' && row.table?.status === 'active',
       removeCrowdfunding: open && !!campaign && !campaign.removedAt,
       removePartner: open && !!partner && !partner.removedAt,
+      removePlace: open && !!place && !place.removedAt,
+      restorePlace: open && !!place && !!place.hiddenAt && !place.removedAt,
       ban:
         open &&
         !!subjectProfile &&
@@ -249,6 +300,7 @@ async function reportForDecision(db: AnyDb, id: string) {
       targetType: reports.targetType,
       targetId: reports.targetId,
       tableId: reports.tableId,
+      subjectId: reports.subjectId,
     })
     .from(reports)
     .where(eq(reports.id, id));
@@ -349,6 +401,7 @@ export async function closeReportedTable(
         moderationNote: note,
       })
       .where(eq(gameTables.id, table.id));
+    await syncTableSessions(t, [table.id]);
     const facts = { tableId: table.id, slug: table.slug, title: table.title };
     return [
       accepted,
@@ -400,6 +453,7 @@ export async function closeTableByAdmin(
         moderationNote: note,
       })
       .where(eq(gameTables.id, table.id));
+    await syncTableSessions(t, [table.id]);
     const facts = { tableId: table.id, slug: table.slug, title: table.title };
     return [
       ...(await cancelPendingInvitations(
@@ -488,6 +542,7 @@ export async function banAccount(
         .update(gameTables)
         .set({ status: 'disabled', icalSequence: table.icalSequence + 1 })
         .where(eq(gameTables.id, table.id));
+      await syncTableSessions(t, [table.id]);
       eventIds.push(
         await recordEvent(t, {
           type: 'TableDisabled',
@@ -503,6 +558,7 @@ export async function banAccount(
       .innerJoin(gameTables, eq(gameTables.id, registrations.tableId))
       .where(eq(registrations.playerId, profileId));
     for (const seat of seats) {
+      eventIds.push(...(await releaseSessionSeats(t, actor!.id, seat.tableId, profileId)));
       await t
         .delete(registrations)
         .where(and(eq(registrations.tableId, seat.tableId), eq(registrations.playerId, profileId)));
@@ -518,8 +574,7 @@ export async function banAccount(
 
     if (reportId) {
       const report = await reportForDecision(t, reportId);
-      if (report.targetType !== 'player' || report.targetId !== profileId)
-        throw new Invalid('id', 'not_found');
+      if (reportSubject(report) !== profileId) throw new Invalid('id', 'not_found');
       eventIds.push(await settle(t, actor!, report, 'resolved', reason, now));
     }
     eventIds.push(
@@ -602,6 +657,8 @@ export const AUDIT_EVENT_TYPES = [
   'AccountBanned',
   'AccountReinstated',
   'AccountBanLifted',
+  'BadgeGranted',
+  'BadgeRevoked',
   'TableClosedByModeration',
   'CatalogEntryCreated',
   'CatalogEntryApproved',
@@ -611,13 +668,24 @@ export const AUDIT_EVENT_TYPES = [
   'CatalogEntryDisabled',
   'SystemAnnouncementSent',
   'EventForced',
+  // A GM's edits, so a dispute over what a table said can be checked. Private fields say only
+  // that they changed (see `TableChange`).
+  'TableUpdated',
+  'TableEdited',
 ] as const satisfies readonly EventType[];
 
 /** The events each kind of decision is made of; `all` is every decision the log keeps. */
 const AUDIT_KIND_TYPES: Record<Exclude<AuditKind, 'all'>, readonly EventType[]> = {
   reports: ['ReportReviewing', 'ReportResolved', 'ReportDismissed'],
-  accounts: ['AccountBanned', 'AccountReinstated', 'AccountBanLifted', 'PlayerLeft'],
-  tables: ['TableClosedByModeration', 'TableDisabled'],
+  accounts: [
+    'AccountBanned',
+    'AccountReinstated',
+    'AccountBanLifted',
+    'PlayerLeft',
+    'BadgeGranted',
+    'BadgeRevoked',
+  ],
+  tables: ['TableClosedByModeration', 'TableDisabled', 'TableUpdated', 'TableEdited'],
   catalog: [
     'CatalogEntryCreated',
     'CatalogEntryApproved',
@@ -627,6 +695,8 @@ const AUDIT_KIND_TYPES: Record<Exclude<AuditKind, 'all'>, readonly EventType[]> 
     'CatalogEntryDisabled',
   ],
   announcements: ['SystemAnnouncementSent'],
+  // Who opened which section. Not a decision, so only under its own kind and never in `all`.
+  access: ['AdminAreaEntered'],
 };
 
 /**
@@ -651,7 +721,9 @@ export async function auditLog(db: AnyDb, actor: Actor | null, params: URLSearch
   const search = filters.query.replace(/^@/, '').replace(/[\\%_]/g, '\\$&');
   const kinds = filters.kind === 'all' ? null : AUDIT_KIND_TYPES[filters.kind];
   const where = and(
-    or(inArray(events.type, [...AUDIT_EVENT_TYPES]), byOther),
+    filters.kind === 'access'
+      ? undefined
+      : or(inArray(events.type, [...AUDIT_EVENT_TYPES]), byOther),
     kinds ? inArray(events.type, [...kinds]) : undefined,
     search
       ? or(
@@ -723,6 +795,8 @@ export async function auditLog(db: AnyDb, actor: Actor | null, params: URLSearch
         title: typeof facts.title === 'string' ? facts.title : null,
         reportId: typeof facts.reportId === 'string' ? facts.reportId : null,
         eventType: typeof facts.eventType === 'string' ? facts.eventType : null,
+        section: typeof facts.section === 'string' ? facts.section : null,
+        badgeId: typeof facts.badgeId === 'string' ? facts.badgeId : null,
       };
     }),
     total,

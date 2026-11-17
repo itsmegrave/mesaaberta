@@ -8,9 +8,16 @@ describe('language-independent routes', () => {
     ['/pt-BR', '/'],
     ['/tables/dragao/manage', '/t/dragao/manage'],
     ['/partners/42/edit', '/p/42/edit'],
-    ['/crowdfunding/new', '/cf/new'],
+    ['/t', '/tables'],
+    ['/t/new', '/tables/new'],
+    ['/p', '/partners'],
+    ['/p/new', '/partners/new'],
+    ['/cf', '/crowdfunding'],
+    ['/cf/new', '/crowdfunding/new'],
+    ['/m', '/messages'],
+    ['/n', '/notifications'],
     ['/messages/42', '/m/42'],
-    ['/notifications', '/n'],
+    ['/partners/invitations/abc', '/p/invitations/abc'],
     ['/account/tables/calendar', '/u/tables/calendar'],
     ['/account/profile', '/u/profile/edit'],
     ['/account/invitations/abc', '/u/profile/invitations/abc'],
@@ -20,7 +27,8 @@ describe('language-independent routes', () => {
     ['/forgot-password', '/forgot'],
     ['/reset-password', '/reset'],
     ['/en/tables/dragao', '/t/dragao'],
-    ['/pt-BR/partners', '/p'],
+    ['/pt-BR/partners', '/partners'],
+    ['/en/t', '/tables'],
     ['/en/t/dragao', '/t/dragao'],
   ])('keeps the full resource path for %s', (oldPath, target) => {
     expect(canonicalPath(oldPath)).toBe(target);
@@ -29,6 +37,17 @@ describe('language-independent routes', () => {
   it.each([
     '/u/ana',
     '/u/tables',
+    '/tables',
+    '/tables/new',
+    '/partners',
+    '/partners/new',
+    '/crowdfunding',
+    '/crowdfunding/new',
+    '/messages',
+    '/notifications',
+    '/t/dragao',
+    '/m/42',
+    '/p/42/edit',
     '/u/profile/edit',
     '/api/messages/42',
     '/v1/tables/42',
@@ -64,7 +83,11 @@ describe('language-independent routes', () => {
   });
 
   it('does not redirect a canonical path', () => {
-    expect(legacyRedirect(new URL('https://mesaaberta.app/t?page=2'), 'GET')).toBeNull();
+    expect(legacyRedirect(new URL('https://mesaaberta.app/tables?page=2'), 'GET')).toBeNull();
+    expect(legacyRedirect(new URL('https://mesaaberta.app/t?page=2'), 'GET')).toEqual({
+      status: 308,
+      location: '/tables?page=2',
+    });
   });
 
   it.each(['tables', 'profile'])(

@@ -25,6 +25,31 @@ const size = (file: File) =>
     img.src = url;
   });
 
+// The alpha of the cut's four corners: 255 when the frame stayed on the picture.
+const corners = (file: File) =>
+  new Promise<number[]>((done) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const context = canvas.getContext('2d')!;
+      context.drawImage(img, 0, 0);
+      const { width, height } = canvas;
+      done(
+        [
+          [1, 1],
+          [width - 2, 1],
+          [1, height - 2],
+          [width - 2, height - 2],
+        ].map(([x, y]) => context.getImageData(x, y, 1, 1).data[3]),
+      );
+    };
+    img.src = url;
+  });
+
 describe('ImageCropper', () => {
   it('sends one square, reduced file, named after the original', async () => {
     const onconfirm = vi.fn();
@@ -74,5 +99,26 @@ describe('ImageCropper', () => {
 
     expect(oncancel).toHaveBeenCalled();
     expect(onconfirm).not.toHaveBeenCalled();
+  });
+
+  it('keeps a wide frame on a tall picture, even when zoomed out', async () => {
+    const onconfirm = vi.fn();
+    // Drawn in place: the specs run without the app's CSS, and an unstyled dialog's edge sits
+    // over the zoom buttons.
+    render(ImageCropper, {
+      bare: true,
+      file: await picture(120, 400),
+      aspectRatio: 4,
+      width: 800,
+      onconfirm,
+      oncancel: vi.fn(),
+    });
+
+    const zoomOut = page.getByRole('button', { name: 'Afastar' });
+    for (let i = 0; i < 5; i++) await zoomOut.click();
+    await page.getByRole('button', { name: 'Usar este recorte' }).click();
+
+    await vi.waitFor(() => expect(onconfirm).toHaveBeenCalledOnce());
+    expect(await corners(onconfirm.mock.calls[0][0])).toEqual([255, 255, 255, 255]);
   });
 });

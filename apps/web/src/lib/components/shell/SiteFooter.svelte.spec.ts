@@ -27,13 +27,15 @@ describe('SiteFooter.svelte', () => {
     render(SiteFooter, { site });
 
     const footer = browserPage.getByRole('contentinfo');
-    await expect.element(footer.getByRole('link', { name: 'Mesas' })).toHaveAttribute('href', '/t');
+    await expect
+      .element(footer.getByRole('link', { name: 'Mesas' }))
+      .toHaveAttribute('href', '/tables');
     await expect
       .element(footer.getByRole('link', { name: 'Parceiros' }))
-      .toHaveAttribute('href', '/p');
+      .toHaveAttribute('href', '/partners');
     await expect
       .element(footer.getByRole('link', { name: 'Financiamentos coletivos' }))
-      .toHaveAttribute('href', '/cf');
+      .toHaveAttribute('href', '/crowdfunding');
     await expect
       .element(footer.getByRole('link', { name: 'oi@example.test' }))
       .toHaveAttribute('href', 'mailto:oi@example.test');
@@ -44,7 +46,7 @@ describe('SiteFooter.svelte', () => {
   });
 
   it('marks the page you are on', async () => {
-    location.pathname = '/cf/new';
+    location.pathname = '/crowdfunding/new';
     render(SiteFooter, { site });
 
     await expect
@@ -84,6 +86,49 @@ describe('SiteFooter.svelte', () => {
       .toBeVisible();
     await expect
       .element(browserPage.getByRole('link', { name: 'Lenindragons' }))
+      .not.toBeInTheDocument();
+  });
+
+  it('lists each directory that is on under "Páginas", after the other pages', async () => {
+    render(SiteFooter, { site });
+    await expect
+      .element(browserPage.getByRole('link', { name: 'Sistemas' }))
+      .not.toBeInTheDocument();
+
+    location.pathname = '/s/tormenta-20';
+    render(SiteFooter, { site, directories: { systems: true, gms: true, places: true } });
+    const heading = browserPage.getByRole('heading', { name: 'Páginas' }).last().element();
+    const names = [...heading.parentElement!.querySelectorAll('a')].map((link) =>
+      link.textContent?.trim(),
+    );
+    expect(names).toEqual([
+      'Mesas',
+      'Parceiros',
+      'Financiamentos coletivos',
+      'Ferramentas',
+      'Sistemas',
+      'Onde jogar',
+      'Quem mestra',
+    ]);
+    // A system's page is part of the systems directory.
+    await expect
+      .element(browserPage.getByRole('link', { name: 'Sistemas' }).last())
+      .toHaveAttribute('aria-current', 'page');
+    await expect
+      .element(browserPage.getByRole('link', { name: 'Quem mestra' }))
+      .toHaveAttribute('href', '/gamemasters');
+  });
+
+  it('lists Combinar while it is on, in place of Procuro mesa', async () => {
+    render(SiteFooter, {
+      site,
+      directories: { systems: false, gms: false, places: false, players: true, matches: true },
+    });
+    await expect
+      .element(browserPage.getByRole('link', { name: 'Combinar' }))
+      .toHaveAttribute('href', '/matches');
+    await expect
+      .element(browserPage.getByRole('link', { name: 'Procuro mesa' }))
       .not.toBeInTheDocument();
   });
 });

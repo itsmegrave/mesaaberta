@@ -1,0 +1,1 @@
+ALTER TABLE "profiles" ADD COLUMN "show_name" boolean DEFAULT false NOT NULL;

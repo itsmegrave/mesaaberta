@@ -16,7 +16,7 @@ describe('requireUser', () => {
   it('sends an anonymous visitor to log in, and back afterwards', async () => {
     await expect(
       requireUser(locals(null), new URL('https://x.test/t/new?draft=1')),
-    ).rejects.toMatchObject({ status: 303, location: '/login?next=%2Ft%2Fnew%3Fdraft%3D1' });
+    ).rejects.toMatchObject({ status: 303, location: '/login?next=%2Ftables%2Fnew%3Fdraft%3D1' });
   });
 
   it.each([
@@ -27,7 +27,7 @@ describe('requireUser', () => {
       requireUser(locals({ id: 'u1' }, profile), new URL('https://x.test/t/new?draft=1')),
     ).rejects.toMatchObject({
       status: 303,
-      location: '/u/profile/setup?next=%2Ft%2Fnew%3Fdraft%3D1',
+      location: '/u/profile/setup?next=%2Ftables%2Fnew%3Fdraft%3D1',
     });
   });
 

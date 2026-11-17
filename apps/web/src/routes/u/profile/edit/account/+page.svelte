@@ -3,6 +3,7 @@
   // for an account without one, creating a password.
   import AddPassword from '../components/AddPassword.svelte';
   import ConnectedAccounts from '../components/ConnectedAccounts.svelte';
+  import Passkeys from '../components/Passkeys.svelte';
   import FormField from '#lib/components/ui/FormField.svelte';
   import SettingsSection from '../components/ui/SettingsSection.svelte';
   import TextInput from '#lib/components/ui/TextInput.svelte';
@@ -12,7 +13,7 @@
 
   const card = 'rounded-lg border border-surface-200-800 bg-panel p-6 md:p-8';
   const readonly =
-    'input h-13 w-full rounded-lg border-control border-ink-muted bg-surface-950-50/5 px-3 text-muted';
+    'input h-11 w-full rounded-lg border-control border-ink-muted bg-surface-950-50/5 px-3 text-muted';
 </script>
 
 <SettingsSection title={m.profile_section_account()} lede={m.profile_section_account_lede()} />
@@ -47,6 +48,10 @@
 
 {#if data.connections}
   <ConnectedAccounts connections={data.connections} class={card} />
+{/if}
+
+{#if data.passkeysOn}
+  <Passkeys passkeys={data.passkeys} class={card} />
 {/if}
 
 {#if data.canAddPassword}

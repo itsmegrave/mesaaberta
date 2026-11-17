@@ -4,6 +4,8 @@
   import { tick } from 'svelte';
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import MessageBubble from '#lib/components/chat/ui/MessageBubble.svelte';
+  import KebabMenu from '#lib/components/ui/KebabMenu.svelte';
+  import { toast } from '#lib/toaster.js';
   import { clock, dayLabel } from '#lib/messages/format.js';
   import { groupMessages, type ThreadItem } from '#lib/messages/group.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -18,6 +20,7 @@
     hasMore = false,
     onloadolder,
     onretry,
+    onreport,
   }: {
     items: ThreadItem[];
     kind: 'table' | 'direct';
@@ -27,7 +30,15 @@
     /** Loads the messages before the first one shown. */
     onloadolder?: () => Promise<void>;
     onretry?: (message: ThreadItem) => void;
+    /** "Denunciar mensagem…" on someone else's message (`use_message_safety`); none hides the ⋮. */
+    onreport?: (message: ThreadItem) => void;
   } = $props();
+
+  const copy = (message: ThreadItem) =>
+    navigator.clipboard.writeText(message.body).then(
+      () => toast.success(m.messages_copied()),
+      () => undefined,
+    );
 
   const locale = getLocale();
   const zone = $derived(shownTimezone('America/Sao_Paulo'));
@@ -122,7 +133,28 @@
           {/if}
           {#each group.messages as message (message.id)}
             <div class="flex flex-col {group.own ? 'items-end' : 'items-start'}">
-              <MessageBubble {message} {onretry} />
+              {#if onreport && !group.own && !message.pending}
+                <!-- The ⋮ shows on hover or focus from md up, and always on a phone. -->
+                <div class="group flex max-w-full items-center gap-1">
+                  <div class="min-w-0"><MessageBubble {message} {onretry} /></div>
+                  <KebabMenu
+                    name={m.messages_message_actions({ name: name(group.sender) })}
+                    placement="bottom-start"
+                    class="md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100 md:data-[state=open]:opacity-100"
+                    items={[
+                      { id: 'copy', label: m.messages_copy_text(), onselect: () => copy(message) },
+                      {
+                        id: 'report',
+                        label: m.messages_report_message(),
+                        destructive: true,
+                        onselect: () => onreport(message),
+                      },
+                    ]}
+                  />
+                </div>
+              {:else}
+                <MessageBubble {message} {onretry} />
+              {/if}
             </div>
           {/each}
           <p class="px-1 text-xs text-muted">

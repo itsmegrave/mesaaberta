@@ -6,7 +6,7 @@
   import { apiRead } from '#lib/api/http.js';
   import { loadWidget } from '#lib/extensions/load-widget.js';
   import { widgets } from '#lib/extensions/panels.js';
-  import { showsWidgets } from '#lib/extensions/widget-routes.js';
+  import { placementRoute, showsWidgets } from '#lib/extensions/widget-routes.js';
   import { queryClient } from '#lib/query/context.js';
   import { widgetsKey, type WidgetsResponse } from '#lib/query/widgets.js';
   import type { WidgetPayload } from '@mesaaberta/core/server/extensions/contract';
@@ -15,7 +15,7 @@
   const DELAY_MS = 3000;
 
   const client = queryClient();
-  const routeId = $derived(page.route.id);
+  const routeId = $derived(placementRoute(page.route.id));
   const key = $derived(widgetsKey(routeId));
   // A build without widget components never asks.
   const installed = Object.keys(widgets).length > 0;

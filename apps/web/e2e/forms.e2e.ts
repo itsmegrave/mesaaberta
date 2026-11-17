@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { asUser, homeLink, pickImage } from './support/app';
+import { asUser, homeLink, openSelect, pickImage } from './support/app';
 import { createUser } from './support/users';
 
 test.skip(({ isMobile }) => isMobile, 'signed-in flows run on desktop only');
@@ -8,7 +8,7 @@ test('leaving a table form with changes asks first, and staying keeps what was t
   browser,
 }) => {
   const { page, context } = await asUser(browser, await createUser('Mestra Ana'));
-  await page.goto('/t/new');
+  await page.goto('/tables/new');
   await page.getByLabel('Título').fill('Uma mesa pela metade');
 
   await homeLink(page).click();
@@ -17,7 +17,7 @@ test('leaving a table form with changes asks first, and staying keeps what was t
   await expect(dialog).toBeVisible();
   await dialog.getByRole('button', { name: 'Continuar editando' }).click();
   await expect(dialog).toHaveCount(0);
-  await expect(page).toHaveURL(/\/t\/new$/);
+  await expect(page).toHaveURL(/\/tables\/new$/);
   await expect(page.getByLabel('Título')).toHaveValue('Uma mesa pela metade');
 
   await homeLink(page).click();
@@ -30,10 +30,12 @@ test('a table form refuses an image that is too big before sending anything', as
   browser,
 }) => {
   const { page, context } = await asUser(browser, await createUser('Mestra Bia'));
-  await page.goto('/t/new');
+  await page.goto('/tables/new');
   let posted = false;
+  // The form's own POST; the layout's background calls (the theme count) are not the form.
   page.on('request', (request) => {
-    if (request.method() === 'POST') posted = true;
+    if (request.method() === 'POST' && new URL(request.url()).pathname === '/tables/new')
+      posted = true;
   });
 
   await pickImage(page, {
@@ -76,7 +78,7 @@ test('the table form drags the seats, takes an image and a suggestion without a 
       );
     }),
   );
-  await page.goto('/t/new');
+  await page.goto('/tables/new');
 
   // The thumb is drawn where it can be grabbed, and the arrow keys move it a seat at a time.
   const seats = page.getByRole('slider', { name: 'Vagas' });
@@ -101,7 +103,7 @@ test('the table form drags the seats, takes an image and a suggestion without a 
   await expect(page.locator('input[name="startsAtLocal"]')).toHaveValue(/^\d{4}-\d{2}-15T19:00$/);
   await page.screenshot({ path: 'test-results/date-picker.png' }).catch(() => {});
 
-  await page.getByRole('combobox', { name: 'Tags' }).fill('Mesa de teste');
+  await (await openSelect(page, 'Tags'))?.fill('Mesa de teste');
   await expect(page.getByRole('option', { name: 'Sugerir “Mesa de teste”' })).toBeVisible();
 
   const reported = await page.evaluate(

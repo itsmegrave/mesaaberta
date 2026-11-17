@@ -81,7 +81,7 @@
 >
   <Menu.Trigger
     aria-label={m.kebab_label({ name })}
-    class="btn inline-flex size-11 shrink-0 items-center justify-center rounded-lg p-0 hover:preset-tonal {className}"
+    class="btn inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-surface-200-800 p-0 hover:preset-tonal {className}"
   >
     <Icon name="more" size={20} />
   </Menu.Trigger>

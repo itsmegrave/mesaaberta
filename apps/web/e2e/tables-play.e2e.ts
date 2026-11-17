@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { asUser, createTable, uniqueTitle } from './support/app';
+import { asUser, createTable, openSection, uniqueTitle, openJoinRequest } from './support/app';
 import { createUser, database } from './support/users';
 
 // Players and GMs, each in their own browser, against the local Supabase and its real Postgres.
@@ -38,6 +38,7 @@ test.describe('joining a table that takes players at once', () => {
     // The GM sees who sat down (names are only shown to the GM).
     await gmPage.goto(`/t/${slug}`);
     await expect(gmPage.getByRole('heading', { name: 'Participantes' })).toBeVisible();
+    await openSection(gmPage, /^Participantes/);
     await expect(gmPage.getByRole('main').getByText(players[0].username)).toBeVisible();
 
     await page.getByRole('button', { name: 'Sair da mesa' }).click();
@@ -135,7 +136,7 @@ test.describe('a table where the GM approves each player', () => {
     const { page, context } = await asUser(browser, players[0]);
 
     await page.goto(`/t/${slug}`);
-    await page.getByRole('button', { name: 'Pedir vaga' }).click();
+    await openJoinRequest(page);
     await page.getByLabel(/Mensagem para quem mestra/).fill('Oi! Jogo há dois anos.');
     await page.getByRole('button', { name: 'Enviar pedido' }).click();
     await expect(
@@ -166,7 +167,7 @@ test.describe('a table where the GM approves each player', () => {
     const { gmPage, gmContext, slug, players } = await setup(browser, { joinMode: 'approval' });
     const { page, context } = await asUser(browser, players[0]);
     await page.goto(`/t/${slug}`);
-    await page.getByRole('button', { name: 'Pedir vaga' }).click();
+    await openJoinRequest(page);
     await page.getByRole('button', { name: 'Enviar pedido' }).click();
     // The request has to be recorded before the GM's dashboard can list it.
     await expect(
@@ -194,7 +195,7 @@ test.describe('a table where the GM approves each player', () => {
     const second = await asUser(browser, players[1]);
     for (const { page } of [first, second]) {
       await page.goto(`/t/${slug}`);
-      await page.getByRole('button', { name: 'Pedir vaga' }).click();
+      await openJoinRequest(page);
       await page.getByRole('button', { name: 'Enviar pedido' }).click();
       await expect(
         page.getByText('Seu pedido foi enviado. Você recebe um aviso quando ele for respondido.'),
@@ -264,8 +265,13 @@ test.describe('ratings', () => {
           .first(),
       ).toBeVisible();
 
-      // The dashboard shows what was given, and the GM cannot rate their own table.
+      // The dashboard shows what was given, under the concluded tables, and the GM cannot rate
+      // their own table.
       await page.goto('/u/tables');
+      await page
+        .getByRole('button', { name: /Encerradas/ })
+        .first()
+        .click();
       await expect(page.getByText('Sua nota para a mestragem: 4')).toBeVisible();
       await gmPage.goto(`/t/${slug}`);
       await expect(gmPage.getByRole('heading', { name: 'Avalie a mestragem' })).toHaveCount(0);
@@ -289,7 +295,7 @@ test.describe('ratings', () => {
     const { gmContext, slug, players } = await setup(browser, { joinMode: 'approval' });
     const { page, context } = await asUser(browser, players[0]);
     await page.goto(`/t/${slug}`);
-    await page.getByRole('button', { name: 'Pedir vaga' }).click();
+    await openJoinRequest(page);
     await page.getByRole('button', { name: 'Enviar pedido' }).click();
 
     const sql = database();

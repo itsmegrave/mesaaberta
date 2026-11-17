@@ -4,6 +4,7 @@ import { editPartnerSchema, partnerLinks, partnerLinkUrl } from '@mesaaberta/cor
 const base = {
   name: 'Taverna do Dado',
   description: '',
+  types: ['community'],
   contactEmail: '',
   siteUrl: 'https://taverna.example',
   backlinkUrl: '',
@@ -33,6 +34,13 @@ describe('partnerLinkUrl', () => {
 });
 
 describe('partner form', () => {
+  it('needs one to three known kinds', () => {
+    expect(codes({ types: [] })).toContain('required');
+    expect(codes({ types: ['shop', 'podcast', 'event'] })).toEqual([]);
+    expect(codes({ types: ['shop', 'podcast', 'event', 'art'] })).toContain('too_many_types');
+    expect(codes({ types: ['casino'] })).toContain('invalid');
+  });
+
   it('accepts a site alone, and a network alone', () => {
     expect(codes({})).toEqual([]);
     expect(codes({ siteUrl: '', linkNetwork: ['instagram'], linkUrl: ['@mesaaberta'] })).toEqual(

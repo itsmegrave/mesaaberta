@@ -1,4 +1,3 @@
-import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import type { Logger } from '@mesaaberta/core/server/logger';
 import type { AnalyticsEnv } from '@mesaaberta/core/server/analytics/index';
 import { analyticsProviders } from '@mesaaberta/core/server/analytics/index';
@@ -9,18 +8,29 @@ export type RequestEventName =
   | 'player_browse_mesas_viewed'
   | 'player_mesa_detail_viewed'
   | 'player_seat_claim_initiated'
-  | 'gm_onboarding_started';
+  | 'gm_onboarding_started'
+  | 'systems_directory_viewed'
+  | 'gm_directory_viewed'
+  | 'places_directory_viewed'
+  | 'theme_in_use'
+  | 'theme_changed';
 
 export type RequestEventProperties = Record<string, string | number>;
 
 /** What to send, or a lookup that runs after the response and may decide there is nothing to send. */
 export type RequestEventInput =
-  RequestEventProperties | ((db: AnyDb) => Promise<RequestEventProperties | null>);
+  RequestEventProperties | (() => Promise<RequestEventProperties | null>);
+
+export type TrackOptions = {
+  /** Fixed labels to set on the person's profile too, where the provider keeps profiles. */
+  profile?: Record<string, string>;
+};
 
 export type Track = (
   name: RequestEventName,
   distinctId: string | null | undefined,
   properties: RequestEventInput,
+  options?: TrackOptions,
 ) => void;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -43,19 +53,19 @@ export function sourceChannel(referer: string | null, url: URL): string {
  */
 export function createTracker(options: {
   env: AnalyticsEnv | undefined;
-  afterResponse: (task: (db: AnyDb) => Promise<unknown>) => void;
+  afterResponse: (task: () => Promise<unknown>) => void;
   log: Logger;
   factories?: readonly AnalyticsProviderFactory<AnalyticsEnv>[];
   now?: () => Date;
 }): Track {
   const { env, afterResponse, log, factories, now = () => new Date() } = options;
-  return (name, distinctId, properties) => {
+  return (name, distinctId, properties, { profile } = {}) => {
     if (!distinctId || !UUID.test(distinctId)) return;
     const providers = analyticsProviders(env, factories);
     if (providers.length === 0) return;
     const time = now();
-    afterResponse(async (db) => {
-      const resolved = typeof properties === 'function' ? await properties(db) : properties;
+    afterResponse(async () => {
+      const resolved = typeof properties === 'function' ? await properties() : properties;
       if (!resolved) return;
       const event = {
         name,
@@ -64,7 +74,12 @@ export function createTracker(options: {
         time,
         properties: { ...resolved, timestamp_utc: time.toISOString() },
       };
-      const results = await Promise.allSettled(providers.map((provider) => provider.send(event)));
+      const results = await Promise.allSettled(
+        providers.map(async (provider) => {
+          await provider.send(event);
+          if (profile && provider.setProfile) await provider.setProfile(distinctId, profile);
+        }),
+      );
       results.forEach((result, index) => {
         if (result.status === 'rejected')
           log.warn('analytics.track.failed', {

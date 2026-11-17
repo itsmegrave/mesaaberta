@@ -1,23 +1,27 @@
-import { error } from '@sveltejs/kit';
 import { requireAdmin } from '#lib/server/admin-access.js';
 import { catalogActions } from '#lib/server/admin/catalog-actions.js';
-import { listApproved, listQueue, recentDecisions } from '@mesaaberta/core/server/admin/catalog';
+import type {
+  listApproved,
+  listQueue,
+  recentDecisions,
+} from '@mesaaberta/core/server/admin/catalog';
+import { readFromApi, revivedDates } from '#lib/server/api-read.js';
 import { requireUser } from '#lib/server/auth/guard.js';
 import type { Actions, PageServerLoad } from './$types';
 
 // Only admins get this far: `handleAdminAccess` answers 404 to anyone else, and each load and
 // action checks again with `requireAdmin`.
 export const load: PageServerLoad = async ({ locals, url }) => {
-  await requireUser(locals, url);
+  const user = await requireUser(locals, url);
   await requireAdmin(locals);
-  if (!locals.db) error(503, 'Database not configured');
 
-  const [queue, decisions, approved] = await Promise.all([
-    listQueue(locals.db),
-    recentDecisions(locals.db),
-    listApproved(locals.db),
-  ]);
-  return { queue, decisions, approved };
+  return revivedDates(
+    await readFromApi<{
+      queue: Awaited<ReturnType<typeof listQueue>>;
+      decisions: Awaited<ReturnType<typeof recentDecisions>>;
+      approved: Awaited<ReturnType<typeof listApproved>>;
+    }>(locals, user.id, '/v1/admin-reads/queue'),
+  );
 };
 
 export const actions: Actions = {

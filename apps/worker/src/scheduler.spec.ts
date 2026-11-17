@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { DAILY_IMPORT_CRON, SWEEPER_CRON } from '@mesaaberta/core/server/events/scheduled';
+import {
+  DAILY_IMPORT_CRON,
+  LOGO_SEARCH_CRON,
+  SWEEPER_CRON,
+} from '@mesaaberta/core/server/events/scheduled';
 import { createScheduler } from './scheduler';
 
 const at = (iso: string) => ({ now: new Date(iso) });
@@ -16,7 +20,11 @@ describe('createScheduler', () => {
   it('sweeps at once, then every interval, never sooner', async () => {
     const time = clock('2026-10-15T03:00:00Z');
     const run = vi.fn(async () => undefined);
-    const scheduler = createScheduler(run, { now: time.now, sweepEverySeconds: 300 });
+    const scheduler = createScheduler(run, {
+      now: time.now,
+      sweepEverySeconds: 300,
+      logoSearch: false,
+    });
 
     await scheduler.tick();
     time.advance(60);
@@ -30,7 +38,11 @@ describe('createScheduler', () => {
   it('runs the daily import once per UTC day, from 04:00', async () => {
     const time = clock('2026-10-15T03:59:00Z');
     const run = vi.fn(async () => undefined);
-    const scheduler = createScheduler(run, { now: time.now, sweepEverySeconds: 100_000 });
+    const scheduler = createScheduler(run, {
+      now: time.now,
+      sweepEverySeconds: 100_000,
+      logoSearch: false,
+    });
 
     await scheduler.tick();
     expect(run.mock.calls.map(([cron]) => cron)).toEqual([SWEEPER_CRON]);
@@ -48,7 +60,7 @@ describe('createScheduler', () => {
   it('catches the daily import up when it starts after 04:00; the import guards its own date', async () => {
     const time = clock('2026-10-15T10:00:00Z');
     const run = vi.fn(async () => undefined);
-    const scheduler = createScheduler(run, { now: time.now });
+    const scheduler = createScheduler(run, { now: time.now, logoSearch: false });
 
     await scheduler.tick();
 
@@ -59,7 +71,11 @@ describe('createScheduler', () => {
     const time = clock('2026-10-15T03:00:00Z');
     let release: () => void = () => undefined;
     const run = vi.fn(() => new Promise<void>((resolve) => void (release = resolve)));
-    const scheduler = createScheduler(run, { now: time.now, sweepEverySeconds: 30 });
+    const scheduler = createScheduler(run, {
+      now: time.now,
+      sweepEverySeconds: 30,
+      logoSearch: false,
+    });
 
     const first = scheduler.tick();
     time.advance(60);
@@ -68,5 +84,19 @@ describe('createScheduler', () => {
 
     release();
     await first;
+  });
+
+  it('runs the logo search at once, then every ten minutes', async () => {
+    const time = clock('2026-10-15T03:00:00Z');
+    const run = vi.fn(async () => undefined);
+    const scheduler = createScheduler(run, { now: time.now, sweepEverySeconds: 100_000 });
+
+    await scheduler.tick();
+    time.advance(300);
+    await scheduler.tick();
+    time.advance(300);
+    await scheduler.tick();
+
+    expect(run.mock.calls.filter(([cron]) => cron === LOGO_SEARCH_CRON)).toHaveLength(2);
   });
 });

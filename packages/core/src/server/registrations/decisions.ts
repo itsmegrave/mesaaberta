@@ -9,8 +9,11 @@ import {
   leaveTable,
   removePlayer,
 } from './service';
-import { ratingSchema } from '../../tables/rating';
+import { joinWaitlist, leaveWaitlist } from './waitlist';
+import { leaveSession, signUpForSession } from '../tables/session-signups';
+import { playerRatingSchema, ratingSchema } from '../../tables/rating';
 import { submitRating } from '../ratings/service';
+import { ratePlayer } from '../ratings/players';
 
 /** Mirrors the `registrations_message_length` check. */
 export const JOIN_MESSAGE_MAX = 500;
@@ -34,6 +37,27 @@ export const registrationActions = {
     schema: z.object({}),
     apply: (db: AnyDb, actor: Actor | null, slug: string) => leaveTable(db, actor, slug),
   },
+  // The lista de espera of a full table (`use_waitlist`, checked by the web Worker).
+  waitlist: {
+    schema: z.object({}),
+    apply: (db: AnyDb, actor: Actor | null, slug: string) => joinWaitlist(db, actor, slug),
+  },
+  unwaitlist: {
+    schema: z.object({}),
+    apply: (db: AnyDb, actor: Actor | null, slug: string) => leaveWaitlist(db, actor, slug),
+  },
+  // Campanha aberta (`use_session_signup`, checked by the web Worker): "Quero jogar esta" (or wait
+  // for it) and leaving one session.
+  sessionSignup: {
+    schema: z.object({ sessionId: z.uuid() }),
+    apply: (db: AnyDb, actor: Actor | null, slug: string, data: { sessionId: string }) =>
+      signUpForSession(db, actor, slug, data),
+  },
+  sessionLeave: {
+    schema: z.object({ sessionId: z.uuid() }),
+    apply: (db: AnyDb, actor: Actor | null, slug: string, data: { sessionId: string }) =>
+      leaveSession(db, actor, slug, data),
+  },
   approve: {
     schema: player,
     apply: (db: AnyDb, actor: Actor | null, slug: string, { playerId }: { playerId: string }) =>
@@ -56,8 +80,22 @@ export const registrationActions = {
       db: AnyDb,
       actor: Actor | null,
       slug: string,
-      { gmScore, comment }: { gmScore: number; comment: string },
-    ) => submitRating(db, actor, slug, { gmScore, comment: comment || null }),
+      {
+        gmScore,
+        comment,
+        commentPublic,
+      }: { gmScore: number; comment: string; commentPublic: boolean },
+    ) => submitRating(db, actor, slug, { gmScore, comment: comment || null, commentPublic }),
+  },
+  // The GM rating a player they marked present (`use_player_ratings`, checked by the web Worker).
+  ratePlayer: {
+    schema: playerRatingSchema,
+    apply: (
+      db: AnyDb,
+      actor: Actor | null,
+      slug: string,
+      { playerId, score, comment }: { playerId: string; score: number; comment: string },
+    ) => ratePlayer(db, actor, slug, playerId, { score, comment: comment || null }),
   },
 };
 

@@ -43,7 +43,7 @@ const draft = (over: Partial<AnnouncementDraft> = {}): AnnouncementDraft => ({
   tone: 'warning',
   audience: 'all_active_users',
   recipient: '',
-  link: '/t',
+  link: '/tables',
   confirmed: true,
   ...over,
 });
@@ -119,7 +119,7 @@ describe('sendAnnouncement', () => {
       icon: 'alert-triangle',
       title: 'Manutenção no sábado',
       body: 'A plataforma fica fora do ar das 2h às 4h.',
-      link: '/t',
+      link: '/tables',
       actorId: null,
       metadata: { tone: 'warning' },
     });

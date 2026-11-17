@@ -1,10 +1,21 @@
 import { and, eq } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { gameTables, notifications, profiles, registrations, userBadges } from '../db/schema';
+import {
+  gameTables,
+  notifications,
+  placeFeatures,
+  platforms,
+  profiles,
+  registrations,
+  systems,
+  tags,
+  userBadges,
+} from '../db/schema';
 import { routes } from '../../routes';
 import { recordEvent } from '../events/outbox';
 import type { Handler, StoredEvent } from '../events/types';
-import { BADGES, meets, statsFor, type BadgeDefinition } from './catalog';
+import { meets, statsFor, type BadgeDefinition } from './catalog';
+import { ruleBadges } from './rules';
 
 /** Who an event may have earned a badge for. */
 async function candidates(db: AnyDb, event: StoredEvent): Promise<string[]> {
@@ -27,8 +38,33 @@ async function candidates(db: AnyDb, event: StoredEvent): Promise<string[]> {
       // The ones marked absent did not take part: their count is re-checked by the rule itself.
       return [...new Set([table.gmId, ...players.map((row) => row.id)])];
     }
-    case 'RatingSubmitted':
-      return [event.payload.playerId];
+    case 'RatingSubmitted': {
+      // The player who rated (for the critic), and the GM the rating is about.
+      const [table] = await db
+        .select({ gmId: gameTables.gmId })
+        .from(gameTables)
+        .where(eq(gameTables.id, event.payload.tableId));
+      return [...new Set([event.payload.playerId, ...(table ? [table.gmId] : [])])];
+    }
+    case 'ReportResolved':
+      return [event.payload.reporterId];
+    // The member who added the campaign is the actor; an import has none.
+    case 'CrowdfundingAdded':
+      return event.actorId ? [event.actorId] : [];
+    case 'CatalogEntryApproved': {
+      // Whoever suggested the entry, if a member did.
+      const table = {
+        platform: platforms,
+        tag: tags,
+        system: systems,
+        placeTag: placeFeatures,
+      }[event.payload.kind];
+      const [entry] = await db
+        .select({ suggestedBy: table.suggestedBy })
+        .from(table)
+        .where(eq(table.id, event.payload.entryId));
+      return entry?.suggestedBy ? [entry.suggestedBy] : [];
+    }
     case 'PartnerApproved':
       return [event.payload.submitterId];
     case 'ProfileUpdated':
@@ -83,14 +119,23 @@ export async function awardBadges(
 }
 
 /**
- * Awards the badges an event can have earned. Idempotent: a badge is a row keyed by person and
+ * Awards the badges an event can have earned, the extensions' too when their `triggers` name one of
+ * these types. Idempotent: a badge is a row keyed by person and
  * badge, so a retry awards nothing twice and a revoked badge stays revoked.
  */
 export const badgeHandler: Handler = {
   name: 'badges-v1',
-  types: ['TableConcluded', 'RatingSubmitted', 'PartnerApproved', 'ProfileUpdated'],
+  types: [
+    'TableConcluded',
+    'RatingSubmitted',
+    'PartnerApproved',
+    'ProfileUpdated',
+    'ReportResolved',
+    'CrowdfundingAdded',
+    'CatalogEntryApproved',
+  ],
   async handle(event, db) {
-    const rules = BADGES.filter((rule) => rule.triggers.includes(event.type));
+    const rules = ruleBadges().filter((rule) => rule.triggers.includes(event.type));
     if (rules.length === 0) return;
     for (const profileId of await candidates(db, event)) {
       await awardBadges(db, profileId, rules, event);
@@ -98,12 +143,15 @@ export const badgeHandler: Handler = {
   },
 };
 
-/** The bell notice for a badge a rule awarded. A backfill records no event, so it tells nobody. */
+/**
+ * The bell notice for a badge a rule awarded or an admin granted. A backfill records no event, so it
+ * tells nobody.
+ */
 export const badgeNoticeHandler: Handler = {
   name: 'badge-notice-v1',
-  types: ['BadgeEarned'],
+  types: ['BadgeEarned', 'BadgeGranted'],
   async handle(event, db) {
-    if (event.type !== 'BadgeEarned') return;
+    if (event.type !== 'BadgeEarned' && event.type !== 'BadgeGranted') return;
     const [person] = await db
       .select({ username: profiles.username })
       .from(profiles)

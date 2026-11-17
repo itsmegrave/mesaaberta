@@ -66,8 +66,11 @@
     buttonClass?: string;
     /** The button's content. */
     children?: Snippet;
-    /** The form's content instead of the button (a button of its own must be `type="submit"`). */
-    content?: Snippet;
+    /**
+     * The form's content instead of the button (a button of its own must be `type="submit"`). It
+     * gets the form's state, to pass on as that button's `controller`.
+     */
+    content?: Snippet<[{ pending: boolean; delayed: boolean; timeout: boolean }]>;
     /** After the button: a hint beside it. */
     after?: Snippet;
   } = $props();
@@ -109,7 +112,7 @@
     {/if}
   {/each}
   {#if content}
-    {@render content()}
+    {@render content(form)}
   {:else}
     <MAButton
       type="submit"

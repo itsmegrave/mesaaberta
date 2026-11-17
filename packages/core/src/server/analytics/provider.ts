@@ -23,6 +23,11 @@ export interface AnalyticsProvider {
   /** Stable lowercase id: the outbox handler is recorded as `<name>-product-events-v1`. */
   readonly name: string;
   send(event: AnalyticsEvent): Promise<void>;
+  /**
+   * Sets fixed labels on the person's profile, so every event they send can be broken down by
+   * them (the theme they use). Optional: a provider without profiles leaves it out.
+   */
+  setProfile?(distinctId: string, properties: Record<string, string>): Promise<void>;
 }
 
 /** Builds a provider from the runtime environment, or `null` when it is not configured. */

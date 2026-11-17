@@ -39,8 +39,8 @@ describe('the auth callback', () => {
     expect(await call('error=access_denied')).toMatchObject({ location: '/' });
   });
 
-  describe('behind api_auth_finish_login', () => {
-    const remoteOf = async (apiOn: boolean, answer: object | 'down') => {
+  describe('through the api', () => {
+    const remoteOf = async (answer: object | 'down') => {
       const fetch = vi.fn(async (_request: Request) =>
         answer === 'down'
           ? Promise.reject(new Error('down'))
@@ -50,38 +50,42 @@ describe('the auth callback', () => {
         supabase: {},
         db: null,
         env: { API: { fetch } },
-        flags: { isEnabled: vi.fn(async () => apiOn) },
         log: { warn: vi.fn() },
       };
-      await call('code=abc&next=%2Ft%2Fnew', locals);
+      await call('code=abc&next=%2Ftables%2Fnew', locals);
       const { remote } = finishLogin.mock.calls[0][0] as {
         remote: (token: string, next: string | null) => Promise<unknown>;
       };
-      return { fetch, locals, answer: await remote('jwt-a', '/t/new') };
+      return { fetch, locals, answer: await remote('jwt-a', '/tables/new') };
     };
 
     it('hands the database half to the api with the new access token', async () => {
-      const { fetch, answer, locals } = await remoteOf(true, { result: 'ok', target: '/t/new' });
+      const { fetch, answer, locals } = await remoteOf({
+        result: 'ok',
+        target: '/tables/new',
+      });
 
-      expect(answer).toEqual({ result: 'ok', target: '/t/new' });
+      expect(answer).toEqual({ result: 'ok', target: '/tables/new' });
       const request = fetch.mock.calls[0][0];
       expect(new URL(request.url).pathname).toBe('/v1/auth/finish-login');
       expect(request.headers.get('authorization')).toBe('Bearer jwt-a');
       expect(request.headers.get('x-client-ip')).toBe('127.0.0.1');
-      expect(await request.json()).toEqual({ next: '/t/new' });
+      expect(await request.json()).toEqual({ next: '/tables/new' });
       expect(JSON.stringify(locals.log.warn.mock.calls)).not.toContain('jwt-a');
     });
 
     it('passes a refusal on so the person is signed out', async () => {
-      expect((await remoteOf(true, { result: 'suspended' })).answer).toEqual({
+      expect((await remoteOf({ result: 'suspended' })).answer).toEqual({
         result: 'suspended',
       });
     });
 
-    it('leaves it to the web path when the flag is off, the api is down or it answers something else', async () => {
-      expect((await remoteOf(false, { result: 'ok', target: '/' })).answer).toBeNull();
-      expect((await remoteOf(true, 'down')).answer).toBeNull();
-      expect((await remoteOf(true, { result: 'no_session' })).answer).toBeNull();
+    it('never does the database half here: no database, and null when the api is down or answers something else', async () => {
+      expect((await remoteOf('down')).answer).toBeNull();
+      // Even with a database at hand, the web Worker does not pass it on.
+      await call('code=abc', { supabase: {}, db: {}, log: {} });
+      expect(finishLogin.mock.calls.at(-1)![0]).toMatchObject({ db: null });
+      expect((await remoteOf({ result: 'no_session' })).answer).toBeNull();
     });
   });
 });

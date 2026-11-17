@@ -1,8 +1,10 @@
 import { and, asc, eq, inArray, isNotNull, or } from 'drizzle-orm';
 import { eraseMessagesOf } from '@mesaaberta/core/server/messages/service';
+import { eraseMatchesOf } from '@mesaaberta/core/server/matches/service';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {
   conversations,
+  follows,
   gmInviteBlocks,
   playerInvitations,
   gameTables,
@@ -10,8 +12,10 @@ import {
   messages,
   notifications,
   userBadges,
+  profileFavoriteSystems,
   profileSocialLinks,
   profiles,
+  playerRatings,
   ratings,
   registrations,
   systems,
@@ -24,6 +28,7 @@ import {
 import { lockTableRows, lockTableSchedule } from '../tables/schedule-guard';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import { extensions, type Extension } from '../extensions/index';
+import { syncTableSessions } from '../tables/sessions';
 
 /**
  * Everything the account holds, for the data portability right (LGPD art. 18, V). Only this
@@ -45,6 +50,10 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
       avatarPath: profiles.avatarPath,
       bannerPath: profiles.bannerPath,
       bio: profiles.bio,
+      tableRole: profiles.tableRole,
+      showFavoriteSystems: profiles.showFavoriteSystems,
+      followNotifyTables: profiles.followNotifyTables,
+      followNotifySeats: profiles.followNotifySeats,
       createdAt: profiles.createdAt,
     })
     .from(profiles)
@@ -58,6 +67,8 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
     notificationsReceived,
     messagesSent,
     badges,
+    playerRatingsGiven,
+    playerRatingsReceived,
   ] = await Promise.all([
     db
       .select({
@@ -114,6 +125,7 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
         slug: gameTables.slug,
         gmScore: ratings.gmScore,
         comment: ratings.comment,
+        commentPublic: ratings.commentPublic,
         createdAt: ratings.createdAt,
       })
       .from(ratings)
@@ -160,37 +172,77 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
       .from(userBadges)
       .where(eq(userBadges.profileId, userId))
       .orderBy(asc(userBadges.awardedAt), asc(userBadges.badgeId)),
+    // The players the person rated as a GM, with their own note.
+    db
+      .select({
+        table: gameTables.title,
+        slug: gameTables.slug,
+        playerId: playerRatings.playerId,
+        score: playerRatings.score,
+        comment: playerRatings.comment,
+        createdAt: playerRatings.createdAt,
+      })
+      .from(playerRatings)
+      .innerJoin(gameTables, eq(playerRatings.tableId, gameTables.id))
+      .where(eq(gameTables.gmId, userId))
+      .orderBy(asc(playerRatings.createdAt)),
+    // What GMs gave the person as a participant. The comment is that GM's own note, so it stays out.
+    db
+      .select({
+        table: gameTables.title,
+        slug: gameTables.slug,
+        score: playerRatings.score,
+        createdAt: playerRatings.createdAt,
+      })
+      .from(playerRatings)
+      .innerJoin(gameTables, eq(playerRatings.tableId, gameTables.id))
+      .where(eq(playerRatings.playerId, userId))
+      .orderBy(asc(playerRatings.createdAt)),
   ]);
 
-  const [invitationsReceived, invitationsSent, invitationBlocks] = await Promise.all([
-    db
-      .select({
-        id: playerInvitations.id,
-        tableId: playerInvitations.tableId,
-        gmId: playerInvitations.gmId,
-        status: playerInvitations.status,
-        createdAt: playerInvitations.createdAt,
-        expiresAt: playerInvitations.expiresAt,
-        respondedAt: playerInvitations.respondedAt,
-        cancellationReason: playerInvitations.cancellationReason,
-      })
-      .from(playerInvitations)
-      .where(eq(playerInvitations.playerId, userId)),
-    db
-      .select({
-        id: playerInvitations.id,
-        tableId: playerInvitations.tableId,
-        status: playerInvitations.status,
-        createdAt: playerInvitations.createdAt,
-        expiresAt: playerInvitations.expiresAt,
-      })
-      .from(playerInvitations)
-      .where(eq(playerInvitations.gmId, userId)),
-    db
-      .select({ gmId: gmInviteBlocks.gmId, createdAt: gmInviteBlocks.createdAt })
-      .from(gmInviteBlocks)
-      .where(eq(gmInviteBlocks.playerId, userId)),
-  ]);
+  const [invitationsReceived, invitationsSent, invitationBlocks, favoriteSystems, following] =
+    await Promise.all([
+      db
+        .select({
+          id: playerInvitations.id,
+          tableId: playerInvitations.tableId,
+          gmId: playerInvitations.gmId,
+          status: playerInvitations.status,
+          createdAt: playerInvitations.createdAt,
+          expiresAt: playerInvitations.expiresAt,
+          respondedAt: playerInvitations.respondedAt,
+          cancellationReason: playerInvitations.cancellationReason,
+        })
+        .from(playerInvitations)
+        .where(eq(playerInvitations.playerId, userId)),
+      db
+        .select({
+          id: playerInvitations.id,
+          tableId: playerInvitations.tableId,
+          status: playerInvitations.status,
+          createdAt: playerInvitations.createdAt,
+          expiresAt: playerInvitations.expiresAt,
+        })
+        .from(playerInvitations)
+        .where(eq(playerInvitations.gmId, userId)),
+      db
+        .select({ gmId: gmInviteBlocks.gmId, createdAt: gmInviteBlocks.createdAt })
+        .from(gmInviteBlocks)
+        .where(eq(gmInviteBlocks.playerId, userId)),
+      db
+        .select({ system: systems.name, createdAt: profileFavoriteSystems.createdAt })
+        .from(profileFavoriteSystems)
+        .innerJoin(systems, eq(profileFavoriteSystems.systemId, systems.id))
+        .where(eq(profileFavoriteSystems.profileId, userId))
+        .orderBy(asc(systems.position), asc(systems.name)),
+      // Who the person follows, by their public @. Who follows them is those people's data.
+      db
+        .select({ username: profiles.username, createdAt: follows.createdAt })
+        .from(follows)
+        .innerJoin(profiles, eq(follows.followeeId, profiles.id))
+        .where(eq(follows.followerId, userId))
+        .orderBy(asc(follows.createdAt)),
+    ]);
   return {
     invitationsReceived,
     invitationsSent,
@@ -205,14 +257,19 @@ export async function exportAccount(db: AnyDb, userId: string, email: string, no
     notifications: notificationsReceived,
     messagesSent,
     badges,
+    playerRatingsGiven,
+    playerRatingsReceived,
+    favoriteSystems,
+    following,
   };
 }
 
 /**
  * The database side of deleting an account, in one transaction: the person's active tables are
  * disabled (each with a `TableDisabled` event, so the players get the calendar cancellation), their
- * seats go, and so do the ratings of the tables they ran, with the cached score. The ratings they gave
- * stay, final, and count for those GMs; only the comments go, with their other texts. A finished
+ * seats go, and so do the ratings of the tables they ran, with the cached score, and their score as a
+ * participant. The ratings they gave, of GMs and of players, stay, final, and count for those people;
+ * only the comments go, with their other texts. A finished
  * table stays as it was. Returns the events to dispatch. Run it before the Auth user is deleted:
  * the cancellation mail looks up the GM's address.
  */
@@ -254,6 +311,7 @@ export async function closeAccount(
         .update(gameTables)
         .set({ status: 'disabled', icalSequence: table.icalSequence + 1 })
         .where(eq(gameTables.id, table.id));
+      await syncTableSessions(t, [table.id]);
       ids.push(
         await recordEvent(t, {
           type: 'TableDisabled',
@@ -274,7 +332,20 @@ export async function closeAccount(
       );
     await t.delete(gmScores).where(eq(gmScores.gmId, userId));
     await t.update(ratings).set({ comment: null }).where(eq(ratings.playerId, userId));
+    // The other way round: their score as a participant goes; what they gave as a GM stays, final,
+    // and counts for those players, without the notes.
+    await t.delete(playerRatings).where(eq(playerRatings.playerId, userId));
+    await t
+      .update(playerRatings)
+      .set({ comment: null })
+      .where(
+        inArray(
+          playerRatings.tableId,
+          t.select({ id: gameTables.id }).from(gameTables).where(eq(gameTables.gmId, userId)),
+        ),
+      );
     await eraseMessagesOf(t, userId);
+    await eraseMatchesOf(t, userId);
     // What extensions keep about the person (a poll's votes): the profile row stays, so no cascade.
     for (const extension of installed) await extension.onAccountClosed?.(t, userId);
     return ids;
@@ -284,7 +355,7 @@ export async function closeAccount(
 }
 
 /**
- * Clears every personal field of a closed account and its links and notifications. The row itself stays, empty, because
+ * Clears every personal field of a closed account, its links, favorite systems, follows and notifications. The row itself stays, empty, because
  * the disabled tables still point at it; it is suspended so nothing can act through it.
  */
 export async function anonymiseProfile(db: AnyDb, userId: string) {
@@ -297,6 +368,11 @@ export async function anonymiseProfile(db: AnyDb, userId: string) {
       .delete(gmInviteBlocks)
       .where(or(eq(gmInviteBlocks.playerId, userId), eq(gmInviteBlocks.gmId, userId)));
     await tx.delete(profileSocialLinks).where(eq(profileSocialLinks.profileId, userId));
+    await tx.delete(profileFavoriteSystems).where(eq(profileFavoriteSystems.profileId, userId));
+    // Both ways: nobody keeps following an empty account, and it follows nobody.
+    await tx
+      .delete(follows)
+      .where(or(eq(follows.followerId, userId), eq(follows.followeeId, userId)));
     await tx.delete(notifications).where(eq(notifications.recipientId, userId));
     await tx.delete(userBadges).where(eq(userBadges.profileId, userId));
     await tx
@@ -313,6 +389,8 @@ export async function anonymiseProfile(db: AnyDb, userId: string) {
         avatarPath: null,
         bannerPath: null,
         bio: null,
+        tableRole: null,
+        tableRoleInferred: false,
         status: 'suspended',
         invitationsEnabled: false,
       })

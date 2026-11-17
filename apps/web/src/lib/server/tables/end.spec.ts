@@ -44,6 +44,7 @@ const input = (over: Partial<TableInput> = {}): TableInput => ({
   kind: 'one_shot',
   capacity: 5,
   minPlayers: 3,
+  plannedSessions: null,
   startsAtLocal: '2026-10-10T19:00',
   timezone: 'America/Sao_Paulo',
   durationMinutes: 240,

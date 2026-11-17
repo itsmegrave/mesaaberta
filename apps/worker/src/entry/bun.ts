@@ -4,6 +4,7 @@ import { outboxDepth } from '@mesaaberta/core/server/events/outbox-depth';
 import { SWEEPER_CRON } from '@mesaaberta/core/server/events/scheduled';
 import { setHandlerObserver } from '@mesaaberta/core/server/events/handler-runs';
 import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
+import { enforceLocalOnly } from '@mesaaberta/core/server/local-only';
 import { setAppName } from '@mesaaberta/core/server/logger';
 import { createJobMetrics } from '@mesaaberta/core/server/metrics';
 import { createScheduler } from '../scheduler';
@@ -14,6 +15,7 @@ import { createScheduler } from '../scheduler';
 // `EVENT_POLLER=true` to sweep through the poller contract (ADR 0003).
 setAppName('worker');
 logInstalled();
+enforceLocalOnly(process.env);
 const env = process.env as unknown as WorkerEnv;
 const worker = createWorker();
 const sweepEverySeconds = Math.max(30, Number(process.env.SWEEP_INTERVAL_SECONDS ?? 300));

@@ -81,9 +81,12 @@
     schema,
     errorMessage: m.admin_dialog_error,
     onSuccess: () => {
+      // Read the words first: closing clears the row the page made them from (`Target`), so a
+      // preset such as `removePlace(row.name, …)` cannot be read again after `open = false`.
+      const message = success;
       open = false;
       form.reset();
-      toast.success(success);
+      toast.success(message);
     },
   });
   const data = $derived(form.values as Record<string, string>);
@@ -99,6 +102,8 @@
     not_open: m.moderation_err_changed,
     closed: m.moderation_err_changed,
     already_approved: m.moderation_err_changed,
+    place_already_owned: m.moderation_err_changed,
+    not_owned: m.moderation_err_changed,
     not_found: m.moderation_err_changed,
     banned: m.moderation_err_banned,
     forbidden: m.moderation_err_forbidden,

@@ -3,7 +3,14 @@ import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { gameTables, profiles, registrations } from '@mesaaberta/core/server/db/schema';
 import { publicName } from '@mesaaberta/core/server/db/public-name';
 import { authorize, joinBlocker, type Actor } from '@mesaaberta/core/server/auth/policy';
-import { AlreadyRegistered, Forbidden, NotFound, TableFull } from '@mesaaberta/core/server/errors';
+import {
+  AdultOnly,
+  AlreadyRegistered,
+  Forbidden,
+  NotFound,
+  TableFull,
+} from '@mesaaberta/core/server/errors';
+import { releaseSessionSeats } from '../tables/session-signups';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import type { DomainEvent } from '@mesaaberta/core/server/events/types';
 import { JOIN_LIMIT, enforceRateLimit } from '../rate-limit';
@@ -12,6 +19,8 @@ import { seatAvailability } from '../invitations/seats';
 import { pendingInvitationFor } from '../invitations/service';
 import { Invalid } from '../errors';
 import { hasStarted } from '@mesaaberta/core/server/tables/schedule';
+import { promoteWaitlistOf } from './waitlist';
+import { isMinorAtAdultTable } from './age-gate';
 
 // Every operation is one transaction. The ones that can change how many seats are taken lock the
 // table's row first (`SELECT ... FOR UPDATE`), so two of them on the same table run one after the
@@ -92,6 +101,7 @@ export async function joinTable(
     if (blocker === 'registered') throw new AlreadyRegistered();
     if (blocker === 'full') throw new TableFull();
     if (blocker) throw new Forbidden('table:join');
+    if (await isMinorAtAdultTable(asDb(tx), table, actor!.id)) throw new AdultOnly();
     await enforceRateLimit(asDb(tx), actor!.id, JOIN_LIMIT, now);
 
     const status = table.joinMode === 'auto' ? 'confirmed' : 'pending';
@@ -118,6 +128,10 @@ export async function joinTable(
   });
 }
 
+/** Whether the table had no seat left before a player gives theirs up: who follows its GM hears of the vaga. */
+const fullBefore = async (tx: Tx, tableId: string) =>
+  (await seatAvailability(asDb(tx), tableId, new Date())).available === 0;
+
 /** A player gives up their place, or withdraws a request. A pending request took no seat, so it leaves no event. */
 export async function leaveTable(db: AnyDb, actor: Actor | null, slug: string) {
   return db.transaction(async (tx) => {
@@ -127,6 +141,9 @@ export async function leaveTable(db: AnyDb, actor: Actor | null, slug: string) {
 
     const registration = await registrationOf(tx, table.id, actor!.id);
     if (!registration) throw new NotFound('no registration');
+    const wasFull = registration.status === 'confirmed' && (await fullBefore(tx, table.id));
+    // Campanha aberta: the sessions they played go to whoever waited for them.
+    const movedUp = await releaseSessionSeats(asDb(tx), actor!.id, table.id, actor!.id);
 
     await tx
       .delete(registrations)
@@ -138,9 +155,16 @@ export async function leaveTable(db: AnyDb, actor: Actor | null, slug: string) {
     const eventId = await recordEvent(asDb(tx), {
       type: 'PlayerLeft',
       actorId: actor!.id,
-      payload: { tableId: table.id, slug: table.slug, playerId: actor!.id, reason: 'left' },
+      payload: {
+        tableId: table.id,
+        slug: table.slug,
+        playerId: actor!.id,
+        reason: 'left',
+        ...(wasFull ? { wasFull: true as const } : {}),
+      },
     });
-    return { eventIds: [eventId] };
+    // The seat goes to the first in the lista de espera, if anyone waits.
+    return { eventIds: [eventId, ...movedUp, ...(await promoteWaitlistOf(asDb(tx), table.id))] };
   });
 }
 
@@ -158,6 +182,7 @@ export async function approveRegistration(
 
     const registration = await registrationOf(tx, table.id, playerId);
     if (registration?.status !== 'pending') throw new NotFound('no pending request');
+    if (await isMinorAtAdultTable(asDb(tx), table, playerId)) throw new AdultOnly();
     if ((await seatAvailability(asDb(tx), table.id, new Date())).available < 1)
       throw new TableFull();
 
@@ -192,7 +217,9 @@ export async function declineRegistration(
       .delete(registrations)
       .where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, playerId)));
 
-    return { eventIds: [await record(tx, actor!, table, playerId, 'JoinDeclined')] };
+    const declined = await record(tx, actor!, table, playerId, 'JoinDeclined');
+    // At a table that approves each player, a declined request makes room for the next in line.
+    return { eventIds: [declined, ...(await promoteWaitlistOf(asDb(tx), table.id))] };
   });
 }
 
@@ -205,6 +232,8 @@ export async function removePlayer(db: AnyDb, actor: Actor | null, slug: string,
 
     const registration = await registrationOf(tx, table.id, playerId);
     if (registration?.status !== 'confirmed') throw new NotFound('that player has no seat');
+    const wasFull = await fullBefore(tx, table.id);
+    const movedUp = await releaseSessionSeats(asDb(tx), actor!.id, table.id, playerId);
 
     await tx
       .delete(registrations)
@@ -214,9 +243,15 @@ export async function removePlayer(db: AnyDb, actor: Actor | null, slug: string,
     const eventId = await recordEvent(asDb(tx), {
       type: 'PlayerLeft',
       actorId: actor!.id,
-      payload: { tableId: table.id, slug: table.slug, playerId, reason: 'removed' },
+      payload: {
+        tableId: table.id,
+        slug: table.slug,
+        playerId,
+        reason: 'removed',
+        ...(wasFull ? { wasFull: true as const } : {}),
+      },
     });
-    return { eventIds: [eventId] };
+    return { eventIds: [eventId, ...movedUp, ...(await promoteWaitlistOf(asDb(tx), table.id))] };
   });
 }
 

@@ -1,3 +1,4 @@
+import { openTablesEnabled } from './open-enabled';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import { onboardingUrl } from '@mesaaberta/core/server/auth/onboarding';
 import { redirect } from '@sveltejs/kit';
@@ -13,7 +14,9 @@ import {
   TableConcluded,
 } from '@mesaaberta/core/server/errors';
 import { IMAGE_BUCKET, prepareImage, storeImage } from '@mesaaberta/core/server/images';
-import { withLocation } from '@mesaaberta/core/server/location/cep';
+import { serverStorage } from '@mesaaberta/core/server/storage';
+import { resolveTableLocation } from './api';
+import { directoryEnabled } from '../directories/flags';
 import { timezoneOf } from '../time';
 import { tableFormSchema, toTableInput, type TableInput } from '@mesaaberta/core/tables/schema';
 
@@ -63,7 +66,7 @@ export async function handleTableForm(
     data,
     tableFormSchema,
     { ...NEW_TABLE_VALUES, image: undefined },
-    { arrays: ['platforms', 'tags'], booleans: ['removeImage'], files: ['image'] },
+    { arrays: ['platforms', 'tags', 'safetyTools'], booleans: ['removeImage'], files: ['image'] },
   );
   if (!form.valid) return fail(400, { form: responseForm(form) });
 
@@ -73,19 +76,26 @@ export async function handleTableForm(
   let asDraft: boolean;
   try {
     await guard(draft, data);
+    // A westmarch while the kind is off: the form did not offer it.
+    if (form.data.kind === 'open' && !(await openTablesEnabled(locals)))
+      throw new Invalid('kind', 'invalid');
     const image = data.get('image');
     let imagePath: string | undefined;
 
     if (image instanceof File && image.size > 0) {
       const prepared = await prepareImage(image);
-      const storage = locals.supabase?.storage.from(IMAGE_BUCKET);
+      const storage = serverStorage(locals.env, IMAGE_BUCKET);
       if (!storage) throw new Invalid('image', 'upload_failed');
       imagePath = await storeImage(storage, prepared, locals.log);
     }
 
-    const input = locals.db
-      ? await withLocation(locals.db, toTableInput(form.data))
-      : toTableInput(form.data);
+    // An "Onde jogar" place, when one was picked and the places are on: it brings its CEP and area.
+    // Otherwise the CEP the GM typed is looked up, as before there were places.
+    const placeSlug =
+      form.data.placeSlug && (await directoryEnabled(locals, 'places')) ? form.data.placeSlug : '';
+    const user = await locals.getUser();
+    if (!user) throw new Forbidden();
+    const input = await resolveTableLocation(locals, user.id, toTableInput(form.data), placeSlug);
     const saved = await save(input, imagePath, draft);
     slug = saved.slug;
     // A table whose system is a suggestion is saved as a draft whatever button was pressed.

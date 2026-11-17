@@ -1,16 +1,21 @@
-import { error } from '@sveltejs/kit';
 import { requireUser } from '#lib/server/auth/guard.js';
-import { listCalendarTables } from '@mesaaberta/core/server/calendar/feed';
+import { readFromApi } from '#lib/server/api-read.js';
+import type { CalendarTable } from '@mesaaberta/core/server/calendar/ics';
 import { buildCalendar, uidDomainFor } from '@mesaaberta/core/server/calendar/ics';
 import type { RequestHandler } from './$types';
 
 // "Baixar calendário" in Minhas mesas: the tables the person runs or has a seat at, as one `.ics`.
 export const GET: RequestHandler = async ({ locals, url }) => {
   const user = await requireUser(locals, url);
-  if (!locals.db) error(503, 'Database not configured');
-
   const now = new Date();
-  const tables = await listCalendarTables(locals.db, user.id, now);
+  // The api Worker reads them; JSON turned their dates into strings.
+  const tables = (await readFromApi<CalendarTable[]>(locals, user.id, '/v1/me/calendar')).map(
+    (table) => ({
+      ...table,
+      startsAt: new Date(table.startsAt),
+      until: table.until ? new Date(table.until) : null,
+    }),
+  );
 
   return new Response(
     buildCalendar({

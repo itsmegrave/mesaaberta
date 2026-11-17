@@ -56,14 +56,33 @@ export type NewTable = {
   image?: { name: string; mimeType: string; buffer: Buffer };
 };
 
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 /**
- * Picks an option in a SearchSelect (the searchable dropdown): types part of its name, then clicks
- * it. Waits for the combobox first, since the page shows a plain <select> until it hydrates.
+ * Opens a SearchSelect and returns its search box, if it has one. On a wide screen a long list is a
+ * combobox to type into; on a phone, and for a short list, the field is a button ("Hora 20") that
+ * opens the list, in a bottom sheet with a "Buscar: <label>" box when the list is long.
  */
+export async function openSelect(page: Page, label: string) {
+  const combobox = page.getByRole('combobox', { name: label }).filter({ visible: true });
+  const button = page
+    .getByRole('button', { name: new RegExp(`^${escapeRegExp(label)}( |$)`) })
+    .filter({ visible: true });
+  await expect(combobox.or(button).first()).toBeVisible();
+  if ((await combobox.count()) > 0) {
+    await combobox.first().click();
+    return combobox.first();
+  }
+  await button.first().click();
+  await expect(page.getByRole('option').first()).toBeVisible();
+  const search = page.getByRole('searchbox', { name: `Buscar: ${label}` });
+  return (await search.count()) > 0 ? search : null;
+}
+
+/** Picks an option in a SearchSelect: opens it, types part of the name if it has a search, clicks it. */
 export async function pickFromSearch(page: Page, label: string, option: string) {
-  const input = page.getByRole('combobox', { name: label });
-  await expect(input).toBeVisible();
-  await input.fill(option.slice(0, 6));
+  const search = await openSelect(page, label);
+  await search?.fill(option.slice(0, 6));
   await page.getByRole('option', { name: option, exact: true }).click();
 }
 
@@ -130,7 +149,7 @@ export const uniqueTitle = (prefix: string) =>
 
 /** Fills and submits the create form as the signed-in user. Returns the slug from the URL it lands on. */
 export async function createTable(page: Page, table: NewTable) {
-  await page.goto('/t/new');
+  await page.goto('/tables/new');
   await pickFromSearch(page, 'Sistema de RPG', table.system ?? 'Daggerheart');
   await page.getByLabel('Título').fill(table.title);
   if (table.description) await page.getByLabel('Descrição').fill(table.description);
@@ -153,7 +172,7 @@ export async function createTable(page: Page, table: NewTable) {
   // more than the short UI assertion budget to establish its first database connection.
   const submitted = page.waitForResponse(
     (response) =>
-      response.request().method() === 'POST' && new URL(response.url()).pathname === '/t/new',
+      response.request().method() === 'POST' && new URL(response.url()).pathname === '/tables/new',
   );
   await page.getByRole('button', { name: 'Abrir mesa' }).click();
   expect((await submitted).status()).toBeLessThan(400);
@@ -215,4 +234,41 @@ export async function adminSection(page: Page, isMobile: boolean, name: string) 
   if (!isMobile) return page.getByRole('link', { name, exact: true });
   await page.getByRole('button', { name: /^Seção: / }).click();
   return page.getByRole('menuitem', { name, exact: true });
+}
+
+/**
+ * Opens a collapsible section (MAAccordion) when it is closed. On a wide screen a phone-only one is
+ * already open. The toggle only answers once the page has hydrated (before that, a wide screen still
+ * draws it, inert), so this clicks until no closed toggle is left.
+ */
+export async function openSection(page: Page, name: RegExp) {
+  const closed = page.getByRole('button', { name, expanded: false });
+  await expect(async () => {
+    if ((await closed.count()) > 0) await closed.first().click({ timeout: 1_000 });
+    await expect(closed).toHaveCount(0, { timeout: 1_000 });
+  }).toPass();
+}
+
+/**
+ * Opens the "Pedir vaga" dialog on a table page. The trigger only answers once the page has
+ * hydrated (before that the click lands on an inert button), so this clicks until the dialog is up.
+ */
+export async function openJoinRequest(page: Page) {
+  const send = page.getByRole('button', { name: 'Enviar pedido' });
+  await expect(async () => {
+    if (!(await send.isVisible())) await page.getByRole('button', { name: 'Pedir vaga' }).click();
+    await expect(send).toBeVisible({ timeout: 1_000 });
+  }).toPass();
+}
+
+/**
+ * Shows every card on the table list: each section stops at 3 cards with a "Ver mais N mesas"
+ * button. The button only answers once the page has hydrated, so this clicks until none is left.
+ */
+export async function showAllTables(page: Page) {
+  const more = page.getByRole('button', { name: /^Ver mais \d+ mesas?$/ });
+  await expect(async () => {
+    if ((await more.count()) > 0) await more.first().click({ timeout: 1_000 });
+    await expect(more).toHaveCount(0, { timeout: 1_000 });
+  }).toPass();
 }

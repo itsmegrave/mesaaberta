@@ -20,6 +20,7 @@ export async function readTables(db: AnyDb, filters: TableFilters, now: Date) {
     modality,
     platforms: pickedPlatforms,
     tags: pickedTags,
+    gm,
   } = filters;
   const [upcoming, systems, catalog] = await Promise.all([
     listUpcomingTables(db, now),
@@ -56,7 +57,8 @@ export async function readTables(db: AnyDb, filters: TableFilters, now: Date) {
       (!modality || table.modality === modality) &&
       (pickedPlatforms.length === 0 ||
         table.platforms.some((p) => pickedPlatforms.includes(p.slug))) &&
-      (pickedTags.length === 0 || table.tags.some((t) => pickedTags.includes(t.slug))),
+      (pickedTags.length === 0 || table.tags.some((t) => pickedTags.includes(t.slug))) &&
+      (!gm || table.gmName === gm),
   );
 
   return {
@@ -71,5 +73,6 @@ export async function readTables(db: AnyDb, filters: TableFilters, now: Date) {
     },
     pickedPlatforms,
     pickedTags,
+    pickedGm: gm,
   };
 }

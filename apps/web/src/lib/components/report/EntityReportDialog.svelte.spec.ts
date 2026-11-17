@@ -1,12 +1,16 @@
 import '../../../routes/layout.css';
 import { page } from 'vitest/browser';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import EntityReportDialog from './EntityReportDialog.svelte';
 
 const entity = { id: '00000000-0000-4000-8000-000000000003', name: 'Loja do Dado' };
 
 describe('EntityReportDialog', () => {
+  beforeEach(async () => {
+    await page.viewport(1280, 900);
+  });
+
   it('names the listing it reports and posts its id to the report action', async () => {
     render(EntityReportDialog, { kind: 'partner', entity, open: true });
 
@@ -21,7 +25,7 @@ describe('EntityReportDialog', () => {
   it('keeps the ids of each kind, which the error lines and the e2e tests point at', async () => {
     render(EntityReportDialog, { kind: 'crowdfunding', entity, open: true });
 
-    await expect.element(page.getByRole('combobox', { name: 'Motivo' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: /^Motivo/ })).toBeVisible();
     expect(document.getElementById('crowdfunding-report-reason')).not.toBeNull();
     expect(document.getElementById('crowdfunding-report-details')).not.toBeNull();
   });
@@ -29,7 +33,7 @@ describe('EntityReportDialog', () => {
   it("offers the partner's reasons, with spam worded as the repeated kind", async () => {
     render(EntityReportDialog, { kind: 'partner', entity, open: true });
 
-    await page.getByRole('button', { name: 'Abrir a lista: Motivo' }).click();
+    await page.getByRole('button', { name: /^Motivo/ }).click();
 
     await expect
       .element(page.getByRole('option', { name: 'Não tem o link para a Mesa Aberta' }))
@@ -42,7 +46,7 @@ describe('EntityReportDialog', () => {
   it("does not offer a partner's reasons for a campaign", async () => {
     render(EntityReportDialog, { kind: 'crowdfunding', entity, open: true });
 
-    await page.getByRole('button', { name: 'Abrir a lista: Motivo' }).click();
+    await page.getByRole('button', { name: /^Motivo/ }).click();
 
     await expect
       .element(page.getByRole('option', { name: 'Link quebrado ou errado' }))
@@ -55,7 +59,7 @@ describe('EntityReportDialog', () => {
   it('refuses to send without a reason, before anything is posted', async () => {
     render(EntityReportDialog, { kind: 'partner', entity, open: true });
 
-    await expect.element(page.getByRole('combobox', { name: 'Motivo' })).toBeVisible();
+    await expect.element(page.getByRole('button', { name: /^Motivo/ })).toBeVisible();
     // The browser's own check would stop the submit first; skip it to reach the schema.
     document.getElementById('partner-report-reason')?.removeAttribute('required');
     await page.getByRole('button', { name: 'Enviar denúncia' }).click();

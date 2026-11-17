@@ -1,50 +1,32 @@
-import { error } from '@sveltejs/kit';
-import { CATALOG_KINDS, pageNumber, type CatalogKind } from '@mesaaberta/core/admin/catalog';
-import { pageSizeOf, sortOf, type Sort } from '@mesaaberta/core/admin/list';
+import type { CatalogKind } from '@mesaaberta/core/admin/catalog';
+import type { Sort } from '@mesaaberta/core/admin/list';
 import { requireAdmin } from '#lib/server/admin-access.js';
 import { catalogActions } from '#lib/server/admin/catalog-actions.js';
-import {
-  CATALOG_PAGE_SIZE,
+import type {
   CATALOG_SORTS,
   CATALOG_STATUS_FILTERS,
   listApproved,
   listCatalogAdmin,
 } from '@mesaaberta/core/server/admin/catalog';
+import { readFromApi, revivedDates } from '#lib/server/api-read.js';
 import { requireUser } from '#lib/server/auth/guard.js';
 import type { Actions, PageServerLoad } from './$types';
 
+type CatalogPage = {
+  kind: CatalogKind;
+  query: string;
+  status: (typeof CATALOG_STATUS_FILTERS)[number];
+  sort: Sort<(typeof CATALOG_SORTS)[number]> | null;
+  approved: Awaited<ReturnType<typeof listApproved>>[CatalogKind];
+} & Awaited<ReturnType<typeof listCatalogAdmin>>;
+
+// The api reads the console for the address's filters; a page past the last is its 404.
 export const load: PageServerLoad = async ({ locals, url }) => {
-  await requireUser(locals, url);
+  const user = await requireUser(locals, url);
   await requireAdmin(locals);
-  if (!locals.db) error(503, 'Database not configured');
-
-  const asked = url.searchParams.get('kind');
-  const kind: CatalogKind = CATALOG_KINDS.find((value) => value === asked) ?? 'platform';
-  const query = (url.searchParams.get('q') ?? '').trim().slice(0, 40);
-  const page = pageNumber(url.searchParams.get('page'));
-  const statusAsked = url.searchParams.get('status');
-  const status = CATALOG_STATUS_FILTERS.find((value) => value === statusAsked) ?? 'all';
-  const pageSize = pageSizeOf(url.searchParams, CATALOG_PAGE_SIZE);
-  // The catalog keeps its own order (the pickers' order) until a column is asked for.
-  const sorted = url.searchParams.get('sort');
-  const sort: Sort<(typeof CATALOG_SORTS)[number]> | null = CATALOG_SORTS.some(
-    (value) => value === sorted,
-  )
-    ? sortOf(url.searchParams, CATALOG_SORTS, { id: 'name', dir: 'asc' })
-    : null;
-
-  const list = await listCatalogAdmin(locals.db, kind, { query, page, pageSize, status, sort });
-  // A page past the last is a 404, the first page always exists.
-  if (page > list.pages) error(404, 'Not found');
-
-  return {
-    kind,
-    query,
-    status,
-    sort,
-    ...list,
-    approved: (await listApproved(locals.db))[kind],
-  };
+  return revivedDates(
+    await readFromApi<CatalogPage>(locals, user.id, `/v1/admin-reads/catalog?${url.searchParams}`),
+  );
 };
 
 export const actions: Actions = {

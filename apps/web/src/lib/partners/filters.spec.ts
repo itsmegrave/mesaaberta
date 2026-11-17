@@ -6,6 +6,7 @@ describe('readPartnerFilters', () => {
   it('opens on the newest, first page', () => {
     expect(readPartnerFilters(new URLSearchParams(''))).toEqual({
       query: '',
+      type: null,
       sort: 'newest',
       page: 1,
     });
@@ -22,10 +23,18 @@ describe('readPartnerFilters', () => {
     expect(readPartnerFilters(new URLSearchParams('sort=name')).sort).toBe('name');
     expect(readPartnerFilters(new URLSearchParams('sort=hax')).sort).toBe('newest');
   });
+
+  it('keeps a known kind and drops any other', () => {
+    expect(readPartnerFilters(new URLSearchParams('type=publisher')).type).toBe('publisher');
+    expect(readPartnerFilters(new URLSearchParams('type=none')).type).toBeNull();
+    expect(readPartnerFilters(new URLSearchParams('type=hax')).type).toBeNull();
+  });
 });
 
 describe('partnerAdminFilters', () => {
-  it('opens on what waits for review', () => {
-    expect(partnerAdminFilters(new URLSearchParams('')).status).toBe('pending');
+  it('opens on every partner', () => {
+    expect(partnerAdminFilters(new URLSearchParams('')).status).toBe('all');
+    expect(partnerAdminFilters(new URLSearchParams('status=nope')).status).toBe('all');
+    expect(partnerAdminFilters(new URLSearchParams('status=pending')).status).toBe('pending');
   });
 });

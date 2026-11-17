@@ -1,0 +1,27 @@
+import { initialForm } from '#lib/forms/contract.js';
+import { NEW_PLACE_VALUES } from '@mesaaberta/core/places/schema';
+import { requireUser } from '#lib/server/auth/guard.js';
+import { requireDirectory } from '#lib/server/directories/flags.js';
+import { handlePlaceForm } from '#lib/server/places/form-action.js';
+import { placeTagOptions } from '#lib/server/places/tags.js';
+import { cepStreetEnabled } from '#lib/server/places/cep-street.js';
+import type { Actions, PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ locals, url }) => {
+  await requireDirectory(locals, 'places');
+  const user = await requireUser(locals, url);
+  const [tags, cepStreet] = await Promise.all([
+    placeTagOptions(locals, user.id),
+    cepStreetEnabled(locals),
+  ]);
+  return { form: initialForm(NEW_PLACE_VALUES), ...tags, cepStreet };
+};
+
+export const actions: Actions = {
+  default: async (event) => {
+    await requireDirectory(event.locals, 'places');
+    // Who is asking comes before whether we can serve them.
+    await requireUser(event.locals, event.url);
+    return handlePlaceForm(event);
+  },
+};

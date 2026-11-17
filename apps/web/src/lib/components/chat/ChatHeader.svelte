@@ -4,6 +4,7 @@
   import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import PostButton from '#lib/components/PostButton.svelte';
+  import KebabMenu, { type KebabItem } from '#lib/components/ui/KebabMenu.svelte';
   import { muteSchema } from '@mesaaberta/core/messages/schema';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -13,22 +14,66 @@
     conversation,
     action = '?/mute',
     onback,
+    onreport,
+    onblock,
   }: {
     action?: string;
     onback?: () => void;
+    /** "Denunciar @pessoa…" in a direct conversation (`use_message_safety`); none hides it. */
+    onreport?: () => void;
+    /** "Bloquear @pessoa…", likewise; hidden once the person is blocked. */
+    onblock?: () => void;
     conversation: {
       kind: 'table' | 'direct';
+      /** An admin conversation: the title reads "[Admin] @username" and it offers no block. */
+      admin?: boolean;
       table: { slug: string; title: string; imageUrl: string | null } | null;
       other: { username: string; avatarUrl: string | null } | null;
       muted: boolean;
+      blocked?: boolean;
     };
   } = $props();
 
   const title = $derived(
     conversation.kind === 'table'
       ? (conversation.table?.title ?? '')
-      : atHandle(conversation.other?.username),
+      : conversation.admin
+        ? m.messages_admin_title({ name: atHandle(conversation.other?.username) })
+        : atHandle(conversation.other?.username),
   );
+  // The ⋮ of a direct conversation: the person's profile, then reporting and blocking them.
+  const more = $derived.by((): KebabItem[] => {
+    const other = conversation.kind === 'direct' ? conversation.other : null;
+    if (!other || !(onreport || onblock)) return [];
+    const name = atHandle(other.username);
+    return [
+      {
+        id: 'profile',
+        label: m.messages_view_profile(),
+        href: `/u/${encodeURIComponent(other.username)}`,
+      },
+      ...(onreport
+        ? [
+            {
+              id: 'report',
+              label: m.messages_report_person({ name }),
+              destructive: true,
+              onselect: onreport,
+            },
+          ]
+        : []),
+      ...(onblock && !conversation.blocked && !conversation.admin
+        ? [
+            {
+              id: 'block',
+              label: m.messages_block_person({ name }),
+              destructive: true,
+              onselect: onblock,
+            },
+          ]
+        : []),
+    ];
+  });
   const picture = $derived(
     conversation.kind === 'table' ? conversation.table?.imageUrl : conversation.other?.avatarUrl,
   );
@@ -85,7 +130,7 @@
   {:else}
     <Breadcrumbs
       class="min-w-0 flex-1"
-      items={[{ label: m.messages_title(), href: '/m' }, { label: title }]}
+      items={[{ label: m.messages_title(), href: '/messages' }, { label: title }]}
     />
   {/if}
 
@@ -99,7 +144,7 @@
     errorMessage={m.messages_error_generic}
     onSuccess={(values) => (conversation.muted = values.muted as boolean)}
     class="m-0"
-    buttonClass="btn h-12 rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
+    buttonClass="btn h-11 rounded-lg px-3 text-sm font-semibold hover:preset-tonal"
   >
     <Icon name={conversation.muted ? 'bell' : 'bell-off'} size={18} />
     <span class="hidden sm:inline"
@@ -109,4 +154,7 @@
       >{conversation.muted ? m.messages_unmute() : m.messages_mute()}</span
     >
   </PostButton>
+  {#if more.length > 0}
+    <KebabMenu name={title} items={more} />
+  {/if}
 </header>

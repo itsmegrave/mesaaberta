@@ -1,5 +1,5 @@
 import { createRawSnippet } from 'svelte';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { toast } from '#lib/toaster.js';
@@ -10,6 +10,7 @@ const children = createRawSnippet(() => ({ render: () => '<p>Page content</p>' }
 const viewer = { timezone: 'America/Sao_Paulo', source: 'profile' } as const;
 const shell = {
   cacheIdentity: 'anonymous',
+  blogLive: false,
   accountRead: {
     summary: null,
     readSeed: {
@@ -22,6 +23,9 @@ const shell = {
   },
   maintenance: false,
   maintenanceBypass: false,
+  directories: { systems: false, gms: false, places: false, players: false, matches: false },
+  beginners: false,
+  overdrive: false,
   viewer,
   site: {
     APP_ORIGIN: 'https://mesaaberta.app',
@@ -107,31 +111,29 @@ describe('+layout.svelte', () => {
     }
     // Parceiros is not linked from the app chrome; /p is reached directly.
     await expect.element(nav.getByRole('link', { name: 'Parceiros' })).not.toBeInTheDocument();
-    await expect.element(nav.getByText('Sua conta', { exact: true })).toBeVisible();
+    // The bell sits right above the account block, with no "Sua conta" group label.
+    await expect.element(nav.getByText('Sua conta', { exact: true })).not.toBeInTheDocument();
     // Mensagens lives in the account menu, not in the group.
     expect(nav.getByRole('link', { name: /^Mensagens/ }).elements()).toHaveLength(0);
     await expect
       .element(nav.getByRole('button', { name: 'Notificações: 4 sem ler' }))
       .toBeVisible();
-    await expect.element(nav.getByRole('link', { name: /Admin/ })).toBeVisible();
-    await expect.element(nav.getByRole('switch', { name: 'Tema escuro' })).toBeVisible();
+    // Admin and the theme live in the account menu, which is last.
+    expect(nav.getByRole('link', { name: /Admin/ }).elements()).toHaveLength(0);
+    expect(nav.getByRole('switch', { name: 'Tema escuro' }).elements()).toHaveLength(0);
     const account = nav.getByRole('button', { name: /Mestre Silva/i }).element();
     expect(nav.element().contains(account)).toBe(true);
-    // The theme switch comes before the account block, which is last.
-    expect(
-      account.compareDocumentPosition(nav.getByRole('switch', { name: 'Tema escuro' }).element()),
-    ).toBe(Node.DOCUMENT_POSITION_PRECEDING);
   });
 
   it('draws the open side nav without an inline style, which the CSP blocks', async () => {
     render(Layout, { children, data: { ...signedOut, account: adminAccount } });
     const nav = page.getByRole('navigation', { name: 'Navegação principal' });
 
-    await expect.element(nav.getByRole('switch', { name: 'Tema escuro' })).toBeVisible();
+    await expect.element(nav.getByRole('button', { name: /Mestre Silva/i })).toBeVisible();
     expect(nav.element().querySelectorAll('[style]')).toHaveLength(0);
   });
 
-  it('collapses to an 80px rail, with Admin among the links and the bell, theme and account together', async () => {
+  it('collapses to an 80px rail with the same groups as the open nav, the bell next to the account', async () => {
     render(Layout, { children, data: { ...signedOut, account: adminAccount } });
     const nav = page.getByRole('navigation', { name: 'Navegação principal' });
     await nav.getByRole('button', { name: 'Recolher menu' }).click();
@@ -139,20 +141,20 @@ describe('+layout.svelte', () => {
     await expect
       .element(nav.getByRole('button', { name: 'Expandir menu' }))
       .toHaveAttribute('aria-expanded', 'false');
-    const theme = nav.getByRole('button', { name: 'Tema escuro' }).element();
     const bell = nav.getByRole('button', { name: 'Notificações', exact: true }).element();
     const account = nav.getByRole('button', { name: /Mestre Silva/i }).element();
-    expect(theme.parentElement).toBe(bell.parentElement);
-    expect(theme.parentElement?.contains(account)).toBe(true);
+    // Notificações sits in the bottom group, right above the account, as when open.
+    await expect.element(nav.getByText('Sua conta', { exact: true })).not.toBeInTheDocument();
+    // Each rail item sits in its tooltip's wrapper, so the group is one level further up.
+    expect(bell.parentElement?.parentElement?.contains(account)).toBe(true);
+    // Admin and the theme are in the account menu, not on the rail.
+    expect(nav.getByRole('link', { name: 'Admin' }).elements()).toHaveLength(0);
+    expect(nav.getByRole('button', { name: 'Tema escuro' }).elements()).toHaveLength(0);
     // The width animates, so wait for it to settle.
     await expect.poll(() => nav.element().getBoundingClientRect().width).toBe(80);
-    await expect
-      .element(nav.getByRole('link', { name: 'Admin' }))
-      .toHaveAttribute('href', '/admin');
-    const label = nav.getByRole('link', { name: 'Minhas mesas' }).element()
-      .lastElementChild as HTMLElement;
-    expect(getComputedStyle(label).whiteSpace).toBe('normal');
-    expect(label.scrollWidth).toBeLessThanOrEqual(label.clientWidth);
+    // Icons only: the name is the accessible name and the tooltip, not text under the icon.
+    expect(nav.getByRole('link', { name: 'Minhas mesas' }).element().textContent?.trim()).toBe('');
+    expect(bell.textContent?.trim()).toBe('');
     // The test runner's pane splitter overlaps the left edge of the scaled test frame, where the
     // 80px rail's button sits, so a pointer click lands on the splitter; click the element itself.
     (nav.getByRole('button', { name: 'Expandir menu' }).element() as HTMLElement).click();
@@ -161,12 +163,118 @@ describe('+layout.svelte', () => {
       .toHaveAttribute('aria-expanded', 'true');
   });
 
+  it('names a rail item in a tooltip on hover and on keyboard focus', async () => {
+    render(Layout, { children, data: { ...signedOut, account: adminAccount } });
+    const nav = page.getByRole('navigation', { name: 'Navegação principal' });
+    // The pane splitter overlaps the rail (see above), so click and hover the elements themselves.
+    (nav.getByRole('button', { name: 'Recolher menu' }).element() as HTMLElement).click();
+    await expect.poll(() => nav.element().getBoundingClientRect().width).toBe(80);
+
+    const myTables = nav.getByRole('link', { name: 'Minhas mesas' }).element();
+    myTables.parentElement!.dispatchEvent(
+      new PointerEvent('pointermove', { bubbles: true, pointerType: 'mouse' }),
+    );
+    await expect.element(page.getByRole('tooltip')).toHaveTextContent('Minhas mesas');
+    await userEvent.keyboard('{Escape}');
+    await expect.element(page.getByRole('tooltip')).not.toBeInTheDocument();
+
+    (nav.getByRole('button', { name: 'Expandir menu' }).element() as HTMLElement).focus();
+    await userEvent.tab();
+    await expect.element(page.getByRole('tooltip')).toHaveTextContent('Mesas');
+    await userEvent.tab();
+    await expect.element(page.getByRole('tooltip')).toHaveTextContent('Abrir uma mesa');
+  });
+
+  describe('directories in the menu', () => {
+    const withSystems = {
+      ...signedOut,
+      directories: { systems: true, gms: false, places: false, players: false, matches: false },
+    };
+    const nav = () => page.getByRole('navigation', { name: 'Navegação principal' });
+
+    it('adds an Explorar group after the destinations, with the long name, when a directory is on', async () => {
+      render(Layout, { children, data: withSystems });
+
+      await expect.element(nav().getByText('Explorar', { exact: true })).toBeVisible();
+      await expect
+        .element(nav().getByRole('link', { name: 'Sistemas de RPG' }))
+        .toHaveAttribute('href', '/systems');
+    });
+
+    it('shows the icon under a divider on the rail, named by its long name', async () => {
+      render(Layout, { children, data: withSystems });
+      await nav().getByRole('button', { name: 'Recolher menu' }).click();
+
+      await expect
+        .element(nav().getByRole('link', { name: 'Sistemas de RPG', exact: true }))
+        .toHaveAttribute('href', '/systems');
+      await expect.element(nav().getByText('Explorar', { exact: true })).not.toBeInTheDocument();
+    });
+
+    it('keeps Explorar with Financiamentos while every directory is off', async () => {
+      render(Layout, { children, data: signedOut });
+
+      await expect.element(nav().getByText('Explorar', { exact: true })).toBeVisible();
+      await expect
+        .element(nav().getByRole('link', { name: 'Financiamentos', exact: true }))
+        .toHaveAttribute('href', '/crowdfunding');
+      expect(
+        nav()
+          .getByRole('link', { name: /Sistemas/ })
+          .elements(),
+      ).toHaveLength(0);
+    });
+
+    it('lists Financiamentos after the directories', async () => {
+      render(Layout, { children, data: withSystems });
+
+      const hrefs = nav()
+        .getByRole('link')
+        .elements()
+        .map((link) => link.getAttribute('href'));
+      expect(hrefs.indexOf('/crowdfunding')).toBeGreaterThan(hrefs.indexOf('/systems'));
+      expect(hrefs.indexOf('/systems')).toBeGreaterThan(hrefs.indexOf('/tables'));
+    });
+
+    it('puts Financiamentos and Ferramentas in the phone Explorar sheet with every directory off', async () => {
+      await page.viewport(390, 844);
+      render(Layout, { children, data: signedOut });
+      const bar = page.getByRole('navigation', { name: 'Navegação móvel' });
+
+      expect(bar.getByRole('link').elements()).toHaveLength(3);
+      await bar.getByRole('button', { name: 'Explorar' }).click();
+      const sheet = page.getByRole('dialog', { name: 'Explorar' });
+      await expect
+        .element(sheet.getByRole('link', { name: /Financiamentos/ }))
+        .toHaveAttribute('href', '/crowdfunding');
+      await expect
+        .element(sheet.getByRole('link', { name: /Ferramentas/ }))
+        .toHaveAttribute('href', '/tools');
+    });
+
+    it('puts Financiamentos in the phone Explorar sheet once a directory is on', async () => {
+      await page.viewport(390, 844);
+      render(Layout, { children, data: withSystems });
+      const bar = page.getByRole('navigation', { name: 'Navegação móvel' });
+
+      expect(bar.getByRole('link').elements()).toHaveLength(3);
+      await bar.getByRole('button', { name: 'Explorar' }).click();
+      const sheet = page.getByRole('dialog', { name: 'Explorar' });
+      await expect
+        .element(sheet.getByRole('link', { name: /Financiamentos/ }))
+        .toHaveAttribute('href', '/crowdfunding');
+      await expect
+        .element(sheet.getByRole('link', { name: /Sistemas de RPG/ }))
+        .toHaveAttribute('href', '/systems');
+    });
+  });
+
   describe('footer links', () => {
     it.each([
       ['itsmegrave', 'https://github.com/itsmegrave'],
       ['GitHub', 'https://github.com/itsmegrave/mesaaberta'],
       ['contato@mesaaberta.app', 'mailto:contato@mesaaberta.app'],
-      ['Parceiros', '/p'],
+      ['Parceiros', '/partners'],
       ['Instagram da Mesa Aberta, @mesaaberta.app', 'https://www.instagram.com/mesaaberta.app/'],
     ])('links %s to %s', async (name, href) => {
       render(Layout, { children, data: signedOut });
@@ -187,7 +295,7 @@ describe('+layout.svelte', () => {
             .getByRole('navigation', { name: 'Navegação principal' })
             .getByRole('link', { name: 'Mesas' }),
         )
-        .toHaveAttribute('href', '/t');
+        .toHaveAttribute('href', '/tables');
     });
   });
 
@@ -261,7 +369,7 @@ describe('+layout.svelte', () => {
         .not.toBeInTheDocument();
     });
 
-    it('shows admin link and suggestion count badge for admins', async () => {
+    it('shows the admin link and the suggestion count in the account menu for admins', async () => {
       render(Layout, {
         children,
         data: {
@@ -274,11 +382,10 @@ describe('+layout.svelte', () => {
         .getByRole('button', { name: /Mestre Silva/i })
         .click();
 
-      const adminLink = navigation().getByRole('link', { name: /Admin/i });
+      const adminLink = accountMenu().getByRole('link', { name: 'Admin: 3' });
       await expect.element(adminLink).toBeVisible();
       await expect.element(adminLink).toHaveAttribute('href', '/admin');
-      await expect.element(adminLink.getByText('Admin', { exact: true })).toBeVisible();
-      await expect.element(adminLink.getByLabelText('Admin: 3')).toHaveTextContent('3');
+      await expect.element(adminLink.getByTestId('admin-count')).toHaveTextContent('3');
     });
 
     it('signs out with a POST to /logout, never a link', async () => {
@@ -312,7 +419,7 @@ describe('+layout.svelte', () => {
 
       await expect
         .element(navigation().getByRole('link', { name: 'Abrir uma mesa' }))
-        .toHaveAttribute('href', '/t/new');
+        .toHaveAttribute('href', '/tables/new');
     });
 
     it('shows the unread count on the bell, and the latest notifications when it opens', async () => {
@@ -356,10 +463,10 @@ describe('+layout.svelte', () => {
       const item = page.getByRole('button', { name: /@bia pediu uma vaga em Mesa do Dragão/ });
       await expect.element(item).toBeVisible();
       const form = item.element().closest('form');
-      expect(form?.getAttribute('action')).toBe('/n?/open');
+      expect(form?.getAttribute('action')).toBe('/notifications?/open');
       await expect
         .element(page.getByRole('link', { name: 'Ver todas' }))
-        .toHaveAttribute('href', '/n');
+        .toHaveAttribute('href', '/notifications');
     });
 
     it('shows no bell to a visitor who is signed out', async () => {
@@ -388,10 +495,12 @@ describe('+layout.svelte', () => {
 
       const nav = page.getByRole('navigation', { name: 'Navegação móvel' });
       await expect.element(nav).toBeVisible();
-      await expect.element(nav.getByRole('link', { name: 'Mesas' })).toHaveAttribute('href', '/t');
+      await expect
+        .element(nav.getByRole('link', { name: 'Mesas' }))
+        .toHaveAttribute('href', '/tables');
       await expect
         .element(nav.getByRole('link', { name: 'Abrir mesa' }))
-        .toHaveAttribute('href', '/t/new');
+        .toHaveAttribute('href', '/tables/new');
       await expect
         .element(nav.getByRole('link', { name: 'Minhas mesas' }))
         .toHaveAttribute('href', '/u/tables');
@@ -402,7 +511,9 @@ describe('+layout.svelte', () => {
 
       const nav = page.getByRole('navigation', { name: 'Navegação móvel' });
       await expect.element(nav).toBeVisible();
-      await expect.element(nav.getByRole('link', { name: 'Mesas' })).toHaveAttribute('href', '/t');
+      await expect
+        .element(nav.getByRole('link', { name: 'Mesas' }))
+        .toHaveAttribute('href', '/tables');
       await expect
         .element(page.getByRole('banner').getByRole('link', { name: 'Entrar' }))
         .toHaveAttribute('href', '/login');
@@ -420,7 +531,7 @@ describe('+layout.svelte', () => {
         .not.toBeInTheDocument();
     });
 
-    it('puts Admin on the tab bar on mobile, not in the account menu', async () => {
+    it('puts Admin and the theme in the phone account sheet, not on the tab bar', async () => {
       render(Layout, {
         children,
         data: {
@@ -431,21 +542,24 @@ describe('+layout.svelte', () => {
       });
 
       const bar = page.getByRole('navigation', { name: 'Navegação móvel' });
-      await expect
-        .element(bar.getByRole('link', { name: 'Admin: 3' }))
-        .toHaveAttribute('href', '/admin');
+      expect(bar.getByRole('link', { name: /Admin/ }).elements()).toHaveLength(0);
+      const banner = page.getByRole('banner');
+      expect(banner.getByRole('button', { name: 'Tema escuro' }).elements()).toHaveLength(0);
 
-      await page
-        .getByRole('banner')
-        .getByRole('button', { name: /Mestre Silva/i })
-        .click();
+      await banner.getByRole('button', { name: /Mestre Silva/i }).click();
+      const sheet = page.getByRole('dialog', { name: 'Menu da conta' });
       await expect
-        .element(
-          page
-            .getByRole('navigation', { name: 'Menu da conta' })
-            .getByRole('link', { name: /Admin/ }),
-        )
-        .not.toBeInTheDocument();
+        .element(sheet.getByRole('link', { name: 'Admin: 3' }))
+        .toHaveAttribute('href', '/admin');
+      await expect.element(sheet.getByRole('radiogroup', { name: 'Tema' })).toBeVisible();
+    });
+
+    it('keeps the theme button in the phone header for visitors', async () => {
+      render(Layout, { children, data: { ...signedOut, authEnabled: true } });
+
+      await expect
+        .element(page.getByRole('banner').getByRole('button', { name: 'Tema escuro' }))
+        .toBeInTheDocument();
     });
   });
 

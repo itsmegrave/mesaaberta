@@ -1,12 +1,12 @@
 import { eq } from 'drizzle-orm';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { postalCodes } from '@mesaaberta/core/server/db/schema';
-import { areaOf, type CepPlace } from '@mesaaberta/core/location/cep';
+import { areaOf, type CepAddress, type CepPlace } from '@mesaaberta/core/location/cep';
 import type { TableInput } from '@mesaaberta/core/tables/schema';
 import { Invalid } from '@mesaaberta/core/server/errors';
 
 export type CepLookup =
-  { status: 'found'; place: CepPlace } | { status: 'not_found' } | { status: 'unavailable' };
+  { status: 'found'; place: CepAddress } | { status: 'not_found' } | { status: 'unavailable' };
 
 const TIMEOUT_MS = 3000;
 const text = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
@@ -15,6 +15,8 @@ const text = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
  * What a CEP (8 digits, already normalised) resolves to. From the `postal_codes` cache when it has
  * been seen before; otherwise from ViaCEP, whose answer is kept. `unavailable` when ViaCEP fails or
  * is slow: the caller decides whether that blocks anything (it never blocks a table without CEP).
+ * A row kept before streets were (`street` null) asks ViaCEP once more for the street, and is still
+ * found, without one, when ViaCEP cannot answer.
  */
 export async function lookupCep(
   db: AnyDb,
@@ -23,14 +25,41 @@ export async function lookupCep(
 ): Promise<CepLookup> {
   const [known] = await db
     .select({
+      street: postalCodes.street,
       neighbourhood: postalCodes.neighbourhood,
       city: postalCodes.city,
       state: postalCodes.state,
     })
     .from(postalCodes)
     .where(eq(postalCodes.cep, cep));
-  if (known) return { status: 'found', place: known };
+  if (known && known.street !== null) return { status: 'found', place: placeOf(known) };
 
+  const fetched = await fromViaCep(cep, request);
+  if (known) {
+    if (fetched.status !== 'found') return { status: 'found', place: { ...known, street: null } };
+    await db
+      .update(postalCodes)
+      .set({ street: fetched.place.street ?? '' })
+      .where(eq(postalCodes.cep, cep));
+    return { status: 'found', place: { ...known, street: fetched.place.street } };
+  }
+  if (fetched.status !== 'found') return fetched;
+
+  const { place } = fetched;
+  await db
+    .insert(postalCodes)
+    .values({ cep, ...place, street: place.street ?? '' })
+    .onConflictDoNothing();
+  return fetched;
+}
+
+/** A cached row as a lookup answers it: an empty street (a town-wide CEP) is no street. */
+const placeOf = (row: CepPlace & { street: string | null }): CepAddress => ({
+  ...row,
+  street: row.street || null,
+});
+
+async function fromViaCep(cep: string, request: typeof fetch): Promise<CepLookup> {
   let body: Record<string, unknown>;
   try {
     const response = await request(`https://viacep.com.br/ws/${cep}/json/`, {
@@ -50,13 +79,15 @@ export async function lookupCep(
   const state = text(body.uf).toUpperCase();
   if (!city || !/^[A-Z]{2}$/.test(state)) return { status: 'unavailable' };
 
-  const place = { neighbourhood: text(body.bairro) || null, city, state };
-  await db
-    .insert(postalCodes)
-    .values({ cep, ...place })
-    .onConflictDoNothing();
-
-  return { status: 'found', place };
+  return {
+    status: 'found',
+    place: {
+      street: text(body.logradouro) || null,
+      neighbourhood: text(body.bairro) || null,
+      city,
+      state,
+    },
+  };
 }
 
 /**

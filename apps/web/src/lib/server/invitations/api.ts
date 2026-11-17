@@ -16,7 +16,8 @@ function dates<T>(value: T): T {
     return Object.fromEntries(
       Object.entries(value).map(([key, item]) => [
         key,
-        ['expiresAt', 'createdAt', 'respondedAt'].includes(key) && typeof item === 'string'
+        ['expiresAt', 'createdAt', 'respondedAt', 'startsAt'].includes(key) &&
+        typeof item === 'string'
           ? new Date(item)
           : dates(item),
       ]),

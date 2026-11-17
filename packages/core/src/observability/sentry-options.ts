@@ -1,8 +1,10 @@
-import type { ErrorEvent, Log } from '@sentry/core';
+import { withStaticSpan } from '@sentry/core';
+import type { ErrorEvent, Log, SpanJSON, TransactionEvent } from '@sentry/core';
 import { safeFields, scrubString, type AppName } from './privacy';
+import { buildInfoOf, type BuildEnv } from '../server/build-info';
 
-// Type-only imports from the SDK's platform-neutral core: nothing is bundled by this file, and every
-// Sentry SDK (SvelteKit, Cloudflare, Node) takes these shapes, so each host shares one privacy policy.
+// The SDK's platform-neutral core: every Sentry SDK (SvelteKit, Cloudflare, Node) takes these shapes,
+// so each host shares one privacy policy. `withStaticSpan` is the only runtime import.
 
 /**
  * A request the app cancelled itself (TanStack Query aborting a refetch it replaced, a closed tab)
@@ -11,10 +13,129 @@ import { safeFields, scrubString, type AppName } from './privacy';
 const cancelled = (event: ErrorEvent) =>
   event.exception?.values?.some((exception) => exception.type === 'AbortError') ?? false;
 
+/**
+ * The browser lost the network (offline, a dropped connection, a page left mid-request): each
+ * browser words it differently, and nothing on our side failed. The server's own lines record a
+ * request that did reach it.
+ */
+const NETWORK_FAILURES = [
+  /^Failed to fetch( \(.*\))?$/,
+  /^Load failed( \(.*\))?$/,
+  /^NetworkError when attempting to fetch resource\.?$/,
+  /^Network request failed$/,
+  /^The network connection was lost\.?$/,
+];
+const offline = (event: ErrorEvent) =>
+  event.exception?.values?.some(
+    ({ type, value }) =>
+      type === 'TypeError' && !!value && NETWORK_FAILURES.some((shape) => shape.test(value)),
+  ) ?? false;
+
+/** A code identifier (`data.table.slug`, `e[0]`), never free text. */
+const IDENT = String.raw`[\w$.[\]'"]{1,80}`;
+/**
+ * Exception messages that only ever name code, never data: the engine's own type errors, Svelte's
+ * error codes, SvelteKit's wrapped `HttpError`, a failed chunk import. Anything else is withheld.
+ */
+const SAFE_MESSAGES = [
+  new RegExp(`^Cannot read propert(?:y|ies) of (?:undefined|null) \\(reading ${IDENT}\\)$`),
+  new RegExp(`^Cannot set propert(?:y|ies) of (?:undefined|null) \\(setting ${IDENT}\\)$`),
+  new RegExp(`^(?:undefined|null) is not an object \\(evaluating ${IDENT}\\)$`),
+  new RegExp(`^${IDENT} is not (?:a function|iterable|defined|a constructor)$`),
+  new RegExp(`^${IDENT} is (?:undefined|null)$`),
+  new RegExp(`^can't access property ${IDENT}, ${IDENT} is (?:undefined|null)$`),
+  /^https:\/\/svelte\.dev\/e\/[a-z_]{1,60}$/,
+  /^Object captured as exception with keys: [\w, ]{1,80}$/,
+  /^HttpError \d{3}$/,
+  /^(?:Failed to fetch dynamically imported module|Importing a module script failed\.?|error loading dynamically imported module)/,
+  /^Maximum call stack size exceeded\.?$/,
+  /^The operation was aborted due to timeout$/,
+];
+
+/** What an issue's title says: a code-only message as it was, else the safe tags it carried. */
+const describe = (value: string | undefined, tags: Record<string, string | number | boolean>) => {
+  const message = value?.split('\n')[0];
+  // A failed chunk import names the chunk's URL after the message: keep the message, not the URL.
+  if (message && SAFE_MESSAGES.some((safe) => safe.test(message)))
+    return scrubString(message.replace(/\s+https?:\/\/\S+$/, '')).slice(0, 200);
+  const known = ['code', 'causeCode', 'status']
+    .filter((key) => tags[key] !== undefined)
+    .map((key) => `${key} ${tags[key]}`);
+  return known.length
+    ? `${known.join(', ')} (details withheld; correlate by requestId)`
+    : 'Exception details withheld; correlate by requestId and code location';
+};
+
+/** The person an event happened to, as their opaque id only (the `userId` tag the request set). */
+const userOf = (tags: Record<string, string | number | boolean>) =>
+  typeof tags.userId === 'string' ? { id: tags.userId } : undefined;
+
+/** Flag evaluations the request recorded (`recordFlag`): only flag-shaped names and booleans. */
+const flagsOf = (event: ErrorEvent) => {
+  const values = event.contexts?.flags?.values?.filter(
+    ({ flag, result }) => /^[a-z][a-z0-9_]*$/.test(flag) && typeof result === 'boolean',
+  );
+  return values?.length ? { flags: { values } } : undefined;
+};
+
+/** The contexts that survived, or none at all. */
+const optionalContexts = <T extends Record<string, unknown>>(contexts: T) => {
+  const kept = Object.fromEntries(Object.entries(contexts).filter(([, value]) => value));
+  return Object.keys(kept).length ? (kept as T) : undefined;
+};
+
+/**
+ * Where the event ran, never who sent it: the runtime's name and version, the cloud provider and
+ * region the SDK set and, from the browser, the browser and OS families (names only). Workers expose no CPU, memory, OS or host name; the data center that served a
+ * request travels as the `colo` tag (`coloOf`).
+ */
+const hostContexts = (event: { contexts?: ErrorEvent['contexts'] }) => {
+  const runtime = event.contexts?.runtime;
+  const cloud = event.contexts?.cloud_resource;
+  const label = (value: unknown) =>
+    typeof value === 'string' && /^[a-zA-Z0-9_.:-]{1,64}$/.test(value) ? value : undefined;
+  // The browser sets only family names (apps/web/src/lib/observability/client-family.ts).
+  const family = (context: { name?: unknown } | undefined) =>
+    context && label(context.name) && { name: label(context.name) };
+  const kept = {
+    runtime: runtime && { name: label(runtime.name), version: label(runtime.version) },
+    browser: family(event.contexts?.browser),
+    os: family(event.contexts?.os),
+    cloud_resource: cloud && {
+      'cloud.provider': label(cloud['cloud.provider']),
+      'cloud.region': label(cloud['cloud.region']),
+    },
+  };
+  return Object.fromEntries(Object.entries(kept).filter(([, value]) => value));
+};
+
+/**
+ * The Cloudflare data center (IATA code, e.g. `GRU`) that served a request: the runtime's
+ * `request.cf.colo`, else the suffix of the `cf-ray` header. Undefined off Cloudflare.
+ */
+export const coloOf = (request: Request): string | undefined => {
+  const colo = (request as { cf?: { colo?: unknown } }).cf?.colo;
+  if (typeof colo === 'string' && /^[A-Z]{3}$/.test(colo)) return colo;
+  return request.headers.get('cf-ray')?.match(/-([A-Z]{3})$/)?.[1];
+};
+
+/**
+ * A frame's file as the deploy uploaded it. Cloudflare names a Worker's bundle bare (`entry.js`,
+ * `index.js`), while sentry-cli uploads it as `app:///entry.js`, so a bare bundle name takes the
+ * same prefix or no frame maps. URLs, `app:///` paths and `node-internal:` frames stay as they are.
+ */
+const frameFile = (filename: string | undefined) => {
+  const file = filename?.split(/[?#]/)[0];
+  return file && /^[\w.-]+\.m?js$/.test(file) ? `app:///${file}` : file;
+};
+
 export function privateEvent(event: ErrorEvent): ErrorEvent | null {
-  if (cancelled(event)) return null;
-  // Reconstruct rather than redact unknown SDK contexts. Keep code locations for diagnosis,
-  // never exception messages, local variables, source context, breadcrumbs or request data.
+  if (cancelled(event) || offline(event)) return null;
+  const tags = safeFields(event.tags);
+  // Reconstruct rather than redact unknown SDK contexts. Keep code locations, the flags the
+  // request read and who it happened to (an opaque id) for diagnosis, never free-text exception
+  // messages, local variables, source context, breadcrumbs or request data. `dist` must survive:
+  // the server's source maps are uploaded per app (release + dist), and without it no frame maps.
   return {
     type: undefined,
     event_id: event.event_id,
@@ -22,8 +143,11 @@ export function privateEvent(event: ErrorEvent): ErrorEvent | null {
     platform: event.platform,
     level: event.level,
     release: event.release,
+    dist: event.dist,
     environment: event.environment,
-    tags: safeFields(event.tags),
+    tags,
+    user: userOf(tags),
+    contexts: optionalContexts({ ...flagsOf(event), ...hostContexts(event) }),
     debug_meta: event.debug_meta && {
       images: event.debug_meta.images?.flatMap((image) =>
         image.type === 'sourcemap'
@@ -40,10 +164,10 @@ export function privateEvent(event: ErrorEvent): ErrorEvent | null {
     exception: event.exception && {
       values: event.exception.values?.map((exception) => ({
         type: exception.type && /^[A-Za-z]+Error$/.test(exception.type) ? exception.type : 'Error',
-        value: 'Exception details withheld; correlate by requestId and code location',
+        value: describe(exception.value, tags),
         stacktrace: exception.stacktrace && {
           frames: exception.stacktrace.frames?.map((frame) => ({
-            filename: frame.filename?.split(/[?#]/)[0],
+            filename: frameFile(frame.filename),
             function: frame.function,
             lineno: frame.lineno,
             colno: frame.colno,
@@ -65,13 +189,138 @@ export function privateLog(log: Log): Log | null {
   };
 }
 
+/** A URL or path without its query string or fragment, which may carry tokens or search terms. */
+const withoutQuery = (text: string) => text.replace(/[?#]\S*/g, '');
+
+/** SQL with its literals replaced, so a statement names tables and columns but no values. */
+const withoutLiterals = (sql: string) =>
+  sql.replace(/'(?:[^']|'')*'/g, '?').replace(/\b\d+(?:\.\d+)?\b/g, '?');
+
+// Span attributes that describe the operation, never its payload.
+const SPAN_LABELS = new Set([
+  'http.request.method',
+  'http.method',
+  'http.route',
+  'server.address',
+  'url.scheme',
+  'network.protocol.name',
+  'db.system',
+  'db.system.name',
+  'db.operation.name',
+  'faas.trigger',
+  'faas.cron',
+  'sentry.op',
+  'sentry.origin',
+  'sentry.source',
+  'resource.render_blocking_status',
+]);
+
+/**
+ * One span as Sentry may see it: timing, operation and status, a description without query strings
+ * or SQL literals, and only numeric or labelled attributes. Applied to every span of a transaction
+ * and to the browser's standalone Web Vitals spans.
+ */
+export function privateSpan(span: SpanJSON): SpanJSON {
+  const data: SpanJSON['data'] = {};
+  for (const [key, value] of Object.entries(span.data ?? {})) {
+    if (typeof value === 'number' || typeof value === 'boolean') data[key] = value;
+    else if (SPAN_LABELS.has(key) && typeof value === 'string') data[key] = withoutQuery(value);
+  }
+  const description =
+    span.description &&
+    scrubString(
+      span.op?.startsWith('db')
+        ? withoutLiterals(span.description)
+        : withoutQuery(span.description),
+    );
+  return {
+    span_id: span.span_id,
+    parent_span_id: span.parent_span_id,
+    trace_id: span.trace_id,
+    segment_id: span.segment_id,
+    is_segment: span.is_segment,
+    op: span.op,
+    origin: span.origin,
+    status: span.status,
+    start_timestamp: span.start_timestamp,
+    timestamp: span.timestamp,
+    exclusive_time: span.exclusive_time,
+    measurements: span.measurements,
+    description,
+    data,
+  };
+}
+
+/**
+ * A request's transaction named by its route template (`GET /u/[username]`) rather than the path it
+ * served (`GET /u/ana`), when the request hook tagged the `route`: on Workers the SDK names the root
+ * span before SvelteKit has matched a route, so every profile and table would be its own row.
+ */
+const transactionName = (
+  event: TransactionEvent,
+): Pick<TransactionEvent, 'transaction' | 'transaction_info'> => {
+  const name = event.transaction && scrubString(withoutQuery(event.transaction));
+  const route = safeFields(event.tags).route;
+  const method = name?.match(/^([A-Z]+) \//)?.[1];
+  if (typeof route === 'string' && method && event.transaction_info?.source !== 'route')
+    return { transaction: `${method} ${route}`, transaction_info: { source: 'route' } };
+  return { transaction: name, transaction_info: event.transaction_info };
+};
+
+/**
+ * A transaction rebuilt from the parts that measure performance: its route, timings, Web Vitals and
+ * spans. No request, user, breadcrumbs or extra data; tags pass the same allowlist as errors.
+ */
+export function privateTransaction(event: TransactionEvent): TransactionEvent {
+  const trace = event.contexts?.trace;
+  return {
+    type: 'transaction',
+    event_id: event.event_id,
+    timestamp: event.timestamp,
+    start_timestamp: event.start_timestamp,
+    platform: event.platform,
+    release: event.release,
+    dist: event.dist,
+    environment: event.environment,
+    ...transactionName(event),
+    tags: safeFields(event.tags),
+    measurements: event.measurements,
+    contexts: optionalContexts({
+      ...hostContexts(event),
+      trace: trace && {
+        trace_id: trace.trace_id,
+        span_id: trace.span_id,
+        parent_span_id: trace.parent_span_id,
+        op: trace.op,
+        origin: trace.origin,
+        status: trace.status,
+        data: privateSpan({
+          span_id: trace.span_id ?? '',
+          trace_id: trace.trace_id ?? '',
+          start_timestamp: 0,
+          status: '',
+          data: trace.data ?? {},
+        }).data,
+      },
+    }),
+    spans: event.spans?.map(privateSpan),
+  };
+}
+
+/**
+ * The share of requests, page loads and cron runs traced. Grave chose 100% on 2026-10-26 while
+ * traffic is low, to fill the performance dashboard; lower it here when the span quota matters.
+ */
+export const TRACES_SAMPLE_RATE = 1;
+
 /**
  * What every deployment of the app sends to Sentry, whatever the SDK or the entrypoint: no PII, no
- * request data, no automatic capture. The caller adds `dsn` and `environment`.
+ * request data, no automatic capture beyond performance traces, which pass `privateTransaction`.
+ * The caller adds `dsn` and `environment`.
  */
 export const privateSentryOptions = {
   sendDefaultPii: false,
-  tracesSampleRate: 0,
+  tracesSampleRate: TRACES_SAMPLE_RATE,
   traceLifecycle: 'static' as const,
   dataCollection: {
     userInfo: false,
@@ -88,17 +337,33 @@ export const privateSentryOptions = {
   },
   beforeSend: privateEvent,
   beforeSendLog: privateLog,
-  beforeSendTransaction: () => null,
+  beforeSendTransaction: privateTransaction,
+  beforeSendSpan: withStaticSpan(privateSpan),
   beforeSendMetric: () => null,
   beforeBreadcrumb: () => null,
 };
 
 /**
- * `privateSentryOptions` for one app: every event is tagged `app` (web, api or worker), whatever
+ * `privateSentryOptions` for one app: every event and transaction is tagged `app` (web, api or worker), whatever
  * scope raised it, so issues from the three deployables can be told apart and filtered.
  */
 export const sentryOptionsForApp = (app: AppName) => ({
   ...privateSentryOptions,
   initialScope: { tags: { app } },
   beforeSend: (event: ErrorEvent) => privateEvent({ ...event, tags: { ...event.tags, app } }),
+  beforeSendTransaction: (event: TransactionEvent) =>
+    privateTransaction({ ...event, tags: { ...event.tags, app } }),
 });
+
+export type ReleaseEnv = BuildEnv & { CF_VERSION_METADATA?: { id?: string } };
+
+/**
+ * The `release` and `dist` an app's server events carry. The deploy uploads each Worker's bundled
+ * source maps under the release tag (`DEPLOYMENT_VERSION`) with the app as the dist, so events must
+ * name the same pair for Sentry to map `app:///_worker.js` frames. Without a tag (local and
+ * self-hosted runs) the Worker version id stays the release, as before.
+ */
+export const sentryReleaseFor = (app: AppName, env: ReleaseEnv | undefined) => {
+  const { version } = buildInfoOf(env);
+  return version ? { release: version, dist: app } : { release: env?.CF_VERSION_METADATA?.id };
+};

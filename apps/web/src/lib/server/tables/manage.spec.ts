@@ -1,5 +1,14 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { gameTables, profiles, ratings, systems } from '@mesaaberta/core/server/db/schema';
+import { eq } from 'drizzle-orm';
+import {
+  events,
+  gameTables,
+  playerRatings,
+  profiles,
+  ratings,
+  registrations,
+  systems,
+} from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import {
@@ -75,12 +84,66 @@ describe('loadManage', () => {
     await test.db.delete(ratings);
   });
 
+  it('gives each request its score as a participant, and each player whether they can be rated and what they got', async () => {
+    const before = await loadManage(test.db, gm, 'mesa', now);
+    expect(before.requests[0].participantRating).toEqual({ score: null, count: 0, isNew: true });
+    expect(before.players[0]).toMatchObject({
+      tablesPlayed: 0,
+      markedPresent: false,
+      playerRating: null,
+    });
+
+    await test.db
+      .update(registrations)
+      .set({ attended: true })
+      .where(eq(registrations.playerId, ana.id));
+    await test.db
+      .insert(playerRatings)
+      .values({ tableId: before.table.id, playerId: ana.id, score: 5 });
+    const after = await loadManage(test.db, gm, 'mesa', now);
+
+    expect(after.players[0]).toMatchObject({ markedPresent: true, playerRating: 5 });
+    await test.db.delete(playerRatings);
+    await test.db
+      .update(registrations)
+      .set({ attended: null })
+      .where(eq(registrations.playerId, ana.id));
+  });
+
   it('shows the latest activity first, naming the player and telling a removal from leaving', async () => {
     const { activity } = await loadManage(test.db, gm, 'mesa', now);
 
     expect(activity[0]).toMatchObject({ type: 'PlayerLeft', player: 'davi', removed: true });
     expect(activity.map((a) => a.type)).toContain('JoinDeclined');
     expect(activity.length).toBeLessThanOrEqual(8);
+  });
+
+  it('counts which session a campaign or adventure is on from the sessions confirmed', async () => {
+    expect((await loadManage(test.db, gm, 'mesa', now)).session).toBeNull();
+
+    const [table] = await test.db
+      .update(gameTables)
+      .set({ kind: 'adventure', plannedSessions: 4 })
+      .where(eq(gameTables.slug, 'mesa'))
+      .returning();
+    expect((await loadManage(test.db, gm, 'mesa', now)).session).toBe(1);
+
+    const held = { tableId: table.id, slug: 'mesa', title: 'Mesa', nextStartsAt: '' };
+    await test.db.insert(events).values([
+      { type: 'TableSessionHeld', payload: held, processedAt: now },
+      { type: 'TableSessionHeld', payload: held, processedAt: now },
+      // Another table's sessions do not count.
+      { type: 'TableSessionHeld', payload: { ...held, tableId: id(99) }, processedAt: now },
+    ]);
+    const manage = await loadManage(test.db, gm, 'mesa', now);
+    expect(manage.session).toBe(3);
+    expect(manage.table.plannedSessions).toBe(4);
+
+    await test.db.delete(events).where(eq(events.type, 'TableSessionHeld'));
+    await test.db
+      .update(gameTables)
+      .set({ kind: 'one_shot', plannedSessions: null })
+      .where(eq(gameTables.slug, 'mesa'));
   });
 
   it('opens for the GM and an admin only', async () => {

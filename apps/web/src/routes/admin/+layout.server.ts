@@ -2,21 +2,31 @@ import { error } from '@sveltejs/kit';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { extensions } from '@mesaaberta/core/server/extensions/index';
 import { adminCounts } from '#lib/server/admin/counts.js';
+import { badgesEnabled } from '#lib/server/badges/enabled.js';
 import type { LayoutServerLoad } from './$types';
 
 // What waits on an admin, for the counts in the navigation. Only admins get this far:
 // `handleAdminAccess` answers 404 to anyone else, and the load checks again. The page then polls
 // `/api/admin/counts` so the numbers do not go stale while an admin stays on one page.
 export const load: LayoutServerLoad = async ({ locals }) => {
-  if (!can(await locals.getProfile(), 'admin:access')) error(404);
-  if (!locals.db) error(503, 'Database not configured');
+  const profile = await locals.getProfile();
+  if (!profile || !can(profile, 'admin:access')) error(404);
 
   // The connections page opens on the first installed extension that has a panel on it; an
   // extension with a section of its own (the polls) gets its own entry instead.
   const panel = extensions.find((extension) => extension.admin && !extension.admin.section);
   return {
-    adminCounts: await adminCounts(locals.db),
+    adminCounts: await adminCounts(locals, profile.id),
     adminConnections: panel ? `/admin/${panel.id}` : null,
+    // The badges section, while badges are on (`use_badges` is its kill switch).
+    adminBadges: await badgesEnabled(locals, profile),
+    // "Mandar mensagem" on the lists (`use_admin_messages`), and who is looking, so no row offers
+    // to write to oneself.
+    adminMessages: await locals.flags.isEnabled('use_admin_messages', {
+      id: profile.id,
+      isAdmin: true,
+    }),
+    adminId: profile.id,
     adminSections: extensions.flatMap(({ id, admin }) =>
       admin?.section ? [{ path: `/admin/${id}`, ...admin.section }] : [],
     ),

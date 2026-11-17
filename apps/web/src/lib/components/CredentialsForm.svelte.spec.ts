@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import CredentialsFormHarness from './CredentialsFormHarness.svelte';
 
-const props = { next: '/t/new' };
+const props = { next: '/tables/new' };
 
 describe('CredentialsForm', () => {
   it('is a plain POST with an email and a password, and nothing else to fill in', async () => {
@@ -20,7 +20,7 @@ describe('CredentialsForm', () => {
     render(CredentialsFormHarness, { ...props, mode: 'login' });
 
     const form = page.getByRole('button', { name: 'Entrar' }).element().closest('form')!;
-    expect(form.querySelector<HTMLInputElement>('input[name=next]')?.value).toBe('/t/new');
+    expect(form.querySelector<HTMLInputElement>('input[name=next]')?.value).toBe('/tables/new');
   });
 
   it('tells a password manager which kind of form it is', async () => {

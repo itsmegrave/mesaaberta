@@ -10,6 +10,8 @@ export function registrationError(code: string, retryAfter?: number): string {
       return m.table_error_full();
     case 'already_registered':
       return m.table_error_already();
+    case 'adult_only':
+      return m.table_error_adult_only();
     case 'forbidden':
       return m.table_error_forbidden();
     case 'already_rated':

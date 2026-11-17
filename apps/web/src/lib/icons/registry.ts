@@ -14,12 +14,15 @@ import GameBarStoolIcon from '@iconify-svelte/game-icons/bar-stool';
 import GameHouseIcon from '@iconify-svelte/game-icons/house';
 import GameTradeIcon from '@iconify-svelte/game-icons/trade';
 import GameBlackKnightHelmIcon from '@iconify-svelte/game-icons/black-knight-helm';
+import GameShopIcon from '@iconify-svelte/game-icons/shop';
+import GameHourglassIcon from '@iconify-svelte/game-icons/hourglass';
 import TicketPercentIcon from '@iconify-svelte/reicon/ticket-percent-filled';
 import SquarePenIcon from '@iconify-svelte/reicon/edit-filled';
 import MoonIcon from '@iconify-svelte/reicon/moon-filled';
 import SunIcon from '@iconify-svelte/reicon/sun-filled';
 import MoreHIcon from '@iconify-svelte/reicon/more-h-filled';
 import CopyIcon from '@iconify-svelte/reicon/copy-filled';
+import FeedIcon from '@iconify-svelte/reicon/feed-filled';
 import EyeIcon from '@iconify-svelte/reicon/eye-filled';
 import TrashIcon from '@iconify-svelte/reicon/trash-filled';
 import RoutingIcon from '@iconify-svelte/reicon/routing-filled';
@@ -70,6 +73,15 @@ import GameDiceTwentyFacesTwentyIcon from '@iconify-svelte/game-icons/dice-twent
 
 import GameCompassIcon from '@iconify-svelte/game-icons/compass';
 import GameWoodenChairIcon from '@iconify-svelte/game-icons/wooden-chair';
+import GameLanternFlameIcon from '@iconify-svelte/game-icons/lantern-flame';
+import GameHeartsIcon from '@iconify-svelte/game-icons/hearts';
+import GameWalkingBootIcon from '@iconify-svelte/game-icons/walking-boot';
+import GameDoorIcon from '@iconify-svelte/game-icons/door';
+import GameCheckedShieldIcon from '@iconify-svelte/game-icons/checked-shield';
+import GameMegaphoneIcon from '@iconify-svelte/game-icons/megaphone';
+import GameBookPileIcon from '@iconify-svelte/game-icons/book-pile';
+import GameSandsOfTimeIcon from '@iconify-svelte/game-icons/sands-of-time';
+import GameAnchorIcon from '@iconify-svelte/game-icons/anchor';
 import GameRollingDicesIcon from '@iconify-svelte/game-icons/rolling-dices';
 import GameQuillInkIcon from '@iconify-svelte/game-icons/quill-ink';
 import GameSpellBookIcon from '@iconify-svelte/game-icons/spell-book';
@@ -81,6 +93,12 @@ import GameLaurelsIcon from '@iconify-svelte/game-icons/laurels';
 import GamePodiumIcon from '@iconify-svelte/game-icons/podium';
 import EyeOffIcon from '@iconify-svelte/reicon/eye-off-filled';
 import GameOpenTreasureChestIcon from '@iconify-svelte/game-icons/open-treasure-chest';
+import GameToolboxIcon from '@iconify-svelte/game-icons/toolbox';
+import GameCardPlayIcon from '@iconify-svelte/game-icons/card-play';
+import GameBookCoverIcon from '@iconify-svelte/game-icons/book-cover';
+import GamePositionMarkerIcon from '@iconify-svelte/game-icons/position-marker';
+import GamePointyHatIcon from '@iconify-svelte/game-icons/pointy-hat';
+import GameTreasureMapIcon from '@iconify-svelte/game-icons/treasure-map';
 import PanelLeftOpenIcon from '@iconify-svelte/reicon/sidebar-left-filled';
 import PanelLeftCloseIcon from '@iconify-svelte/reicon/sidebar-left-filled';
 import BoldIcon from '@iconify-svelte/reicon/text-bold';
@@ -132,11 +150,15 @@ export const ICONS = {
   'game-icons:bar-stool': GameBarStoolIcon,
   'game-icons:tavern-sign': GameTavernSignIcon,
   'game-icons:black-knight-helm': GameBlackKnightHelmIcon,
+  'game-icons:shop': GameShopIcon,
+  // Lista de espera.
+  'game-icons:hourglass': GameHourglassIcon,
   'square-pen': SquarePenIcon,
   moon: MoonIcon,
   sun: SunIcon,
   more: MoreHIcon,
   copy: CopyIcon,
+  feed: FeedIcon,
   eye: EyeIcon,
   'eye-off': EyeOffIcon,
   trash: TrashIcon,
@@ -185,11 +207,26 @@ export const ICONS = {
   mail: MailIcon,
   'game-icons:dice-twenty-faces-twenty': GameDiceTwentyFacesTwentyIcon,
   'game-icons:open-treasure-chest': GameOpenTreasureChestIcon,
+  'game-icons:toolbox': GameToolboxIcon,
+  'game-icons:card-play': GameCardPlayIcon,
+  'game-icons:book-cover': GameBookCoverIcon,
+  'game-icons:position-marker': GamePositionMarkerIcon,
+  'game-icons:pointy-hat': GamePointyHatIcon,
+  'game-icons:treasure-map': GameTreasureMapIcon,
   'game-icons:trade': GameTradeIcon,
   'game-icons:compass': GameCompassIcon,
   'game-icons:laurels': GameLaurelsIcon,
   'game-icons:podium': GamePodiumIcon,
   'game-icons:wooden-chair': GameWoodenChairIcon,
+  'game-icons:lantern-flame': GameLanternFlameIcon,
+  'game-icons:hearts': GameHeartsIcon,
+  'game-icons:walking-boot': GameWalkingBootIcon,
+  'game-icons:door': GameDoorIcon,
+  'game-icons:checked-shield': GameCheckedShieldIcon,
+  'game-icons:megaphone': GameMegaphoneIcon,
+  'game-icons:book-pile': GameBookPileIcon,
+  'game-icons:sands-of-time': GameSandsOfTimeIcon,
+  'game-icons:anchor': GameAnchorIcon,
   'game-icons:rolling-dices': GameRollingDicesIcon,
   'game-icons:quill-ink': GameQuillInkIcon,
   'game-icons:spell-book': GameSpellBookIcon,

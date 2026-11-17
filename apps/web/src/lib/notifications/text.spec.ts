@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { notificationIcon, notificationText, type Shown } from './text';
+import { isAlert, notificationIcon, notificationText, type Shown } from './text';
 
 const shown = (over: Partial<Shown>): Shown => ({
   type: 'table_updated',
@@ -18,6 +18,66 @@ describe('notificationText', () => {
     );
     expect(notificationText(shown({ type: 'table_cancelled' }))).toBe(
       'A mesa Mesa do Dragão foi cancelada.',
+    );
+  });
+
+  it('words the follow notices with the GM or the new follower', () => {
+    expect(notificationText(shown({ type: 'followed_table_opened', actor: 'mestre' }))).toBe(
+      '@mestre abriu uma mesa nova: Mesa do Dragão.',
+    );
+    expect(notificationText(shown({ type: 'followed_seat_opened', actor: 'mestre' }))).toBe(
+      'Abriu uma vaga em Mesa do Dragão, de @mestre.',
+    );
+    expect(notificationText(shown({ type: 'follow_started', actor: 'ana', metadata: {} }))).toBe(
+      '@ana começou a seguir você.',
+    );
+  });
+
+  it('tells each side of a Combinar match who else wants to play', () => {
+    expect(notificationText(shown({ type: 'match_created', actor: 'ana', metadata: {} }))).toBe(
+      'Bora jogar! @ana também quer jogar com você.',
+    );
+  });
+
+  it('tells the submitter an admin approved or turned down their place, and why', () => {
+    const notice = (metadata: Record<string, string>) =>
+      notificationText(shown({ type: 'moderation_notice', metadata }));
+    expect(notice({ placeApproved: 'Taverna do Dado' })).toBe(
+      'Seu lugar “Taverna do Dado” foi aprovado e já aparece em Onde jogar.',
+    );
+    expect(notice({ placeRemoved: 'Taverna do Dado', reason: 'place_closed' })).toBe(
+      'Seu lugar “Taverna do Dado” não está em Onde jogar. Motivo: O lugar fechou.',
+    );
+    expect(notice({ placeRemoved: 'Taverna', reason: 'not_public', note: 'É uma casa' })).toMatch(
+      /Recado: É uma casa$/,
+    );
+  });
+
+  it('tells whoever suggested a tool an admin approved or turned it down, and why', () => {
+    const notice = (metadata: Record<string, string>) =>
+      notificationText(shown({ type: 'moderation_notice', metadata }));
+    expect(notice({ toolApproved: 'Owlbear Rodeo' })).toBe(
+      'Sua sugestão “Owlbear Rodeo” foi aprovada e já aparece em Ferramentas.',
+    );
+    expect(notice({ toolRemoved: 'Site X', reason: 'off_topic' })).toBe(
+      'Sua sugestão “Site X” não está em Ferramentas. Motivo: Não é de RPG ou jogo de mesa.',
+    );
+    expect(notice({ toolRemoved: 'Site X', reason: 'other', note: 'Já está na lista' })).toMatch(
+      /Recado: Já está na lista$/,
+    );
+  });
+
+  it('raises the alert when reports hide a place, and tells its keepers neutrally', () => {
+    expect(
+      notificationText(shown({ type: 'place_hidden_alert', metadata: { place: 'Taverna' } })),
+    ).toBe('Alerta: “Taverna” recebeu muitas denúncias e foi ocultado. Restaure ou remova.');
+    expect(isAlert({ type: 'place_hidden_alert', read: false })).toBe(true);
+    expect(isAlert({ type: 'place_hidden_alert', read: true })).toBe(false);
+    const notice = (metadata: Record<string, string>) =>
+      notificationText(shown({ type: 'moderation_notice', metadata }));
+    expect(notice({ placeHidden: 'Taverna' })).toMatch(/temporariamente oculto/);
+    expect(notice({ placeRestored: 'Taverna' })).toBe(
+      'Seu lugar “Taverna” voltou para Onde jogar.',
     );
   });
 

@@ -3,15 +3,15 @@
   export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 
   const sizes: Record<ButtonSize, string> = {
-    md: 'h-12 rounded-lg px-4',
-    sm: 'h-11 rounded-lg px-3',
-    icon: 'size-12 rounded-lg p-0',
+    md: 'h-11 rounded-lg px-4',
+    sm: 'h-11 rounded-lg px-3 md:h-9',
+    icon: 'size-11 rounded-lg p-0',
     custom: '',
   };
   const variants: Record<ButtonVariant, string> = {
     primary: 'preset-filled-primary-500',
     secondary: 'btn-secondary',
-    danger: 'preset-filled-error-500',
+    danger: 'preset-filled-error-700',
     ghost: '',
   };
 
@@ -39,10 +39,10 @@
 
   /**
    * Every button. As a form's submit button, pass the form's `controller` (an actionForm), or its
-   * `submitting`, `delayed` (500 ms) and `timeout` (8 s) one by one. It is never disabled before the
-   * first attempt. From the moment the form is sent it is `aria-disabled` and `aria-busy` and a
-   * second click does nothing; the spinner waits for the submit to be slow, so a quick one does not
-   * flash it, and a note shows once it is very slow. It is `aria-disabled`, not `disabled`, so it
+   * `submitting`, `delayed` (300 ms) and `timeout` (8 s) one by one. It is never disabled before the
+   * first attempt. From the moment the form is sent it is dimmed, `aria-disabled` and `aria-busy`
+   * and a second click does nothing; the spinner waits for the submit to be slow, so a quick one
+   * does not flash it, and a note shows once it is very slow. It is `aria-disabled`, not `disabled`, so it
    * keeps its focus and its place in the tab order.
    */
   let {
@@ -88,7 +88,9 @@
   aria-busy={busy || attributes['aria-busy'] || undefined}
   aria-disabled={busy || attributes['aria-disabled'] || undefined}
   onclick={click}
-  class="{buttonClass(variant, size)} {type === 'submit' || delayed ? 'gap-2' : ''} {className}"
+  class="{buttonClass(variant, size)} {type === 'submit' || delayed ? 'gap-2' : ''} {busy
+    ? 'cursor-progress opacity-85'
+    : ''} {className}"
 >
   {#if delayed}
     <Spinner />

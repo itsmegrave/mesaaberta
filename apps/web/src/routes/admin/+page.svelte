@@ -79,6 +79,17 @@
       ],
     },
     {
+      title: m.admin_combinar(),
+      rows: [
+        [m.admin_combinar_people(), data.combinar.people],
+        [m.admin_combinar_matches(), data.combinar.matches],
+        [m.admin_combinar_played(), data.combinar.playedAfter],
+        [m.admin_combinar_alone(), data.combinar.alone],
+        [m.admin_combinar_groups(), data.combinar.groups],
+        [m.admin_combinar_largest(), data.combinar.largest],
+      ],
+    },
+    {
       title: m.admin_operations(),
       rows: [
         [m.admin_platform_suggestions(), data.suggestions.platforms],
@@ -121,7 +132,7 @@
         title: m.admin_attention_posts(),
         count: posts.count,
         detail: m.admin_attention_posts_detail({ title: posts.first ?? '' }),
-        href: '/admin/tables?instagram=uncertain',
+        href: '/admin/tables?post=uncertain',
       });
     if (awaiting.count > 0 && awaiting.first)
       found.push({
@@ -178,29 +189,53 @@
   {/snippet}
   <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
-  <section aria-labelledby="attention-title" class="mt-8">
-    <h2 id="attention-title" class="text-lg font-semibold">{m.admin_attention_title()}</h2>
+  {#if counts.current.hiddenPlaces > 0}
+    <!-- The high alert: reports hid a place, and it stays hidden until an admin decides. -->
+    <a
+      href={href('/admin/places?status=reported')}
+      class="mt-8 flex items-center gap-3 rounded-lg border border-error-500 preset-tonal-error px-5 py-4 no-underline"
+    >
+      <Icon name="triangle-alert" size={20} class="shrink-0" />
+      <span class="min-w-0 flex-1">
+        <span class="block font-semibold"
+          >{m.admin_places_hidden_alert({ count: counts.current.hiddenPlaces })}</span
+        >
+        <span class="block text-sm">{m.admin_places_hidden_alert_detail()}</span>
+      </span>
+      <Icon name="chevron-right" size={18} />
+    </a>
+  {/if}
+
+  <!-- As on the AdminOverview board: the heading and how much waits sit inside the card. -->
+  <section
+    aria-labelledby="attention-title"
+    class="mt-8 rounded-lg border border-surface-200-800 bg-panel"
+  >
+    <div class="flex items-baseline justify-between gap-3 px-5 pt-4 pb-3">
+      <h2 id="attention-title" class="text-xl font-semibold">{m.admin_attention_title()}</h2>
+      {#if attention.length > 0}
+        <span class="text-sm text-muted">{m.home_waiting_count({ count: attention.length })}</span>
+      {/if}
+    </div>
     {#if attention.length === 0}
-      <p class="mt-3 rounded-lg border border-surface-200-800 bg-panel p-5 text-muted">
+      <p class="border-t border-surface-200-800 px-5 py-4 text-muted">
         {m.admin_attention_none()}
       </p>
     {:else}
-      <ul
-        class="mt-3 divide-y divide-surface-200-800 rounded-lg border border-surface-200-800 bg-panel"
-      >
+      <ul class="divide-y divide-surface-200-800 border-t border-surface-200-800">
         {#each attention as item (item.id)}
           <li>
             <a
               href={href(item.href)}
-              class="flex min-h-17 items-center gap-3 px-4 py-3 hover:bg-surface-wash"
+              class="flex min-h-17 items-center gap-3 px-5 py-3 hover:bg-surface-wash"
             >
-              <Media kind="icon" icon={item.icon} />
+              <Media kind="icon" icon={item.icon} tone="lamp" />
               <span class="min-w-0 flex-1">
                 <span class="block font-semibold">{item.title}</span>
                 <span class="block truncate text-sm text-muted">{item.detail}</span>
               </span>
               <span
-                class="chip rounded-full preset-filled-warning-500 px-2.5 font-semibold tabular-nums"
+                class="chip rounded-full preset-filled-warning-500 px-2 font-semibold tabular-nums"
                 >{number(item.count)}</span
               >
               <Icon name="chevron-right" size={18} />

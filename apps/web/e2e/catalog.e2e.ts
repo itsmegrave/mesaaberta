@@ -2,11 +2,13 @@ import { expect, test, type Page } from '@playwright/test';
 import {
   chooseFromMenu,
   createTable,
+  openSelect,
   pickFromSearch,
   setFirstSession,
   soonSession,
   signIn,
   uniqueTitle,
+  showAllTables,
 } from './support/app';
 import { createUser } from './support/users';
 
@@ -22,17 +24,20 @@ async function pickMany(page: Page, label: string, names: string[]) {
 test('the list filters by platform and by tag, any of the ticked ones, kept in the URL', async ({
   page,
 }) => {
-  await page.goto('/t?tag=dungeon-crawl');
+  await page.goto('/tables?tag=dungeon-crawl');
+  await showAllTables(page);
   const cards = page.getByRole('article');
   await expect(cards.filter({ hasText: 'A Cripta do Rei Afogado' })).toHaveCount(1);
   await expect(cards.filter({ hasText: 'Os Sinos de Sablewood' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Tirar o filtro Dungeon crawl' })).toBeVisible();
 
-  await page.goto('/t?tag=dungeon-crawl&tag=iniciantes');
+  await page.goto('/tables?tag=dungeon-crawl&tag=iniciantes');
+  await showAllTables(page);
   await expect(cards.filter({ hasText: 'A Cripta do Rei Afogado' })).toHaveCount(1);
   await expect(cards.filter({ hasText: 'Os Sinos de Sablewood' })).toHaveCount(1);
 
-  await page.goto('/t?platform=foundry-vtt');
+  await page.goto('/tables?platform=foundry-vtt');
+  await showAllTables(page);
   await expect(cards.filter({ hasText: 'Os Sinos de Sablewood' })).toHaveCount(1);
   await expect(cards.filter({ hasText: 'Crônicas de Roshar' })).toHaveCount(0);
 });
@@ -41,12 +46,12 @@ test('ticking a platform applies it at once, and the modality keeps it', async (
   page,
   isMobile,
 }) => {
-  await page.goto('/t');
+  await page.goto('/tables');
   // The popover answers once the page has hydrated.
   await page.waitForLoadState('networkidle');
   // A desktop has a box for the platforms; a phone, the "Filtros" sheet with one.
   if (isMobile) await page.getByRole('button', { name: 'Filtros' }).click();
-  await page.getByRole('combobox', { name: 'Plataformas' }).last().click();
+  await openSelect(page, 'Plataformas');
   await page.getByRole('option', { name: 'Owlbear Rodeo' }).click();
   await expect(page).toHaveURL(/platform=owlbear-rodeo/);
   // Closed, so the list behind it is readable again: the box's list, then (on a phone) the sheet.
@@ -64,7 +69,8 @@ test('ticking a platform applies it at once, and the modality keeps it', async (
 });
 
 test('the card and the table page show the platforms and the tags', async ({ page }) => {
-  await page.goto('/t');
+  await page.goto('/tables');
+  await showAllTables(page);
   await expect(
     page.getByRole('article').filter({ hasText: 'Os Sinos de Sablewood' }),
   ).toContainText('Discord +1');
@@ -72,7 +78,7 @@ test('the card and the table page show the platforms and the tags', async ({ pag
   await page.goto('/t/os-sinos-de-sablewood');
   await expect(
     page.getByRole('list', { name: 'Tags' }).getByRole('link', { name: 'Iniciantes' }),
-  ).toHaveAttribute('href', '/t?tag=iniciantes');
+  ).toHaveAttribute('href', '/tables?tag=iniciantes');
   await expect(page.getByText('Foundry VTT')).toBeVisible();
 });
 
@@ -84,7 +90,7 @@ test('a GM picks platforms and tags when opening a table, and edits them later',
   await signIn(page, await createUser('Mestre Catalogo'));
   const title = uniqueTitle('Com tags');
 
-  await page.goto('/t/new');
+  await page.goto('/tables/new');
   await pickFromSearch(page, 'Sistema de RPG', 'Savage Worlds');
   await page.getByLabel('Título').fill(title);
   await setFirstSession(page, soonSession());
@@ -121,11 +127,11 @@ test('a GM suggests a tag the catalog lacks: it is on the table for them, not fo
   const title = uniqueTitle('Sugere tag');
   const suggested = `Bardo ${Math.random().toString(36).slice(2, 7)}`;
 
-  await page.goto('/t/new');
+  await page.goto('/tables/new');
   await pickFromSearch(page, 'Sistema de RPG', 'Savage Worlds');
   await page.getByLabel('Título').fill(title);
   await setFirstSession(page, soonSession());
-  await page.getByRole('combobox', { name: 'Tags' }).fill(suggested);
+  await (await openSelect(page, 'Tags'))?.fill(suggested);
   await page.getByRole('option', { name: `Sugerir “${suggested}”` }).click();
   await page.keyboard.press('Escape');
   await expect(

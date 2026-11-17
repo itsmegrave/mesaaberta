@@ -6,7 +6,31 @@ describe('api app', () => {
     const response = await createApi().request('/healthz');
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ status: 'ok', service: 'api' });
+    expect(await response.json()).toEqual({
+      status: 'ok',
+      service: 'api',
+      version: null,
+      revision: null,
+    });
+  });
+
+  it('adds the database to the deep probe, not_configured without one', async () => {
+    const response = await createApi().request('/healthz?deep=1');
+
+    expect(await response.json()).toMatchObject({ status: 'ok', database: 'not_configured' });
+  });
+
+  it('says which build answers the health probe', async () => {
+    const response = await createApi().request(
+      '/healthz',
+      {},
+      {
+        DEPLOYMENT_VERSION: 'v0.61.0',
+        DEPLOYMENT_SOURCE_SHA: 'abc123',
+      },
+    );
+
+    expect(await response.json()).toMatchObject({ version: '0.61.0', revision: 'abc123' });
   });
 
   it('answers an unknown path with JSON, not HTML', async () => {
@@ -39,8 +63,21 @@ describe('api app', () => {
     await app.request('/v1/nothing/ana@example.com');
     spy.mockRestore();
 
-    const entry = lines.map((line) => JSON.parse(line)).find((l) => l.msg === 'api request');
+    const entry = lines
+      .map((line) => JSON.parse(line))
+      .find((l) => l.msg === 'api.request_completed');
     expect(entry).toMatchObject({ method: 'GET', status: 404 });
     expect(JSON.stringify(entry)).not.toContain('ana@example.com');
+  });
+
+  it('answers with the request id the web Worker sent, or one of its own', async () => {
+    const app = createApi();
+    const sent = await app.request('/healthz', {
+      headers: { 'x-request-id': '8a1b2c3d4e5f6789-GRU' },
+    });
+    const junk = await app.request('/healthz', { headers: { 'x-request-id': 'ana@example.com' } });
+
+    expect(sent.headers.get('x-request-id')).toBe('8a1b2c3d4e5f6789-GRU');
+    expect(junk.headers.get('x-request-id')).toMatch(/^[0-9a-f-]{36}$/);
   });
 });

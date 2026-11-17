@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
 import { setAppName } from '@mesaaberta/core/server/logger';
+import { enforceLocalOnly } from '@mesaaberta/core/server/local-only';
 import { createHttpMetrics } from '@mesaaberta/core/server/metrics';
 import { createApi } from '../app';
 import { internalToken } from '../internal-token';
@@ -10,6 +11,7 @@ import { internalToken } from '../internal-token';
 // shared secret (`API_INTERNAL_TOKEN`), because over HTTP the actor header is only a claim.
 setAppName('api');
 logInstalled();
+enforceLocalOnly(process.env);
 
 const token = process.env.API_INTERNAL_TOKEN ?? '';
 if (!token) {
@@ -34,8 +36,14 @@ app.use('*', async (c, next) => {
 app.get('/metrics', (c) =>
   c.text(metrics.render(), 200, { 'content-type': 'text/plain; version=0.0.4; charset=utf-8' }),
 );
-// The probe is open (a container health check has no secret); everything else needs the token.
-app.get('/healthz', (c) => c.json({ status: 'ok', service: 'api' }));
+// The probe is open (a container health check has no secret); everything else needs the token,
+// including the deep probe the web /healthz asks (`?deep=1`, the database and the background
+// Worker), which the api app answers.
+app.use('/healthz', async (c, next) =>
+  c.req.query('deep') === '1'
+    ? internalToken(token)(c, next)
+    : c.json({ status: 'ok', service: 'api' }),
+);
 app.use('/v1/*', internalToken(token));
 app.route('/', createApi());
 

@@ -67,7 +67,7 @@ describe('the shadow queue producer', () => {
       'done',
     );
     expect(failing.warn).toHaveBeenCalledWith(
-      'queue shadow publish failed',
+      'queue.shadow_publish_failed',
       expect.objectContaining({ event: 'queue.shadow.failed', eventId: first }),
     );
 

@@ -1,6 +1,9 @@
 import type { RequestEvent } from '@sveltejs/kit';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { profiles } from '@mesaaberta/core/server/db/schema';
 import { listPlaying, listRunning } from '@mesaaberta/core/server/dashboard/queries';
+import { createTestDb } from '../db/test-db';
+import { apiOver } from '../db/test-api';
 import { DASHBOARD_PAGE_SIZE, read } from './dashboard';
 
 vi.mock('#lib/server/invitations/api.js', () => ({
@@ -12,18 +15,29 @@ vi.mock('@mesaaberta/core/server/dashboard/queries', () => ({
   listRunning: vi.fn(),
 }));
 
-const table = (n: number, requests = 0) => ({
+const table = (n: number, requests = 0, tableStatus = 'active') => ({
+  tableStatus,
+  startsAt: new Date('2099-01-01T20:00:00Z'),
   slug: `mesa-${n}`,
   title: `Mesa ${n}`,
   requests: Array.from({ length: requests }, (_, i) => ({ playerId: `p${i}`, username: `p${i}` })),
 });
+const gm = '00000000-0000-4000-8000-0000000000f1';
+let test: Awaited<ReturnType<typeof createTestDb>>;
+beforeAll(async () => {
+  test = await createTestDb();
+  await test.db.insert(profiles).values({ id: gm, username: 'gm' });
+});
+afterAll(() => test.close());
+
+// The api Worker reads the page (over the test database; the lists themselves are mocked).
 const event = (search = '') =>
   ({
     locals: {
-      db: {},
-      flags: { isEnabled: async () => false },
-      getUser: async () => ({ id: 'gm' }),
-      getProfile: async () => ({ id: 'gm', username: 'gm' }),
+      env: apiOver(test.db),
+      log: { warn: vi.fn() },
+      getUser: async () => ({ id: gm }),
+      getProfile: async () => ({ id: gm, username: 'gm' }),
     },
     url: new URL(`https://x.test/u/tables${search}`),
   }) as unknown as RequestEvent;
@@ -55,6 +69,23 @@ describe('the Minhas mesas read', () => {
       tables: 1,
       first: { slug: 'mesa-11', title: 'Mesa 11', page: 2 },
     });
+  });
+
+  it('keeps the tables that are over out of the pages, whole in `ended`', async () => {
+    vi.mocked(listRunning).mockResolvedValue([
+      table(1),
+      table(2, 0, 'concluded'),
+      table(3, 0, 'disabled'),
+    ] as never);
+    vi.mocked(listPlaying).mockResolvedValue([table(4, 0, 'not_held')] as never);
+
+    const dashboard = await read(event());
+    expect(dashboard.running.map((item) => item.slug)).toEqual(['mesa-1']);
+    expect(dashboard.playing).toEqual([]);
+    expect(dashboard.totals).toEqual({ playing: 0, running: 1 });
+    expect(dashboard.ended.running.map((item) => item.slug)).toEqual(['mesa-2', 'mesa-3']);
+    expect(dashboard.ended.playing.map((item) => item.slug)).toEqual(['mesa-4']);
+    expect(dashboard.ended.running[0].startsAt).toBeInstanceOf(Date);
   });
 
   it('reads anything but a positive whole number as page 1, and 404s past the last', async () => {

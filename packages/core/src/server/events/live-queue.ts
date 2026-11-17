@@ -32,7 +32,7 @@ export async function liveRoutingFor(
     const routing = await resolvers.get(db)?.();
     return routing && routing.handlers.length > 0 ? routing : null;
   } catch (error) {
-    log.warn('queue live routing failed', { event: 'queue.live.routing_failed', error });
+    log.warn('queue.live_routing_failed', { event: 'queue.live.routing_failed', error });
     return null;
   }
 }
@@ -45,9 +45,13 @@ export async function publishLive(
 ): Promise<void> {
   try {
     await queueTransport(routing.queue).enqueue(ref);
-    log.info('queue live published', { event: 'queue.live.published', ...ref });
+    log.info('queue.live_published', {
+      event: 'queue.live.published',
+      eventId: ref.eventId,
+      eventType: ref.type,
+    });
   } catch (error) {
-    log.warn('queue live publish failed', {
+    log.warn('queue.live_publish_failed', {
       event: 'queue.live.failed',
       eventId: ref.eventId,
       error,

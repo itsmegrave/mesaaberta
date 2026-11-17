@@ -25,7 +25,12 @@ type NotifyingEvent = Extract<
       | 'JoinDeclined'
       | 'PlayerJoined'
       | 'PlayerLeft'
-      | 'RatingSubmitted';
+      | 'RatingSubmitted'
+      | 'SessionScheduled'
+      | 'SessionMoved'
+      | 'SessionCancelled'
+      | 'SessionSignedUp'
+      | 'SessionSignupLeft';
   }
 >;
 
@@ -100,6 +105,40 @@ async function noticeFor(db: AnyDb, event: NotifyingEvent, gmId: string): Promis
         : { to: [gmId], type: 'player_left', link: manage };
     case 'RatingSubmitted':
       return { to: [gmId], type: 'rating_received', link: page };
+    case 'SessionScheduled':
+      return {
+        to: await confirmedPlayers(db, event.payload.tableId),
+        type: 'session_scheduled',
+        link: page,
+      };
+    case 'SessionMoved':
+      return {
+        to: await confirmedPlayers(db, event.payload.tableId),
+        type: 'session_moved',
+        link: page,
+      };
+    case 'SessionCancelled':
+      return {
+        to: await confirmedPlayers(db, event.payload.tableId),
+        type: 'session_cancelled',
+        link: page,
+      };
+    // Campanha aberta: only what someone else did to the player's place. Signing up or leaving
+    // oneself, or getting in line, tells nobody.
+    case 'SessionSignedUp':
+      return event.payload.by === 'player'
+        ? { to: [], type: 'session_signup_added', link: page }
+        : {
+            to: [event.payload.playerId],
+            type: event.payload.by === 'gm' ? 'session_signup_added' : 'session_signup_seated',
+            link: page,
+          };
+    case 'SessionSignupLeft':
+      return {
+        to: event.payload.reason === 'removed' ? [event.payload.playerId] : [],
+        type: 'session_signup_removed',
+        link: page,
+      };
   }
 }
 
@@ -118,6 +157,20 @@ export function changeSummary(
       ? { startsAtFrom: start.from, startsAtTo: start.to }
       : {};
   return { ...(fields.length > 0 ? { changed: fields.join(',') } : {}), ...moved };
+}
+
+/** A session notice carries the session's date, and where it was for a move. */
+function sessionDates(event: NotifyingEvent): Pick<TableMetadata, 'startsAt' | 'startsAtFrom'> {
+  if (event.type === 'SessionMoved')
+    return { startsAt: event.payload.startsAt, startsAtFrom: event.payload.from };
+  if (
+    event.type === 'SessionScheduled' ||
+    event.type === 'SessionCancelled' ||
+    event.type === 'SessionSignedUp' ||
+    event.type === 'SessionSignupLeft'
+  )
+    return { startsAt: event.payload.startsAt };
+  return {};
 }
 
 /**
@@ -139,6 +192,11 @@ export const notificationHandler: Handler = {
     'PlayerJoined',
     'PlayerLeft',
     'RatingSubmitted',
+    'SessionScheduled',
+    'SessionMoved',
+    'SessionCancelled',
+    'SessionSignedUp',
+    'SessionSignupLeft',
   ],
   async handle(event, db) {
     const notifying = event as NotifyingEvent;
@@ -159,6 +217,11 @@ export const notificationHandler: Handler = {
       [
         'TableUpdated',
         'TableAwaitingConfirmation',
+        'SessionScheduled',
+        'SessionMoved',
+        'SessionCancelled',
+        'SessionSignedUp',
+        'SessionSignupLeft',
         'JoinRequested',
         'JoinApproved',
         'PlayerJoined',
@@ -175,6 +238,7 @@ export const notificationHandler: Handler = {
       slug: table.slug,
       title: table.title,
       ...(notifying.type === 'TableUpdated' ? changeSummary(notifying.payload.changes) : {}),
+      ...sessionDates(notifying),
     };
     await db
       .insert(notifications)
@@ -191,5 +255,26 @@ export const notificationHandler: Handler = {
         })),
       )
       .onConflictDoNothing({ target: [notifications.eventId, notifications.recipientId] });
+
+    // A move up the lista de espera was nobody's click just now: the player hears it too.
+    if (
+      (notifying.type === 'PlayerJoined' || notifying.type === 'JoinRequested') &&
+      notifying.payload.fromWaitlist
+    ) {
+      const type = notifying.type === 'PlayerJoined' ? 'waitlist_seated' : 'waitlist_requested';
+      await db
+        .insert(notifications)
+        .values({
+          recipientId: notifying.payload.playerId,
+          actorId: null,
+          eventId: event.id,
+          category: NOTIFICATION_KINDS[type].category,
+          type,
+          link: routes.table(notifying.payload.slug),
+          metadata,
+          createdAt: event.createdAt,
+        })
+        .onConflictDoNothing({ target: [notifications.eventId, notifications.recipientId] });
+    }
   },
 };

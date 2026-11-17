@@ -5,6 +5,7 @@ import { Forbidden, Invalid, RateLimited } from '../errors';
 import type { Logger } from '../logger';
 import type { Mailer } from '../mail/mailer';
 import { PASSWORD_CODE_LENGTH } from '../../auth/password-setup';
+import { hasPassword } from './has-password';
 
 // Adding a password to an account that signed in with a provider. The person proves they own the
 // mailbox with a code we e-mail and check ourselves (Supabase only checks its reauthentication nonce
@@ -58,7 +59,7 @@ async function userOf(
   const response = await authCall(auth, token, '/user');
   if (response.status === 401 || response.status === 403) throw new Forbidden('no session');
   if (!response.ok) {
-    log.warn('password setup: could not read the user', { status: response.status });
+    log.warn('auth.password_setup_user_read_failed', { status: response.status });
     throw new Error(`auth: could not read the user (${response.status})`);
   }
 
@@ -77,8 +78,10 @@ async function userOf(
 }
 
 /** Only an account that cannot sign in with an e-mail and a password yet, and has an address. */
-function assertCanAdd(user: AuthUser) {
-  if (user.hasEmailIdentity) throw new Invalid('password', 'already_set');
+async function assertCanAdd(db: AnyDb, user: AuthUser) {
+  // A password set on a provider account adds no `email` identity: `auth.users` has the answer.
+  if (user.hasEmailIdentity || (await hasPassword(db, user.id)))
+    throw new Invalid('password', 'already_set');
   if (!user.email) throw new Invalid('password', 'no_email');
 }
 
@@ -142,7 +145,7 @@ export async function requestPasswordCode(deps: Deps, who: Who): Promise<void> {
   const { db, auth, mailer } = deps;
   const now = (deps.now ?? (() => new Date()))();
   const user = await userOf(auth, who, deps.log);
-  assertCanAdd(user);
+  await assertCanAdd(db, user);
 
   const code = newCode();
   const codeHash = await hashOf(who.profileId, code);
@@ -198,7 +201,7 @@ export async function requestPasswordCode(deps: Deps, who: Who): Promise<void> {
       idempotencyKey: `password-code:${who.profileId}:${codeHash.slice(0, 16)}`,
     });
   } catch (error) {
-    deps.log.warn('password setup: the code was not sent', { error });
+    deps.log.warn('auth.password_setup_code_not_sent', { error });
     // No code the person never received is left to be guessed.
     await db.delete(passwordSetupCodes).where(eq(passwordSetupCodes.profileId, who.profileId));
     throw error;
@@ -218,7 +221,7 @@ export async function addPassword(
   const { db, auth, log } = deps;
   const now = (deps.now ?? (() => new Date()))();
   const user = await userOf(auth, who, log);
-  assertCanAdd(user);
+  await assertCanAdd(db, user);
 
   // Counted before it is compared, so a guess is spent whether or not it was right.
   const [live] = await db
@@ -255,7 +258,7 @@ export async function addPassword(
       throw new Invalid('password', 'weak_password');
     }
     if (response.status === 429) throw new RateLimited(60);
-    log.warn('password setup: Supabase refused', { code, status: response.status });
+    log.warn('auth.password_setup_refused', { code, status: response.status });
     throw new Error(`auth: could not set the password (${response.status})`);
   }
 
@@ -264,6 +267,6 @@ export async function addPassword(
   try {
     await authCall(auth, who.token, '/logout?scope=others', { method: 'POST' });
   } catch (error) {
-    log.warn('password setup: could not sign the other sessions out', { error });
+    log.warn('auth.password_setup_sign_out_failed', { error });
   }
 }

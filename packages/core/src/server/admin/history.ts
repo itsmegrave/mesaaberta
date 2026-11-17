@@ -24,14 +24,21 @@ export type HistoryEntry = {
   /** The table the event names, for a person's history. */
   table: string | null;
   removed: boolean;
+  /** A table concluded by the sweeper because its GM never answered (`autoClosed`). */
+  autoClosed: boolean;
   changes: Changes | null;
+  /** The badge a grant or a revocation is about. */
+  badgeId: string | null;
 };
 
 /** `retentionDays`: events are deleted after it, so a history reaches back only that far. */
 export type History = { entries: HistoryEntry[]; more: boolean; retentionDays: number };
 
-/** Sign-ins carry an address: they are the connection log, kept for the law, not a history to browse. */
-const NOT_SHOWN: EventType[] = ['UserSignedIn'];
+/**
+ * Sign-ins carry an address: they are the connection log, kept for the law, not a history to browse.
+ * An admin's visits to the admin area are in the audit log instead.
+ */
+const NOT_SHOWN: EventType[] = ['UserSignedIn', 'AdminAreaEntered'];
 
 async function history(db: AnyDb, where: SQL | undefined): Promise<History> {
   const actor = alias(profiles, 'actor');
@@ -86,6 +93,8 @@ async function history(db: AnyDb, where: SQL | undefined): Promise<History> {
         reason?: string;
         title?: string;
         changes?: Changes;
+        autoClosed?: boolean;
+        badgeId?: string;
       };
       const subjectId = payload.profileId ?? payload.playerId;
       return {
@@ -97,7 +106,9 @@ async function history(db: AnyDb, where: SQL | undefined): Promise<History> {
         subject: subjectId && subjectId !== row.actorId ? (names.get(subjectId) ?? null) : null,
         table: row.table ?? payload.title ?? null,
         removed: payload.reason === 'removed',
+        autoClosed: payload.autoClosed === true,
         changes: payload.changes ?? null,
+        badgeId: payload.badgeId ?? null,
       };
     }),
   };

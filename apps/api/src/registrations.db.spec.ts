@@ -133,4 +133,12 @@ describe('api registration routes over a database', () => {
     expect((await post('join', {})).status).toBe(401);
     expect((await post('join', {}, '00000000-0000-4000-8000-0000000008ff')).status).toBe(403);
   });
+
+  it('lets only the GM rate a player, and refuses a rating without a valid score', async () => {
+    const forbidden = await post('ratePlayer', { playerId: bia, score: 5, comment: '' }, ana);
+    expect(forbidden.status).toBe(403);
+    expect((await post('ratePlayer', { playerId: bia, score: 9, comment: '' }, gm)).status).toBe(
+      400,
+    );
+  });
 });

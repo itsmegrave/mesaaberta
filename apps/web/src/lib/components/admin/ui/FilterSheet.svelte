@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
   // The "Filtros" button of a phone list and the sheet it opens, with the filters the desktop toolbar
   // shows in a row. A pick applies at once (the list behind it reloads); "Ver N resultados" closes.
   import type { Snippet } from 'svelte';
@@ -24,15 +25,15 @@
   let open = $state(false);
 </script>
 
-<button
-  type="button"
+<MAButton
+  size="custom"
   class="btn h-11 shrink-0 gap-2 rounded-lg border-2 border-surface-200-800 bg-panel px-4 font-semibold hover:preset-tonal"
   onclick={() => (open = true)}
 >
   <Icon name="filter" size={18} />{m.admin_list_filters()}
   {#if active > 0}<span class="badge rounded-full preset-filled-primary-500 px-2">{active}</span
     >{/if}
-</button>
+</MAButton>
 
 <Dialog {open} onOpenChange={(details) => (open = details.open)}>
   {#if open}<Portal>
@@ -54,12 +55,12 @@
           <footer class="flex items-center gap-3 border-t border-surface-200-800 p-4">
             {#if clearHref && active > 0}
               <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- already canonical -->
-              <a class="btn h-12 px-3 anchor font-semibold" href={clearHref}
+              <a class="{buttonClass('secondary', 'md')} font-semibold" href={clearHref}
                 >{m.admin_list_clear()}</a
               >
             {/if}
             <Dialog.CloseTrigger
-              class="btn h-12 flex-1 rounded-lg preset-filled-primary-500 px-4 font-semibold"
+              class="btn h-11 flex-1 rounded-lg preset-filled-primary-500 px-4 font-semibold"
               >{m.admin_list_show({ results })}</Dialog.CloseTrigger
             >
           </footer>

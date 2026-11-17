@@ -1,11 +1,23 @@
-import { error } from '@sveltejs/kit';
 import { requireUser } from '#lib/server/auth/guard.js';
-import { loadProfileForm } from '@mesaaberta/core/server/profile/service';
+import { availabilityEnabled } from '#lib/server/profile/availability.js';
+import { followsEnabled } from '#lib/server/follows/state.js';
+import { signedInHomeEnabled } from '#lib/server/profile/signed-in-home.js';
 import type { LayoutServerLoad } from './$types';
 
-// Every part of "Editar perfil" is the signed-in person's own; the header needs their @usuário.
+// Every part of "Editar perfil" is the signed-in person's own; the header needs their @usuário, and
+// the side menu whether "Sistemas favoritos", "Quando posso jogar" and "Seguindo" are on for them.
 export const load: LayoutServerLoad = async ({ locals, url }) => {
-  const user = await requireUser(locals, url);
-  if (!locals.db) error(503, 'Database not configured');
-  return { username: (await loadProfileForm(locals.db, user.id))?.username ?? '' };
+  await requireUser(locals, url);
+  const profile = await locals.getProfile();
+  const [systems, following, availability] = await Promise.all([
+    profile ? signedInHomeEnabled(locals, profile) : false,
+    profile ? followsEnabled(locals, profile) : false,
+    profile ? availabilityEnabled(locals, profile.id) : false,
+  ]);
+  return {
+    username: profile?.username ?? '',
+    systemsSection: systems,
+    followingSection: following,
+    availabilitySection: availability,
+  };
 };

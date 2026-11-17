@@ -8,6 +8,7 @@
   import { AUDIT_KINDS, type AuditKind } from '@mesaaberta/core/admin/report-filters';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import type { AuditLog } from '@mesaaberta/core/server/moderation/admin';
+  import { presentationOf } from '#lib/badges/presentation.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
 
@@ -22,6 +23,7 @@
       tables: m.admin_audit_kind_tables,
       catalog: m.admin_audit_kind_catalog,
       announcements: m.admin_audit_kind_announcements,
+      access: m.admin_audit_kind_access,
     })[kind]();
   const kinds = AUDIT_KINDS.map((value) => ({ value, label: kindLabel(value) }));
   // The log is newest first, so the day headings follow the rows in order.
@@ -38,6 +40,9 @@
   const filtered = $derived(data.log.kind !== 'all' || !!data.log.query);
   const handle = (username: string | null) =>
     username ? atHandle(username) : m.admin_profile_no_username();
+
+  const badgeName = (badgeId: string | null) =>
+    badgeId ? (presentationOf(badgeId)?.name() ?? badgeId) : '';
 
   /** One line per decision, worded from the event: ids only in the record, names looked up. */
   function entryText(entry: AuditLog['rows'][number]) {
@@ -57,10 +62,18 @@
         return m.audit_account_reinstated({ user });
       case 'AccountBanLifted':
         return m.audit_account_ban_lifted({ user });
+      case 'BadgeGranted':
+        return m.audit_badge_granted({ user, badge: badgeName(entry.badgeId) });
+      case 'BadgeRevoked':
+        return m.audit_badge_revoked({ user, badge: badgeName(entry.badgeId) });
       case 'TableClosedByModeration':
         return m.audit_table_closed({ table });
       case 'TableDisabled':
         return m.audit_table_disabled({ table });
+      case 'TableUpdated':
+        return m.audit_table_updated({ table });
+      case 'TableEdited':
+        return m.audit_table_edited({ table });
       case 'PlayerLeft':
         return m.audit_player_removed({ user, table });
       case 'SystemAnnouncementSent':
@@ -79,6 +92,8 @@
         return m.audit_catalog_disabled({ name });
       case 'EventForced':
         return m.audit_event_forced({ type: entry.eventType ?? '' });
+      case 'AdminAreaEntered':
+        return m.audit_admin_entered({ section: entry.section ?? '/admin' });
       default:
         return entry.type;
     }
@@ -98,18 +113,19 @@
     {filtered}
   >
     {#snippet toolbar()}
+      <!-- One row, as on the layout: the kinds, the search, then the count. -->
       <div class="flex flex-wrap items-center gap-3">
-        <ListSearch value={data.log.query} label={m.admin_audit_search()} />
+        <SegmentedFilter
+          name="kind"
+          label={m.admin_audit_kind()}
+          options={kinds}
+          value={data.log.kind}
+        />
+        <ListSearch value={data.log.query} label={m.admin_audit_search()} class="max-w-85" />
         <p role="status" class="ml-auto text-sm font-semibold text-muted">
           {m.admin_audit_total({ count: data.log.total })}
         </p>
       </div>
-      <SegmentedFilter
-        name="kind"
-        label={m.admin_audit_kind()}
-        options={kinds}
-        value={data.log.kind}
-      />
     {/snippet}
 
     {#each days as group (group.day)}

@@ -1,0 +1,85 @@
+import { error } from '@sveltejs/kit';
+import { can } from '@mesaaberta/core/server/auth/policy';
+import type { FlagName } from '@mesaaberta/core/server/flags/registry';
+
+/** The public directories and the flag that releases each. */
+export const DIRECTORY_FLAGS = {
+  systems: 'api_directory_systems',
+  gms: 'api_directory_gms',
+  places: 'api_directory_places',
+  players: 'use_players_directory',
+  matches: 'use_matchmaking',
+} as const satisfies Record<string, FlagName>;
+export type Directory = keyof typeof DIRECTORY_FLAGS;
+export type DirectoryFlags = Record<Directory, boolean>;
+/** Every directory off: the maintenance screen, and a layout that could not read the flags. */
+export const NO_DIRECTORIES: DirectoryFlags = {
+  systems: false,
+  gms: false,
+  places: false,
+  players: false,
+  matches: false,
+};
+
+/** Whether a directory is on for the person reading (targeted by id), or for visitors. */
+export async function directoryEnabled(
+  locals: Pick<App.Locals, 'flags' | 'getProfile'>,
+  directory: Directory,
+): Promise<boolean> {
+  const profile = await locals.getProfile();
+  // Procuro mesa and Combinar are about people, so they are for signed-in people only.
+  if ((directory === 'players' || directory === 'matches') && !profile) return false;
+  return locals.flags.isEnabled(
+    DIRECTORY_FLAGS[directory],
+    profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},
+  );
+}
+
+/** Every directory's switch, for the menus and the footer. */
+export async function directoryFlags(
+  locals: Pick<App.Locals, 'flags' | 'getProfile'>,
+): Promise<DirectoryFlags> {
+  const entries = await Promise.all(
+    (Object.keys(DIRECTORY_FLAGS) as Directory[]).map(
+      async (directory) => [directory, await directoryEnabled(locals, directory)] as const,
+    ),
+  );
+  return Object.fromEntries(entries) as DirectoryFlags;
+}
+
+/** A directory's pages answer 404 while it is off for the person reading. */
+export async function requireDirectory(
+  locals: Pick<App.Locals, 'flags' | 'getProfile'>,
+  directory: Directory,
+) {
+  if (!(await directoryEnabled(locals, directory))) error(404, 'Not found');
+}
+
+/**
+ * Whether the directories link to each other for the person reading (`use_directory_links`): a
+ * partner's own page, and the links between partners, places and quem mestra.
+ */
+export async function directoryLinksEnabled(
+  locals: Pick<App.Locals, 'flags' | 'getProfile'>,
+): Promise<boolean> {
+  const profile = await locals.getProfile();
+  return locals.flags.isEnabled(
+    'use_directory_links',
+    profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {},
+  );
+}
+
+/**
+ * Whether Combinar's graph is on for the person reading (`use_play_graph`): recent table-mates out
+ * of the deck, people in common first, and Quem já jogou comigo. Signed-in people only.
+ */
+export async function playGraphEnabled(
+  locals: Pick<App.Locals, 'flags' | 'getProfile'>,
+): Promise<boolean> {
+  const profile = await locals.getProfile();
+  if (!profile) return false;
+  return locals.flags.isEnabled('use_play_graph', {
+    id: profile.id,
+    isAdmin: can(profile, 'admin:access'),
+  });
+}

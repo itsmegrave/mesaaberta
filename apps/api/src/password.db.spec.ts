@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { passwordSetupCodes, profiles } from '@mesaaberta/db/schema';
 import type { Mail } from '@mesaaberta/core/server/mail/mailer';
 import { createTestDb } from '../../web/src/lib/server/db/test-db';
@@ -9,16 +9,19 @@ import { passwordRoutes } from './password';
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const ana = '00000000-0000-4000-8000-000000000ca1';
 const bia = '00000000-0000-4000-8000-000000000ca2';
+const cris = '00000000-0000-4000-8000-000000000ca3';
 const env = {
   DATABASE_URL: 'postgres://test',
   SUPABASE_URL: 'https://auth.test',
   SUPABASE_PUBLISHABLE_KEY: 'publishable',
 };
 
-// A Supabase Auth that knows two people: Ana (Google only) and Bia (already has a password).
+// A Supabase Auth that knows three people: Ana (Google only), Bia (already has a password) and Cris
+// (Google, then a password: Supabase adds no `email` identity for it).
 const users: Record<string, { id: string; email: string; identities: { provider: string }[] }> = {
   'token-ana': { id: ana, email: 'ana@example.com', identities: [{ provider: 'google' }] },
   'token-bia': { id: bia, email: 'bia@example.com', identities: [{ provider: 'email' }] },
+  'token-cris': { id: cris, email: 'cris@example.com', identities: [{ provider: 'google' }] },
 };
 let sent: Mail[] = [];
 let calls: string[] = [];
@@ -66,7 +69,16 @@ beforeAll(async () => {
   await test.db.insert(profiles).values([
     { id: ana, username: 'ana', role: 'member' },
     { id: bia, username: 'bia', role: 'member' },
+    { id: cris, username: 'cris', role: 'member' },
   ]);
+  // The part of Supabase's `auth.users` the check reads.
+  await test.db.execute(sql`create schema auth`);
+  await test.db.execute(
+    sql`create table auth.users (id uuid primary key, encrypted_password text)`,
+  );
+  await test.db.execute(
+    sql`insert into auth.users values (${ana}, null), (${bia}, 'hash'), (${cris}, 'hash')`,
+  );
 });
 afterAll(() => test.close());
 beforeEach(async () => {
@@ -157,6 +169,13 @@ describe('api password routes over a database', () => {
 
   it('refuses an account that already signs in with a password', async () => {
     const response = await post('/code', {}, { actor: bia, token: 'token-bia' });
+
+    expect(await response.json()).toMatchObject({ field: 'password', message: 'already_set' });
+    expect(sent).toHaveLength(0);
+  });
+
+  it('refuses a provider account whose password has no `email` identity', async () => {
+    const response = await post('/code', {}, { actor: cris, token: 'token-cris' });
 
     expect(await response.json()).toMatchObject({ field: 'password', message: 'already_set' });
     expect(sent).toHaveLength(0);

@@ -5,15 +5,12 @@ import { invitationFormSchema } from '#lib/invitations/schema.js';
 import { requireUser } from '../auth/guard';
 import { requireApiWrite } from '../api-required';
 import { failFrom } from '../fail-from';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { formMessage } from '#lib/forms/server.js';
 import { Invalid, RateLimited } from '@mesaaberta/core/server/errors';
 type Kind = 'invite' | 'cancel' | 'accept' | 'decline' | 'preference' | 'block';
 export function invitationAction(kind: Kind): Action {
   return async ({ locals, url, params, request }) => {
     await requireUser(locals, url);
-    if (!locals.db) error(503, 'Database not configured');
     const form = validateStringForm(await request.formData(), invitationFormSchema, [
       'username',
       'invitationId',
@@ -39,7 +36,7 @@ export function invitationAction(kind: Kind): Action {
             ? '/v1/account/invitation-preferences'
             : kind === 'block'
               ? '/v1/account/invitation-blocks'
-              : `/v1/invitations/${id}/${kind}`;
+              : `/v1/invitations/${encodeURIComponent(id)}/${kind}`;
       const body =
         kind === 'invite'
           ? { username: data.username }
@@ -49,11 +46,7 @@ export function invitationAction(kind: Kind): Action {
               ? { gmId: data.gmId, blocked: data.blocked === 'true' }
               : {};
       if (!actor) error(403, 'Forbidden');
-      const result = await requireApiWrite(locals, actor, path, body);
-      for (const eventId of result.eventIds)
-        locals.afterResponse((db) =>
-          dispatchEvent(db, handlersFor(locals.env), eventId, new Date(), locals.log),
-        );
+      await requireApiWrite(locals, actor, path, body);
     } catch (cause) {
       if (cause instanceof RateLimited)
         return formMessage(

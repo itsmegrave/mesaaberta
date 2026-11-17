@@ -21,7 +21,7 @@ for (const javaScriptEnabled of [true, false]) {
     } finally {
       await sql.end();
     }
-    await signIn(page, user, '/n?category=table');
+    await signIn(page, user, '/notifications?category=table');
     const context = await browser.newContext({
       storageState: await page.context().storageState(),
       javaScriptEnabled,
@@ -29,21 +29,27 @@ for (const javaScriptEnabled of [true, false]) {
     });
     try {
       const feed = await context.newPage();
-      await feed.goto(new URL('/n?category=table', test.info().project.use.baseURL).href, {
-        waitUntil: 'domcontentloaded',
-      });
+      await feed.goto(
+        new URL('/notifications?category=table', test.info().project.use.baseURL).href,
+        {
+          waitUntil: 'domcontentloaded',
+        },
+      );
       const main = feed.getByRole('main');
       const row = main.getByRole('listitem').filter({ hasText: 'Ler uma' });
       await row.getByRole('button', { name: 'Marcar como lida', exact: true }).click();
       await expect(row.getByRole('button', { name: 'Marcar como lida', exact: true })).toHaveCount(
         0,
       );
-      await expect(feed).toHaveURL(/\/n\?category=table$/);
+      await expect(feed).toHaveURL(/\/notifications\?category=table$/);
       await main.getByRole('button', { name: 'Abrir destino', exact: true }).click();
       await expect(feed).toHaveURL(/\/u\/tables$/);
-      await feed.goto(new URL('/n?category=table', test.info().project.use.baseURL).href, {
-        waitUntil: 'domcontentloaded',
-      });
+      await feed.goto(
+        new URL('/notifications?category=table', test.info().project.use.baseURL).href,
+        {
+          waitUntil: 'domcontentloaded',
+        },
+      );
       await feed
         .getByRole('main')
         .getByRole('button', { name: 'Marcar todas como lidas', exact: true })

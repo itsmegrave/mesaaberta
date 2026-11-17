@@ -1,9 +1,11 @@
 import { and, asc, desc, eq, gt, inArray, lte, or, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
+import { unfollowBothWays } from '../follows/service';
 import {
   gameTables,
   gmInviteBlocks,
   playerInvitations,
+  profileBlocks,
   profiles,
   registrations,
 } from '../db/schema';
@@ -13,6 +15,7 @@ import { recordEvent } from '../events/outbox';
 import { addTableMember } from '../messages/service';
 import { enforceRateLimit } from '../rate-limit';
 import { seatAvailability } from './seats';
+import { isMinorAtAdultTable } from '../registrations/age-gate';
 
 export type InvitationStatus = typeof playerInvitations.$inferSelect.status;
 type Invitation = typeof playerInvitations.$inferSelect;
@@ -86,13 +89,24 @@ async function canReceive(db: AnyDb, gmId: string, playerId: string) {
     .select()
     .from(gmInviteBlocks)
     .where(and(eq(gmInviteBlocks.playerId, playerId), eq(gmInviteBlocks.gmId, gmId)));
+  // A block either way (Mensagens or a profile) stops invitations too.
+  const [profileBlock] = await db
+    .select({ blockerId: profileBlocks.blockerId })
+    .from(profileBlocks)
+    .where(
+      or(
+        and(eq(profileBlocks.blockerId, playerId), eq(profileBlocks.blockedId, gmId)),
+        and(eq(profileBlocks.blockerId, gmId), eq(profileBlocks.blockedId, playerId)),
+      ),
+    );
   return !!(
     p?.status === 'active' &&
     p.username &&
     p.invitationsEnabled &&
     gm?.status === 'active' &&
     gm.username &&
-    !block
+    !block &&
+    !profileBlock
   );
 }
 
@@ -134,7 +148,8 @@ export async function invitePlayer(
       playerId === actor.id ||
       table.status !== 'active' ||
       table.startsAt <= now ||
-      !(await canReceive(t, actor.id, playerId))
+      !(await canReceive(t, actor.id, playerId)) ||
+      (await isMinorAtAdultTable(t, table, playerId))
     )
       throw unavailable();
     const previous = await t
@@ -220,7 +235,11 @@ export async function respondToInvitation(
         status: 'expired' as const,
         eventIds: await finish(t, i, table, 'expired', null, now),
       };
-    if (table.status !== 'active' || !(await canReceive(t, i.gmId, i.playerId)))
+    if (
+      table.status !== 'active' ||
+      !(await canReceive(t, i.gmId, i.playerId)) ||
+      (await isMinorAtAdultTable(t, table, i.playerId))
+    )
       return {
         status: 'cancelled' as const,
         eventIds: await finish(t, i, table, 'cancelled', null, now, 'unavailable'),
@@ -336,12 +355,14 @@ export async function setGmInviteBlock(
     const t = tx as unknown as AnyDb;
     const found = await lockInvitationProfiles(t, [actor.id, gmId]);
     if (!found.some((p) => p.id === gmId)) throw new NotFound();
-    if (blocked)
+    if (blocked) {
       await t
         .insert(gmInviteBlocks)
         .values({ playerId: actor.id, gmId, createdAt: now })
         .onConflictDoNothing();
-    else
+      // A block also undoes following, both ways (`follow:create` refuses a new one).
+      await unfollowBothWays(t, actor.id, gmId);
+    } else
       await t
         .delete(gmInviteBlocks)
         .where(and(eq(gmInviteBlocks.playerId, actor.id), eq(gmInviteBlocks.gmId, gmId)));
@@ -405,7 +426,13 @@ const invitationView = {
   expiresAt: playerInvitations.expiresAt,
   createdAt: playerInvitations.createdAt,
   gmId: playerInvitations.gmId,
-  table: { title: gameTables.title, slug: gameTables.slug },
+  table: {
+    title: gameTables.title,
+    slug: gameTables.slug,
+    kind: gameTables.kind,
+    startsAt: gameTables.startsAt,
+    timezone: gameTables.timezone,
+  },
   gmUsername: profiles.username,
 };
 export async function loadInvitation(db: AnyDb, actor: Actor | null, id: string) {

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { signIn } from './support/app';
+import { getHealth } from './support/health';
 import { PASSWORD, createUser } from './support/users';
 
 // Runs against the second server, started with the `maintenance_mode` flag on (playwright.config.ts).
@@ -10,7 +11,7 @@ test.describe('maintenance mode', () => {
   test('every page shows the maintenance screen with a 503, and nothing of the product', async ({
     page,
   }) => {
-    for (const path of ['/', '/t', '/signup', '/u/tables']) {
+    for (const path of ['/', '/tables', '/signup', '/u/tables']) {
       const response = await page.goto(path);
 
       expect(response?.status(), path).toBe(503);
@@ -24,7 +25,7 @@ test.describe('maintenance mode', () => {
 
   test('a form post is refused without running', async ({ request, baseURL }) => {
     // Same-origin, as a browser sends it; otherwise SvelteKit's CSRF check answers first.
-    const response = await request.post('/t/new', {
+    const response = await request.post('/tables/new', {
       form: { title: 'x' },
       headers: { origin: baseURL! },
     });
@@ -34,7 +35,7 @@ test.describe('maintenance mode', () => {
   });
 
   test('the uptime check still answers', async ({ request }) => {
-    expect((await request.get('/healthz')).status()).toBe(200);
+    expect((await getHealth(request)).status()).toBe(200);
   });
 
   test('a member who signs in still gets the screen', async ({ page }) => {
@@ -52,7 +53,7 @@ test.describe('maintenance mode', () => {
     page,
   }) => {
     const admin = await createUser('Admin Manutenção', { role: 'admin' });
-    await signIn(page, admin, '/t');
+    await signIn(page, admin, '/tables');
 
     await expect(
       page.getByText('Modo de manutenção ativo: só a administração vê o site.'),

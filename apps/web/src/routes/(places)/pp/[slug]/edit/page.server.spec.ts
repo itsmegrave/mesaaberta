@@ -1,0 +1,167 @@
+import type { RequestEvent } from '@sveltejs/kit';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Forbidden } from '@mesaaberta/core/server/errors';
+import { findEditablePlace, updatePlace } from '@mesaaberta/core/server/places/service';
+import { placePartnerState } from '@mesaaberta/core/server/places/partner-links';
+import { listPlaceHosts } from '@mesaaberta/core/server/places/hosts';
+import { actorsOnly, apiOver } from '#lib/server/db/test-api.js';
+import { actions, load } from './+page.server';
+
+vi.mock('@mesaaberta/core/server/places/service', async (original) => ({
+  ...(await original<typeof import('@mesaaberta/core/server/places/service')>()),
+  findEditablePlace: vi.fn(),
+  updatePlace: vi.fn(async () => ({
+    eventId: 'e1',
+    slug: 'taverna',
+    replacedImage: null,
+    pending: true,
+  })),
+}));
+vi.mock('@mesaaberta/core/server/places/partner-links', async (original) => ({
+  ...(await original<typeof import('@mesaaberta/core/server/places/partner-links')>()),
+  placePartnerState: vi.fn(async () => null),
+}));
+vi.mock('@mesaaberta/core/server/places/hosts', async (original) => ({
+  ...(await original<typeof import('@mesaaberta/core/server/places/hosts')>()),
+  listPlaceHosts: vi.fn(async () => {
+    throw new Forbidden('not the owner');
+  }),
+}));
+vi.mock('@mesaaberta/core/server/events/dispatcher', () => ({ dispatchEvent: vi.fn() }));
+vi.mock('@mesaaberta/core/server/places/features', async (original) => ({
+  ...(await original<typeof import('@mesaaberta/core/server/places/features')>()),
+  listFeatureOptions: vi.fn(async () => [
+    { name: 'Acessível', slug: 'accessible' },
+    { name: 'Wi-Fi', slug: 'wifi' },
+  ]),
+}));
+
+const ANA = '00000000-0000-4000-8000-0000000000aa';
+const PLACE = '00000000-0000-4000-8000-000000000001';
+const place = {
+  id: PLACE,
+  slug: 'taverna',
+  name: 'Taverna do Dado',
+  kind: 'game_cafe',
+  postalCode: '51020000',
+  street: 'Av. Boa Viagem, 100',
+  complement: null,
+  description: null,
+  openingHours: 'Ter a dom',
+  amenities: ['accessible'],
+  features: [
+    { name: 'Acessível', slug: 'accessible' },
+    { name: 'Bar de vinil', slug: 'bar-de-vinil', pending: true },
+  ],
+  siteUrl: null,
+  imagePath: null,
+  ownerId: null,
+  approvedAt: new Date('2026-10-20T12:00:00Z'),
+  links: [{ network: 'instagram', url: 'https://instagram.com/taverna' }],
+};
+
+function event(form?: Record<string, string>, role = 'member') {
+  return {
+    locals: {
+      // The api answers over the mocked service; the stand-in database only names the actor.
+      env: apiOver(actorsOnly([{ id: ANA, role, status: 'active' }])),
+      flags: { isEnabled: async () => true },
+      log: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn(), child: vi.fn() },
+      getUser: async () => ({ id: ANA }),
+      getProfile: async () => ({ id: ANA, role, status: 'active', username: 'ana' }),
+      afterResponse: vi.fn(),
+    },
+    params: { slug: 'taverna' },
+    url: new URL('https://x.test/pp/taverna/edit'),
+    request: new Request('https://x.test/pp/taverna/edit', {
+      method: 'POST',
+      body: new URLSearchParams(form ?? {}),
+    }),
+  } as unknown as RequestEvent;
+}
+
+type Run = (e: RequestEvent) => Promise<unknown>;
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the columns the page reads
+  vi.mocked(findEditablePlace).mockResolvedValue(place as any);
+});
+
+describe('"Editar lugar"', () => {
+  it('fills the form from the place and says a member’s save goes back to the queue', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- whatever the load returns
+    const data = (await (load as unknown as Run)(event())) as any;
+    expect(data.form.data).toMatchObject({
+      name: 'Taverna do Dado',
+      kind: 'game_cafe',
+      postalCode: '51020-000',
+      tags: ['accessible', 'bar-de-vinil'],
+      linkNetwork: ['instagram'],
+      linkUrl: ['https://instagram.com/taverna'],
+    });
+    expect(data).toMatchObject({ reviewAgain: true, approved: true, catalog: true });
+    // The catalog, and the suggestion it has that is not the reader's own.
+    expect(data.tagOptions.map((option: { slug: string }) => option.slug)).toEqual([
+      'accessible',
+      'wifi',
+      'bar-de-vinil',
+    ]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- whatever the load returns
+    expect(((await (load as unknown as Run)(event(undefined, 'admin'))) as any).reviewAgain).toBe(
+      false,
+    );
+  });
+
+  it('shows "Parceiro" to whoever the api lets ask, and nothing to anyone else', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- whatever the load returns
+    expect(((await (load as unknown as Run)(event())) as any).partner).toBeNull();
+    vi.mocked(placePartnerState).mockResolvedValueOnce({
+      approved: null,
+      pending: null,
+      options: [{ id: PLACE, name: 'Taverna do Dado Editora' }],
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- whatever the load returns
+    expect(((await (load as unknown as Run)(event())) as any).partner).toEqual({
+      approved: null,
+      pending: null,
+      options: [{ id: PLACE, name: 'Taverna do Dado Editora' }],
+    });
+  });
+
+  it('shows "Quem mestra na casa" to the owner and admins only, through the api', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- whatever the load returns
+    expect(((await (load as unknown as Run)(event())) as any).hosts).toBeNull();
+    vi.mocked(listPlaceHosts).mockResolvedValueOnce({
+      placeId: PLACE,
+      hosts: [{ profileId: ANA, username: 'ana', since: new Date('2026-10-28T12:00:00Z') }],
+      invitations: [],
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- whatever the load returns
+    const data = (await (load as unknown as Run)(event(undefined, 'admin'))) as any;
+    expect(data.hosts.hosts.map((host: { username: string }) => host.username)).toEqual(['ana']);
+  });
+
+  it('answers 404 for a place this person may not edit', async () => {
+    vi.mocked(findEditablePlace).mockRejectedValue(new Forbidden('no'));
+    await expect((load as unknown as Run)(event())).rejects.toMatchObject({ status: 404 });
+    await expect((actions.save as unknown as Run)(event({ name: 'x' }))).rejects.toMatchObject({
+      status: 404,
+    });
+    expect(updatePlace).not.toHaveBeenCalled();
+  });
+
+  it('saves the place it found and goes back to its page', async () => {
+    await expect(
+      (actions.save as unknown as Run)(
+        event({
+          name: 'Taverna do Dado',
+          kind: 'game_cafe',
+          postalCode: '51020-000',
+          street: 'Av. Boa Viagem, 100',
+        }),
+      ),
+    ).rejects.toMatchObject({ location: '/pp/taverna?enviado=1' });
+    expect(vi.mocked(updatePlace).mock.lastCall?.[2]).toBe(PLACE);
+  });
+});

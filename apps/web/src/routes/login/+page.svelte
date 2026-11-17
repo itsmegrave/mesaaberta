@@ -7,6 +7,7 @@
   import ProviderButtons from '#lib/components/ui/ProviderButtons.svelte';
   import AuthDivider from '#lib/components/ui/AuthDivider.svelte';
   import AuthShell from '#lib/components/ui/AuthShell.svelte';
+  import PasskeySignIn from './components/PasskeySignIn.svelte';
   import { credentialsSchema } from '#lib/auth/credentials.js';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -41,7 +42,12 @@
 
   {#if data.authEnabled}
     <div class="grid gap-5">
-      <CredentialsForm mode="login" {controller} action="?/email" />
+      <CredentialsForm
+        mode="login"
+        {controller}
+        action="?/email"
+        captchaSiteKey={data.captchaSiteKey}
+      />
 
       <p>
         <a href="/forgot" class="link-underline font-semibold text-link">{m.login_forgot()}</a>
@@ -49,7 +55,12 @@
 
       <AuthDivider />
 
-      <ProviderButtons next={data.next} />
+      <div class="grid gap-3">
+        <ProviderButtons next={data.next} />
+        {#if data.passkeys}
+          <PasskeySignIn next={data.next} captcha={Boolean(data.captchaSiteKey)} />
+        {/if}
+      </div>
 
       <LegalConsent mode="login" />
 

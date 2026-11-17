@@ -1,0 +1,32 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "mesaaberta-mcp",
+  "compatibility_date": "2026-09-19",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "src/index.ts",
+  // Public, unlike the api: MCP clients reach it on its own name. A deployment keeps its own copy
+  // of this file with the custom domain (mcp.mesaaberta.app) in `routes`.
+  "workers_dev": false,
+  "preview_urls": false,
+  "triggers": { "crons": [] },
+  // Placeholders, like the other Workers': a deployment sets its own values. No secret lives here
+  // (the MCP holds none: Supabase keeps the tokens and the api trusts the binding).
+  "vars": {
+    "GROWTHBOOK_API_HOST": "https://cdn.growthbook.io",
+    "GROWTHBOOK_CLIENT_KEY": "",
+    // A DSN only allows sending events, so it is not a secret. Blank, Sentry stays off.
+    "SENTRY_DSN": "",
+    // The project whose OAuth 2.1 server signs people in. Blank, /mcp answers 503.
+    "SUPABASE_URL": "",
+    // The public address of /mcp (https://mcp.mesaaberta.app/mcp), named in the OAuth metadata.
+    "MCP_URL": "",
+  },
+  // The api, reached as the person who approved the client (`x-actor-id`), like the web Worker.
+  "services": [{ "binding": "API", "service": "mesaaberta-api" }],
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true, "persist": true },
+  },
+}

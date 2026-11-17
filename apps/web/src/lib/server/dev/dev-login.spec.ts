@@ -6,7 +6,7 @@ import { PERSONA_PASSWORD, personas } from './personas';
 const local = { DEV_LOGIN: 'true', SUPABASE_URL: 'http://127.0.0.1:54341' };
 
 function setup({
-  url = 'http://localhost:5173/dev/login?as=gm&next=/m',
+  url = 'http://localhost:5173/dev/login?as=gm&next=/messages',
   method = 'GET',
   env = local as Record<string, string> | null,
   supabase = true,
@@ -36,7 +36,7 @@ describe('handleDevLogin', () => {
   it('signs in as the persona with the real Supabase login and redirects to next', async () => {
     const { run, auth } = setup();
 
-    await expect(run()).rejects.toMatchObject({ status: 303, location: '/m' });
+    await expect(run()).rejects.toMatchObject({ status: 303, location: '/messages' });
     expect(auth.signInWithPassword).toHaveBeenCalledWith({
       email: personas.gm.email,
       password: PERSONA_PASSWORD,
@@ -68,13 +68,13 @@ describe('handleDevLogin', () => {
 
   it('sends someone without a username to the onboarding step first', async () => {
     const { run } = setup({
-      url: 'http://localhost:5173/dev/login?as=new&next=/m',
+      url: 'http://localhost:5173/dev/login?as=new&next=/messages',
       username: null,
     });
 
     await expect(run()).rejects.toMatchObject({
       status: 303,
-      location: expect.stringMatching(/\?next=%2Fm$/),
+      location: expect.stringMatching(/\?next=%2Fmessages$/),
     });
   });
 

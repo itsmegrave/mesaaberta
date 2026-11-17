@@ -1,8 +1,21 @@
 # TLS in front of the web app. SITE_ADDRESS is localhost by default (Caddy issues a certificate from
 # its own local CA); set it to your domain and Caddy gets a public certificate. Only the web app is
-# proxied: the api stays on the private network.
+# proxied, plus the two Supabase paths a browser has to open itself; the api, Auth's admin side and
+# Storage's writes stay on the private network.
 {$SITE_ADDRESS:localhost} {
 	# Metrics are for a scraper on the Docker network, never for the internet.
-	respond /metrics 404
-	reverse_proxy web:3000
+	handle /metrics {
+		respond 404
+	}
+	# The links in Auth's e-mails (confirm the address, magic link, new password).
+	handle /auth/v1/verify {
+		reverse_proxy supabase:8000
+	}
+	# Table images, profile pictures and partner logos.
+	handle /storage/v1/object/public/* {
+		reverse_proxy supabase:8000
+	}
+	handle {
+		reverse_proxy web:3000
+	}
 }

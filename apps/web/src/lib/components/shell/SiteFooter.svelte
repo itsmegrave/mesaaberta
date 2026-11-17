@@ -4,20 +4,100 @@
   import Icon from '#lib/components/ui/Icon.svelte';
   import TableLogo from '#lib/components/ui/TableLogo.svelte';
   import { footerNotes } from '#lib/extensions/panels.js';
+  import { listsPlayers } from '#lib/navigation/directory-nav.js';
   import { isUnder } from '#lib/navigation/main-nav.js';
   import { m } from '#lib/paraglide/messages.js';
 
   // The site footer: the brand with the community sentence (and any notes a private build adds),
   // the pages and the contact, then a bottom bar with the open-source sentence and the credits.
-  let { site }: { site: { CONTACT_EMAIL: string; INSTAGRAM_HANDLE?: string } } = $props();
+  let {
+    site,
+    directories = { systems: false, gms: false, places: false },
+    blogLive = false,
+  }: {
+    site: { CONTACT_EMAIL: string; INSTAGRAM_HANDLE?: string };
+    /** Which directories are on for the person: each one's link shows only then. */
+    directories?: {
+      systems: boolean;
+      gms: boolean;
+      places: boolean;
+      players?: boolean;
+      matches?: boolean;
+    };
+    /** Whether a blog post is out: the Blog link shows only then. */
+    blogLive?: boolean;
+  } = $props();
 
-  const pages = [
-    { path: '/t', label: m.nav_tables },
-    { path: '/p', label: m.partner_nav_label },
-    { path: '/cf', label: m.nav_crowdfunding_label },
+  // `route` is the list's route id (its group included), `items` where the section's own pages
+  // live under its letter (`/t/<slug>`). The directories follow, each while it is on.
+  const sections = [
+    { route: '/(tables)/tables', path: '/tables', items: '/t', label: m.nav_tables },
+    { route: '/(partners)/partners', path: '/partners', items: '/p', label: m.partner_nav_label },
+    {
+      route: '/crowdfunding',
+      path: '/crowdfunding',
+      items: undefined,
+      label: m.nav_crowdfunding_label,
+    },
+    { route: '/tools', path: '/tools', items: undefined, label: m.nav_tools },
   ] as const;
 
-  const current = (path: string) => isUnder(page.url.pathname, path);
+  const pages = $derived([
+    ...sections,
+    ...(directories.systems
+      ? [
+          {
+            route: '/systems',
+            path: '/systems',
+            items: '/s',
+            label: m.directory_footer_systems,
+          } as const,
+        ]
+      : []),
+    ...(directories.places
+      ? [
+          {
+            route: '/(places)/places',
+            path: '/places',
+            items: '/pp',
+            label: m.directory_footer_places,
+          } as const,
+        ]
+      : []),
+    ...(directories.gms
+      ? [
+          {
+            route: '/gamemasters',
+            path: '/gamemasters',
+            items: undefined,
+            label: m.directory_footer_gms,
+          } as const,
+        ]
+      : []),
+    ...(listsPlayers(directories)
+      ? [
+          {
+            route: '/players',
+            path: '/players',
+            items: undefined,
+            label: m.directory_footer_players,
+          } as const,
+        ]
+      : []),
+    ...(directories.matches
+      ? [
+          {
+            route: '/matches',
+            path: '/matches',
+            items: undefined,
+            label: m.nav_matches,
+          } as const,
+        ]
+      : []),
+  ]);
+
+  const current = (path: string, items?: string) =>
+    isUnder(page.url.pathname, path) || (!!items && isUnder(page.url.pathname, items));
 
   // Links inside sentences carry the primary underline; page links are quiet until hovered, and the
   // page you are on reads in ink with the same underline.
@@ -26,15 +106,15 @@
 
 <footer class="border-t border-surface-200-800 bg-panel pb-24 md:pb-0">
   <div class="mx-auto w-full max-w-7xl px-5 md:px-8">
-    <div class="grid grid-cols-1 gap-7 pt-8 pb-6 sm:grid-cols-2 md:grid-cols-12 md:gap-8 md:py-14">
-      <div class="flex flex-col gap-3 sm:col-span-2 md:col-span-6 md:gap-5">
+    <div
+      class="grid grid-cols-1 gap-4 pt-6 pb-3 sm:grid-cols-2 md:grid-cols-12 md:gap-8 md:pt-8 md:pb-5"
+    >
+      <div class="flex flex-col gap-1 sm:col-span-2 md:col-span-6 md:gap-2">
         <p class="flex items-center gap-3 text-surface-950-50">
-          <TableLogo size={48} />
-          <span class="font-brand text-2xl font-semibold tracking-wider md:text-3xl"
-            >Mesa Aberta</span
-          >
+          <TableLogo size={32} />
+          <span class="font-brand text-xl font-semibold tracking-wider">Mesa Aberta</span>
         </p>
-        <p class="max-w-sm text-base leading-relaxed text-muted">
+        <p class="max-w-sm text-sm leading-relaxed text-muted">
           {m.footer_community()}
           {#each footerNotes as note (note.text)}
             {note.text}
@@ -61,15 +141,16 @@
         {/if}
       </div>
 
-      <div class="flex flex-col gap-0 md:col-span-3 md:gap-4">
+      <div class="flex flex-col gap-0 md:col-span-3 md:gap-2">
         <h2 class="text-sm font-semibold text-surface-950-50">{m.footer_pages()}</h2>
-        <ul class="flex flex-wrap gap-x-5 text-sm md:flex-col md:gap-3">
+        <ul class="flex flex-wrap gap-x-5 text-sm md:gap-x-4 md:gap-y-1">
           {#each pages as item (item.path)}
+            {@const here = current(item.path, item.items)}
             <li>
               <a
-                href={resolve(item.path)}
-                aria-current={current(item.path) ? 'page' : undefined}
-                class="inline-flex min-h-11 items-center md:min-h-0 {current(item.path)
+                href={resolve(item.route)}
+                aria-current={here ? 'page' : undefined}
+                class="inline-flex min-h-11 items-center md:min-h-0 {here
                   ? strong
                   : 'text-muted hover:text-surface-950-50'}">{item.label()}</a
               >
@@ -78,7 +159,7 @@
         </ul>
       </div>
 
-      <div class="flex flex-col gap-2 md:col-span-3 md:gap-4">
+      <div class="flex flex-col gap-1 md:col-span-3 md:gap-2">
         <h2 class="text-sm font-semibold text-surface-950-50">{m.footer_support()}</h2>
         <a
           href={resolve('/changelog')}
@@ -86,6 +167,12 @@
           class="inline-flex min-h-11 items-center text-sm text-muted hover:text-surface-950-50 md:min-h-0"
           >{m.changelog_title()}</a
         >
+        {#if blogLive}<a
+            href={resolve('/blog')}
+            aria-current={current('/blog') ? 'page' : undefined}
+            class="inline-flex min-h-11 items-center text-sm text-muted hover:text-surface-950-50 md:min-h-0"
+            >{m.blog_title()}</a
+          >{/if}
         <p class="text-sm leading-relaxed text-muted">
           {m.footer_help()}
           <a href="mailto:{site.CONTACT_EMAIL}" class="{strong} whitespace-nowrap"
@@ -96,7 +183,7 @@
     </div>
 
     <div
-      class="flex flex-col gap-2 border-t border-surface-200-800 py-5 text-sm leading-relaxed text-muted md:flex-row md:items-center md:justify-between md:gap-8 md:py-6"
+      class="flex flex-col gap-1 border-t border-surface-200-800 py-3 text-sm leading-relaxed text-muted md:flex-row md:items-center md:justify-between md:gap-8"
     >
       <p>
         {m.footer_open_source()}

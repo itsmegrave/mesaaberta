@@ -1,5 +1,6 @@
 import {
   and,
+  arrayContains,
   count,
   desc,
   eq,
@@ -12,18 +13,27 @@ import {
   sql,
 } from 'drizzle-orm';
 import { partnerAdminFilters } from '../../partners/admin-filters';
+import { orderedTypes, type PartnerType } from '../../partners/types';
 import { OPEN_REPORT_STATUSES, type ReportReason } from '../../moderation/reports';
 import type { Network } from '../../profile/social-links';
 import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
-import { publicName } from '@mesaaberta/core/server/db/public-name';
-import { partnerLinks, partners, profiles, reports } from '@mesaaberta/core/server/db/schema';
+import { textArray } from '@mesaaberta/core/server/db/text-array';
+import { NAMELESS, publicName } from '@mesaaberta/core/server/db/public-name';
+import {
+  partnerInvitations,
+  partnerLinks,
+  partnerOwners,
+  partners,
+  profiles,
+  reports,
+} from '@mesaaberta/core/server/db/schema';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 
 // The admin side of the partners: what waits for review, what is up and what was taken down, and
 // approving, rejecting and removing. Every function authorizes the actor itself; the routes check
-// again before calling. The submitter is shown here and nowhere else.
+// again before calling. Who looks after a partner is shown here, and to those accounts only.
 
 const escapeLike = (text: string) => text.replace(/[\\%_]/g, '\\$&');
 
@@ -75,6 +85,11 @@ export async function listAdminPartners(db: AnyDb, actor: Actor | null, params: 
       : filters.backlink === 'missing'
         ? isNull(partners.backlinkUrl)
         : undefined,
+    filters.type === 'none'
+      ? sql`cardinality(${partners.types}) = 0`
+      : filters.type
+        ? arrayContains(partners.types, [filters.type])
+        : undefined,
     needle
       ? or(
           ilike(partners.name, needle),
@@ -105,6 +120,7 @@ export async function listAdminPartners(db: AnyDb, actor: Actor | null, params: 
       id: partners.id,
       name: partners.name,
       description: partners.description,
+      types: partners.types,
       logoPath: partners.logoPath,
       siteUrl: partners.siteUrl,
       contactEmail: partners.contactEmail,
@@ -116,8 +132,23 @@ export async function listAdminPartners(db: AnyDb, actor: Actor | null, params: 
       removedAt: partners.removedAt,
       removedBy: partners.removedBy,
       removalReason: partners.removalReason,
-      submitterId: partners.submitterId,
       submitter: sql<string | null>`${publicName(profiles.username)}`,
+      // Who looks after it, in the order they joined (the submitter first). Empty for a partner
+      // with no row yet: then it is the submitter alone.
+      owners: sql<
+        string[]
+      >`array(select coalesce(owner.username, ${NAMELESS}) from ${partnerOwners} join ${profiles} owner on owner.id = ${partnerOwners.profileId} where ${partnerOwners.partnerId} = ${partners.id} order by ${partnerOwners.createdAt})`.mapWith(
+        textArray,
+      ),
+      // Who to write to from the admin list ("Mandar mensagem"): the first account that looks after
+      // it, the submitter when it has no row yet.
+      contactId: sql<
+        string | null
+      >`coalesce((select ${partnerOwners.profileId} from ${partnerOwners} where ${partnerOwners.partnerId} = ${partners.id} order by ${partnerOwners.createdAt} limit 1), ${partners.submitterId})`,
+      pendingInvites:
+        sql<number>`(select count(*) from ${partnerInvitations} where ${partnerInvitations.partnerId} = ${partners.id} and ${partnerInvitations.status} = 'pending' and ${partnerInvitations.expiresAt} > now())`.mapWith(
+          Number,
+        ),
       reports: sql<number>`coalesce(${waiting.waiting}, 0)`.mapWith(Number),
     })
     .from(partners)
@@ -146,10 +177,12 @@ export async function listAdminPartners(db: AnyDb, actor: Actor | null, params: 
     : [];
 
   return {
-    rows: rows.map(({ submitterId, ...row }) => ({
+    rows: rows.map((row) => ({
       ...row,
-      // "Removido pelo autor": the submitter took it off themself.
-      withdrawn: row.removedAt !== null && row.removedBy === submitterId,
+      types: orderedTypes(row.types),
+      owners: row.owners.length ? row.owners : row.submitter ? [row.submitter] : [],
+      // "Removido por quem cuida": an owner took it off, so there is no reason (an admin gives one).
+      withdrawn: row.removedAt !== null && row.removalReason === null,
       links: links
         .filter((link) => link.partnerId === row.id)
         .map(({ network, url }) => ({ network: network as Exclude<Network, 'website'>, url })),
@@ -294,5 +327,45 @@ export async function removePartner(
       ),
     );
     return eventIds;
+  });
+}
+
+/**
+ * An admin corrects a partner's kinds ("Editar tipos…"). Unlike the submitter's edit it does not send
+ * the partner back to review: the kinds are a label the admin vouches for, not a link. Refused for
+ * one that is taken down (`closed`) or unknown (`not_found`). Returns the `PartnerUpdated` event,
+ * which keeps the change in the audit log.
+ */
+export async function setPartnerTypes(
+  db: AnyDb,
+  actor: Actor | null,
+  id: string,
+  types: PartnerType[],
+  { now = new Date() }: { now?: Date } = {},
+): Promise<string[]> {
+  authorize(actor, 'moderation:manage');
+  return db.transaction(async (tx) => {
+    const t = tx as unknown as AnyDb;
+    const [partner] = await t.select().from(partners).where(eq(partners.id, id)).for('update');
+    if (!partner) throw new Invalid('id', 'not_found');
+    if (partner.removedAt) throw new Invalid('id', 'closed');
+
+    const next = orderedTypes(types);
+    await t.update(partners).set({ types: next, updatedAt: now }).where(eq(partners.id, id));
+    return [
+      await recordEvent(
+        t,
+        {
+          type: 'PartnerUpdated',
+          actorId: actor!.id,
+          payload: {
+            partnerId: id,
+            name: partner.name,
+            changes: { types: { from: partner.types.join(','), to: next.join(',') } },
+          },
+        },
+        { now },
+      ),
+    ];
   });
 }

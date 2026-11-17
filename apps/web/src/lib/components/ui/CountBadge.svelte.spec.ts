@@ -32,6 +32,6 @@ describe('CountBadge', () => {
   it('takes its colour from the tone', () => {
     render(CountBadge, { count: 3, tone: 'error' });
 
-    expect(badge()?.getAttribute('class')).toContain('preset-filled-error-500');
+    expect(badge()?.getAttribute('class')).toContain('preset-filled-error-700');
   });
 });

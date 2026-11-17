@@ -121,8 +121,8 @@ test.describe('sign in and out', () => {
   }) => {
     const user = await createUser('Ana Souza');
 
-    await signIn(page, user, '/t');
-    await expect(page).toHaveURL(/\/t$/);
+    await signIn(page, user, '/tables');
+    await expect(page).toHaveURL(/\/tables$/);
 
     await signOut(page, user.username);
     await expect(page.getByRole('banner').getByText(user.username)).toHaveCount(0);
@@ -152,9 +152,9 @@ test.describe('sign in and out', () => {
     const user = await createUser('Caio Reis');
     await signIn(page, user);
 
-    await page.goto('/login?next=%2Ft');
+    await page.goto('/login?next=%2Ftables');
 
-    await expect(page).toHaveURL(/\/t$/);
+    await expect(page).toHaveURL(/\/tables$/);
   });
 
   test('a protected page sends an anonymous visitor to log in and back afterwards', async ({
@@ -229,6 +229,8 @@ test.describe('password reset', () => {
     await page.goto('/forgot');
     await page.getByLabel('Email').fill(user.email);
     await page.getByRole('button', { name: 'Enviar link' }).click();
+    // The form's own navigation must finish first, or it interrupts the visit to the link.
+    await expect(page.getByRole('heading', { name: 'Confira seu email' })).toBeVisible();
     const [message] = await inbox(user.email, { waitFor: /reset|recover|password/i });
     await page.goto(linkIn(message)!);
 
@@ -259,6 +261,8 @@ test.describe('password reset', () => {
     await page.goto('/forgot');
     await page.getByLabel('Email').fill(user.email);
     await page.getByRole('button', { name: 'Enviar link' }).click();
+    // The form's own navigation must finish first, or it interrupts the visit to the link.
+    await expect(page.getByRole('heading', { name: 'Confira seu email' })).toBeVisible();
     const [message] = await inbox(user.email, { waitFor: /reset|recover|password/i });
     const link = linkIn(message)!;
     await page.goto(link);

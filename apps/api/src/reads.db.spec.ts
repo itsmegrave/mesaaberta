@@ -7,6 +7,7 @@ import {
   registrations,
   systems,
   tags,
+  userBadges,
 } from '@mesaaberta/db/schema';
 import { readCatalog } from '@mesaaberta/core/server/reads/catalog';
 import { readEditCatalog } from '@mesaaberta/core/server/reads/edit-catalog';
@@ -146,18 +147,30 @@ describe('GET /v1/reads/preview', () => {
       timezone: 'UTC',
       gmId: ana,
       systemId: system.id,
+      publishedAt: new Date(Date.now() - 60 * 60 * 1000),
     });
     const answer = await app.request('/preview', { headers: { [ACTOR_HEADER]: ana } }, env);
 
     expect(answer.status).toBe(200);
-    const body = (await answer.json()) as { tables: { slug: string }[] };
+    const body = (await answer.json()) as {
+      tables: { slug: string }[];
+      newTables: { slug: string }[];
+    };
     expect(body.tables.map((t) => t.slug)).toContain('mesa-publica');
+    expect(body.newTables.map((t) => t.slug)).toContain('mesa-publica');
     expect(JSON.stringify(body)).not.toContain('gmId');
     expect(body).toEqual(JSON.parse(JSON.stringify(await readPreview(test.db, new Date()))));
   });
 
-  it('needs a known actor', async () => {
-    expect((await app.request('/preview', {}, env)).status).toBe(401);
+  it('is open to visitors, and reads an unknown account as one', async () => {
+    const visitor = await app.request('/preview', {}, env);
+    expect(visitor.status).toBe(200);
+    const unknown = await app.request(
+      '/preview',
+      { headers: { [ACTOR_HEADER]: '00000000-0000-4000-8000-0000000fffff' } },
+      env,
+    );
+    expect(await unknown.json()).toEqual(await visitor.json());
   });
 });
 
@@ -166,7 +179,7 @@ describe('GET /v1/reads/tables', () => {
     app.request(`/tables${query}`, { headers: actor ? { [ACTOR_HEADER]: actor } : {} }, env);
 
   it('answers what the in-process reader builds for the same filters, and drops junk', async () => {
-    const filters = { systems: [], modality: null, platforms: [], tags: [] };
+    const filters = { systems: [], modality: null, platforms: [], tags: [], gm: null };
 
     const all = await getTables('?bogus=1&system=NOT%20A%20SLUG');
     expect(all.status).toBe(200);
@@ -182,8 +195,39 @@ describe('GET /v1/reads/tables', () => {
     expect(none.pickedSystems).toEqual(['no-such-system']);
   });
 
-  it('needs a known actor', async () => {
-    expect((await getTables('', null)).status).toBe(401);
+  it('is open to visitors', async () => {
+    const visitor = await getTables('', null);
+    expect(visitor.status).toBe(200);
+    expect(await visitor.json()).toEqual(await (await getTables('')).json());
+  });
+});
+
+describe('GET /v1/reads/table-ids/:slug', () => {
+  it("answers a table's id and its GM's, with the page's visibility", async () => {
+    const [system] = await test.db.select({ id: systems.id }).from(systems).limit(1);
+    const values = (slug: string, status: string) => ({
+      slug,
+      title: slug,
+      kind: 'one_shot',
+      capacity: 4,
+      status,
+      startsAt: new Date('2099-03-01T20:00:00Z'),
+      durationMinutes: 60,
+      timezone: 'UTC',
+      gmId: ana,
+      systemId: system.id,
+    });
+    const [table] = await test.db
+      .insert(gameTables)
+      .values([values('mesa-ids', 'active'), values('rascunho-ids', 'draft')] as never)
+      .returning({ id: gameTables.id });
+    const ids = (slug: string, actor: string | null) =>
+      app.request(`/table-ids/${slug}`, { headers: actor ? { [ACTOR_HEADER]: actor } : {} }, env);
+
+    expect(await (await ids('mesa-ids', null)).json()).toEqual({ id: table.id, gmId: ana });
+    expect((await ids('rascunho-ids', bia)).status).toBe(404);
+    expect((await ids('rascunho-ids', ana)).status).toBe(200);
+    expect((await ids('nenhuma', ana)).status).toBe(404);
   });
 });
 
@@ -219,6 +263,12 @@ describe('GET /v1/reads/detail/:slug', () => {
     await test.db
       .insert(registrations)
       .values({ tableId: table.id, playerId: bia, status: 'confirmed' } as never);
+    await test.db.insert(userBadges).values([
+      { profileId: ana, badgeId: 'gm-first' },
+      { profileId: ana, badgeId: 'gm-master-1' },
+      { profileId: ana, badgeId: 'beloved-gm', hidden: true },
+      { profileId: bia, badgeId: 'reliable-player' },
+    ]);
 
     for (const who of [ana, bia]) {
       const answer = await getDetail('mesa-detalhe', who);
@@ -240,6 +290,20 @@ describe('GET /v1/reads/detail/:slug', () => {
       ((await (await getDetail('mesa-detalhe', bia)).json()) as { registrations: unknown })
         .registrations,
     ).toBeNull();
+    // The roster's badges: the GM's strongest one shown, and reliable players for the GM only.
+    expect(
+      ((await (await getDetail('mesa-detalhe', ana)).json()) as { badges: unknown }).badges,
+    ).toEqual({
+      gm: 'gm-master-1',
+      reliable: [bia],
+    });
+    expect(
+      ((await (await getDetail('mesa-detalhe', bia)).json()) as { badges: unknown }).badges,
+    ).toEqual({
+      gm: 'gm-master-1',
+      reliable: [],
+    });
+    await test.db.delete(userBadges);
   });
 
   it('keeps someone else’s draft and unknown tables a 404', async () => {
@@ -248,8 +312,9 @@ describe('GET /v1/reads/detail/:slug', () => {
     expect((await getDetail('no-such-table')).status).toBe(404);
   });
 
-  it('needs a known actor', async () => {
-    expect((await getDetail('mesa-detalhe', null)).status).toBe(401);
+  it('is open to visitors, who never see someone else’s draft', async () => {
+    expect((await getDetail('mesa-detalhe', null)).status).toBe(200);
+    expect((await getDetail('mesa-ana', null)).status).toBe(404);
   });
 });
 
@@ -312,5 +377,30 @@ describe('GET /v1/reads/manage/:slug', () => {
 
   it('needs a known actor', async () => {
     expect((await getManage('mesa-detalhe', null)).status).toBe(401);
+  });
+});
+
+describe('the directory reads and Início', () => {
+  const read = (path: string, actor: string | null = ana) =>
+    app.request(path, { headers: actor ? { [ACTOR_HEADER]: actor } : {} }, env);
+
+  it('answers a page of each directory to visitors, and 404 past the last page', async () => {
+    for (const path of ['/systems', '/gamemasters', '/places']) {
+      const page = await read(path, null);
+      expect(page.status).toBe(200);
+      expect(await page.json()).toHaveProperty('pages');
+      expect((await read(`${path}?page=99`, null)).status).toBe(404);
+    }
+    expect(await (await read('/gamemasters')).json()).toHaveProperty('systems');
+  });
+
+  it('answers 404 for a system or a place that is not there', async () => {
+    expect((await read('/systems/no-such-system')).status).toBe(404);
+    expect((await read('/places/no-such-place')).status).toBe(404);
+  });
+
+  it('answers the signed-in Início, only for someone signed in', async () => {
+    expect(await (await read('/home?follows=1')).json()).toHaveProperty('rows');
+    expect((await read('/home', null)).status).toBe(401);
   });
 });

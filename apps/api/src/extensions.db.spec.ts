@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import type { Extension } from '@mesaaberta/core/server/extensions/index';
 import { profiles } from '@mesaaberta/db/schema';
@@ -22,6 +22,12 @@ const fake: Extension = {
   },
 };
 const plain: Extension = { id: 'plain' };
+const publishTable = vi.fn(async () => 'published' as const);
+const withPanel: Extension = {
+  id: 'panelled',
+  admin: { count: async () => 0, load: async (_db, env) => ({ hasKey: 'KEY' in (env as object) }) },
+  social: { name: 'panelled', publishTable } as unknown as NonNullable<Extension['social']>,
+};
 
 beforeAll(async () => {
   test = await createTestDb();
@@ -74,5 +80,124 @@ describe('api extension routes over a database', () => {
 
   it('answers 404 for everything in the public build, which installs nothing', async () => {
     expect((await post('queue', { tableId: 'x' }, admin, 'instagram', [])).status).toBe(404);
+  });
+
+  it('answers an extension’s panel for an admin only', async () => {
+    const get = (actor: string) =>
+      app([withPanel]).request(
+        '/panelled/panel',
+        { headers: { [ACTOR_HEADER]: actor } },
+        { ...env, KEY: 'x' },
+      );
+    expect(await (await get(admin)).json()).toEqual({ panel: { hasKey: true } });
+    expect((await get(member)).status).toBe(403);
+  });
+
+  it('publishes a queued table after its answer, with the installed connector', async () => {
+    const send = (tableId: string) =>
+      app([withPanel]).request(
+        '/social/publish',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', [ACTOR_HEADER]: admin },
+          body: JSON.stringify({ tableId }),
+        },
+        env,
+      );
+    expect((await send('nope')).status).toBe(400);
+    const tableId = '00000000-0000-4000-8000-000000000cb1';
+    expect((await send(tableId)).status).toBe(202);
+    await vi.waitFor(() =>
+      expect(publishTable).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        tableId,
+        expect.any(Date),
+        { useTableImage: false },
+      ),
+    );
+  });
+
+  describe('hand-written social posts', () => {
+    const queuePost = vi.fn();
+    const postStatus = vi.fn();
+    const poster: Extension = {
+      id: 'poster',
+      social: {
+        name: 'poster',
+        label: 'Poster',
+        configured: () => true,
+        queuePost,
+        postStatus,
+      } as unknown as NonNullable<Extension['social']>,
+    };
+    const send = (body: unknown, actor = admin, list: Extension[] = [poster]) =>
+      app(list).request(
+        '/social/posts',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', [ACTOR_HEADER]: actor },
+          body: JSON.stringify(body),
+        },
+        env,
+      );
+    const reel = { caption: 'Bora jogar', mediaUrl: 'https://example.com/reel.mp4' };
+
+    it('asks to confirm first, then queues with the connector, as the admin', async () => {
+      queuePost.mockResolvedValueOnce({
+        step: 'confirm',
+        account: 'mesa',
+        kind: 'video',
+        bytes: 9,
+      });
+      const preview = await send(reel);
+      expect(await preview.json()).toEqual({
+        eventIds: [],
+        network: 'Poster',
+        step: 'confirm',
+        account: 'mesa',
+        kind: 'video',
+        bytes: 9,
+      });
+      expect(queuePost).toHaveBeenLastCalledWith(
+        expect.anything(),
+        expect.anything(),
+        { caption: 'Bora jogar', media: { url: reel.mediaUrl }, createdBy: admin },
+        { confirmed: false },
+      );
+
+      queuePost.mockResolvedValueOnce({ status: 'queued', id: 'p1', kind: 'video' });
+      const queued = await send({ ...reel, confirmed: true });
+      expect(await queued.json()).toMatchObject({ status: 'queued', id: 'p1' });
+      expect(queuePost.mock.lastCall?.[3]).toEqual({ confirmed: true });
+    });
+
+    it('refuses a member, bad data, a refused media and a build without the method', async () => {
+      expect((await send(reel, member)).status).toBe(403);
+      expect((await send({ ...reel, mediaUrl: 'http://example.com/a.mp4' })).status).toBe(400);
+      const empty = await send({ ...reel, caption: ' ' });
+      expect(await empty.json()).toMatchObject({ error: 'invalid', field: 'caption' });
+
+      queuePost.mockResolvedValueOnce({ invalid: { field: 'media', code: 'too_large' } });
+      expect(await (await send(reel)).json()).toEqual({
+        error: 'invalid',
+        field: 'media',
+        message: 'too_large',
+      });
+      expect((await send(reel, admin, [plain])).status).toBe(503);
+    });
+
+    it('answers where a post stands, or 404', async () => {
+      const id = '00000000-0000-4000-8000-000000000cc1';
+      const get = (path: string) =>
+        app([poster]).request(path, { headers: { [ACTOR_HEADER]: admin } }, env);
+      postStatus.mockResolvedValueOnce({ id, status: 'published', permalink: 'https://x/p/1/' });
+      expect(await (await get(`/social/posts/${id}`)).json()).toMatchObject({
+        post: { status: 'published' },
+      });
+      postStatus.mockResolvedValueOnce(null);
+      expect((await get(`/social/posts/${id}`)).status).toBe(404);
+      expect((await get('/social/posts/nope')).status).toBe(404);
+    });
   });
 });

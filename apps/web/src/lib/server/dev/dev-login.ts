@@ -41,7 +41,7 @@ export const handleDevLogin: Handle = async ({ event, resolve }) => {
 
   const refusal = devLoginRefusal(event);
   if (refusal) {
-    event.locals.log.warn('dev login refused', { code: 'dev_login_refused', reason: refusal });
+    event.locals.log.warn('auth.dev_login_refused', { code: 'dev_login_refused', reason: refusal });
     error(404, 'Not found');
   }
   const supabase = event.locals.supabase!;
@@ -59,7 +59,7 @@ export const handleDevLogin: Handle = async ({ event, resolve }) => {
     password: PERSONA_PASSWORD,
   });
   if (failed) {
-    event.locals.log.warn('dev login failed', { code: 'dev_login_failed', persona: key });
+    event.locals.log.warn('auth.dev_login_failed', { code: 'dev_login_failed', reason: key });
     error(503, 'The personas are not in the local Supabase. Run `bun run dev:up`.');
   }
 

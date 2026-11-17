@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 
 describe('safeNext', () => {
-  it.each(['/', '/t', '/t/mesa-do-dragao', '/t?page=2', '/t#top'])(
+  it.each(['/', '/tables', '/t/mesa-do-dragao', '/tables?page=2', '/tables#top'])(
     'keeps the on-site path %s',
     (path) => {
       expect(safeNext(path)).toBe(path);
@@ -29,6 +29,6 @@ describe('safeNext', () => {
 
   it('uses the fallback it is given', () => {
     expect(safeNext('https://evil.example', '/account')).toBe('/account');
-    expect(safeNext('//evil.example', '/tables?page=2')).toBe('/t?page=2');
+    expect(safeNext('//evil.example', '/tables?page=2')).toBe('/tables?page=2');
   });
 });

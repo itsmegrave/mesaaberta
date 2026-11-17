@@ -35,12 +35,17 @@
     media: Snippet;
     /** The corner pill's text; none draws no pill. */
     pill?: string;
-    pillTone?: 'primary' | 'warning';
+    /** `plain` is the quiet pill on the panel colour (a place's kind). */
+    pillTone?: 'primary' | 'warning' | 'plain';
     children: Snippet;
     footer: Snippet;
   } = $props();
 
-  const tones = { primary: 'preset-filled-primary-500', warning: 'preset-filled-warning-500' };
+  const tones = {
+    primary: 'preset-filled-primary-500',
+    warning: 'preset-filled-warning-500',
+    plain: 'border border-surface-200-800 bg-panel',
+  };
 </script>
 
 <article

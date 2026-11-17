@@ -3,6 +3,7 @@
   import { dayLabel, timeLabel } from '#lib/admin/format.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import type { History, HistoryEntry } from '@mesaaberta/core/server/admin/history';
+  import { presentationOf } from '#lib/badges/presentation.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
 
@@ -27,6 +28,10 @@
     kind: m.history_field_kind,
     capacity: m.history_field_capacity,
     minPlayers: m.history_field_minPlayers,
+    plannedSessions: m.history_field_plannedSessions,
+    safetyTools: m.history_field_safetyTools,
+    contentRating: m.history_field_contentRating,
+    sessionSize: m.history_field_sessionSize,
     startsAt: m.history_field_startsAt,
     durationMinutes: m.history_field_durationMinutes,
     timezone: m.history_field_timezone,
@@ -60,6 +65,7 @@
       campaign: m.table_kind_campaign,
       one_shot: m.table_kind_one_shot,
       adventure: m.table_kind_adventure,
+      open: m.table_kind_open,
     },
     modality: { online: m.table_modality_online, in_person: m.table_modality_in_person },
     joinMode: { auto: m.history_value_join_auto, approval: m.history_value_join_approval },
@@ -73,6 +79,9 @@
     }
     return WORDS[field]?.[String(value)]?.() ?? String(value);
   }
+
+  const badgeName = (badgeId: string | null) =>
+    badgeId ? (presentationOf(badgeId)?.name() ?? badgeId) : '';
 
   /** What the person did, without who did it: that is shown in front, as a link. */
   function whatHappened(entry: HistoryEntry) {
@@ -92,10 +101,28 @@
         return m.history_event_TableDisabled();
       case 'TableAwaitingConfirmation':
         return m.history_event_TableAwaitingConfirmation();
+      case 'TableCloseReminder':
+        return m.history_event_TableCloseReminder();
       case 'TableConcluded':
-        return m.history_event_TableConcluded();
+        return entry.autoClosed
+          ? m.history_event_TableConcludedAutomatically()
+          : m.history_event_TableConcluded();
+      case 'TableSessionHeld':
+        return entry.autoClosed
+          ? m.history_event_TableSessionHeldAutomatically()
+          : m.history_event_TableSessionHeld();
       case 'TableNotHeld':
         return m.history_event_TableNotHeld();
+      case 'SessionScheduled':
+        return m.history_event_SessionScheduled();
+      case 'SessionMoved':
+        return m.history_event_SessionMoved();
+      case 'SessionCancelled':
+        return m.history_event_SessionCancelled();
+      case 'SessionSignedUp':
+        return m.history_event_SessionSignedUp();
+      case 'SessionSignupLeft':
+        return m.history_event_SessionSignupLeft();
       case 'TableClosedByModeration':
         return m.history_event_TableClosedByModeration();
       case 'JoinRequested':
@@ -120,6 +147,12 @@
         return m.history_event_AccountReinstated({ user });
       case 'AccountBanLifted':
         return m.history_event_AccountBanLifted({ user });
+      case 'BadgeEarned':
+        return m.history_event_BadgeEarned({ user, badge: badgeName(entry.badgeId) });
+      case 'BadgeGranted':
+        return m.history_event_BadgeGranted({ user, badge: badgeName(entry.badgeId) });
+      case 'BadgeRevoked':
+        return m.history_event_BadgeRevoked({ user, badge: badgeName(entry.badgeId) });
       case 'ReportFiled':
         return m.history_event_ReportFiled();
       case 'ReportReviewing':

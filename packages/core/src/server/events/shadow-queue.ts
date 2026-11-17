@@ -30,10 +30,14 @@ export async function publishShadow(
     const queue = await resolvers.get(db)?.();
     if (!queue) return;
     await queueTransport(queue).enqueue(ref);
-    log.info('queue shadow published', { event: 'queue.shadow.published', ...ref });
+    log.info('queue.shadow_published', {
+      event: 'queue.shadow.published',
+      eventId: ref.eventId,
+      eventType: ref.type,
+    });
   } catch (error) {
     // A queue that is down must not touch delivery, which does not read it.
-    log.warn('queue shadow publish failed', {
+    log.warn('queue.shadow_publish_failed', {
       event: 'queue.shadow.failed',
       eventId: ref.eventId,
       error,

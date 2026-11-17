@@ -81,7 +81,7 @@
           type="submit"
           size="custom"
           controller={asking}
-          class="btn h-12 gap-2 rounded-lg border-2 border-primary-500 px-5 font-semibold"
+          class="btn h-11 gap-2 rounded-lg border-2 border-primary-500 px-5 font-semibold"
         >
           {m.password_add_send()}
         </MAButton>
@@ -128,19 +128,14 @@
           type="submit"
           size="custom"
           controller={setting}
-          class="btn h-12 gap-2 rounded-lg preset-filled-primary-500 text-base font-semibold"
+          class="btn h-11 gap-2 rounded-lg preset-filled-primary-500 text-base font-semibold"
         >
           {m.password_add_submit()}
         </MAButton>
       </MAForm>
 
       <MAForm action="?/passwordCode" onsubmit={asking.submit} class="mt-3">
-        <MAButton
-          type="submit"
-          size="custom"
-          controller={asking}
-          class="btn h-12 gap-2 rounded-lg px-0 link-underline font-semibold text-link"
-        >
+        <MAButton type="submit" variant="secondary" controller={asking} class="font-semibold">
           {m.password_add_resend()}
         </MAButton>
       </MAForm>

@@ -1,0 +1,5 @@
+ALTER TYPE "public"."table_kind" ADD VALUE 'open';--> statement-breakpoint
+ALTER TABLE "game_tables" DROP CONSTRAINT "game_tables_recurrence_matches_kind";--> statement-breakpoint
+ALTER TABLE "game_tables" ADD COLUMN "session_size" integer;--> statement-breakpoint
+ALTER TABLE "game_tables" ADD CONSTRAINT "game_tables_session_size_range" CHECK ("game_tables"."session_size" IS NULL OR ("game_tables"."session_size" >= 1 AND "game_tables"."session_size" <= "game_tables"."capacity"));--> statement-breakpoint
+ALTER TABLE "game_tables" ADD CONSTRAINT "game_tables_recurrence_matches_kind" CHECK (("game_tables"."kind"::text IN ('one_shot', 'adventure') AND "game_tables"."recurrence" IS NULL) OR ("game_tables"."kind"::text = 'campaign' AND "game_tables"."recurrence" IS NOT NULL) OR "game_tables"."kind"::text = 'open');

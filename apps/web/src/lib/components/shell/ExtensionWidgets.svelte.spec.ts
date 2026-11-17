@@ -5,7 +5,7 @@ import { QueryClient } from '@tanstack/svelte-query';
 import ExtensionWidgets from './ExtensionWidgets.svelte';
 import Fixture from './widget-fixture.svelte';
 
-const route = vi.hoisted(() => ({ id: '/t' as string | null }));
+const route = vi.hoisted(() => ({ id: '/(tables)/tables' as string | null }));
 vi.mock('$app/env', () => ({ browser: true }));
 vi.mock('@sentry/sveltekit', () => ({ captureException: vi.fn() }));
 vi.mock('$app/state', () => ({
@@ -13,7 +13,7 @@ vi.mock('$app/state', () => ({
     get route() {
       return route;
     },
-    url: new URL('https://x.test/t?page=2'),
+    url: new URL('https://x.test/tables?page=2'),
   },
 }));
 const shared = vi.hoisted(() => ({ client: undefined as unknown }));
@@ -40,7 +40,7 @@ const afterDelay = () => new Promise((resolve) => setTimeout(resolve, 3200));
 afterEach(() => {
   vi.unstubAllGlobals();
   shared.client = undefined;
-  route.id = '/t';
+  route.id = '/(tables)/tables';
 });
 
 describe('ExtensionWidgets', () => {
@@ -55,8 +55,8 @@ describe('ExtensionWidgets', () => {
     const card = page.getByRole('region', { name: 'Qual sistema?' });
     await expect.element(card).toHaveAttribute('data-mode', 'card');
     await expect.element(card).toHaveAttribute('data-action', '/fake/w/p1?/respond');
-    await expect.element(card).toHaveAttribute('data-next', '/t?page=2');
-    expect(fetch).toHaveBeenCalledWith('/api/widgets?route=%2Ft', expect.anything());
+    await expect.element(card).toHaveAttribute('data-next', '/tables?page=2');
+    expect(fetch).toHaveBeenCalledWith('/api/widgets?route=%2Ftables', expect.anything());
   });
 
   it('replaces the card with the answer, and moves on once the widget is done', async () => {
@@ -71,7 +71,7 @@ describe('ExtensionWidgets', () => {
   });
 
   it('never asks on a page where widgets do not show', async () => {
-    route.id = '/t/new';
+    route.id = '/(tables)/tables/new';
     const fetch = serve([poll('p1', 'Qual sistema?')]);
     render(ExtensionWidgets);
     await afterDelay();

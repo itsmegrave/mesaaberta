@@ -52,7 +52,7 @@
         >{m.form_capacity_seats({ count: seats })}</Slider.ValueText
       >
     </div>
-    <Slider.Control class="flex h-12 items-center">
+    <Slider.Control class="flex h-11 items-center">
       <Slider.Track class="h-2 grow rounded-full bg-surface-200-800">
         <Slider.Range class="h-full rounded-full bg-primary-500" />
       </Slider.Track>
@@ -78,7 +78,7 @@
       {min}
       {max}
       bind:value
-      class="input h-13 rounded-lg border-control border-ink-muted bg-panel px-3"
+      class="input h-11 rounded-lg border-control border-ink-muted bg-panel px-3"
       aria-invalid={invalid || undefined}
       aria-describedby={describedby}
     />

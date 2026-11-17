@@ -41,6 +41,10 @@ const input = (over: Partial<TableInput> = {}): TableInput => ({
   kind: 'one_shot',
   capacity: 5,
   minPlayers: 3,
+  plannedSessions: null,
+  safetyTools: [],
+  contentRating: null,
+  sessionSize: null,
   startsAtLocal: '2026-10-10T19:00',
   timezone: 'America/Sao_Paulo',
   durationMinutes: 240,
@@ -54,6 +58,7 @@ const input = (over: Partial<TableInput> = {}): TableInput => ({
   locationNeighbourhood: null,
   locationCity: null,
   locationState: null,
+  placeId: null,
   platforms: [],
   tags: [],
   removeImage: false,
@@ -128,6 +133,7 @@ describe('table duplication', () => {
       gmId: actor.id,
       status: 'active',
       minPlayers: 3,
+      plannedSessions: null,
       imagePath: 'tables/original.png',
       icalSequence: 0,
       duplicatedFromTableId: loaded.sourceId,
@@ -390,7 +396,7 @@ it('allows editing inactive sources after a copy takes their released slot', asy
     await duplicateTable(test.db, actor, original.slug, input(), { now });
     await expect(
       updateTable(test.db, actor, original.slug, input({ title: 'Fonte corrigida' })),
-    ).resolves.toEqual({ eventId: expect.any(String) });
+    ).resolves.toEqual({ eventId: expect.any(String), promoted: [] });
     expect((await row(original.slug)).status).toBe(status);
   }
 });

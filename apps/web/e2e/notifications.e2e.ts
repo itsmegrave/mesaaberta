@@ -48,7 +48,7 @@ test('the GM hears about a new player on the bell, opens it, and it is read', as
   const page = playerSession.page;
   await page.goto('/u/tables');
   await bellSays(page, 'Notificações: 1 sem ler');
-  await page.goto('/n?category=registration');
+  await page.goto('/notifications?category=registration');
   await expect(
     page.getByRole('main').getByText(`Sua vaga em ${title} foi encerrada pela mestria da mesa.`),
   ).toBeVisible();

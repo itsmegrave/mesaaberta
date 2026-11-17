@@ -5,11 +5,15 @@
   import { tick } from 'svelte';
   import MAForm from '#lib/components/ui/MAForm.svelte';
   import InvitationAction from '#lib/components/InvitationAction.svelte';
+  import PostButton from '#lib/components/PostButton.svelte';
+  import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
+  import { blockSchema } from '@mesaaberta/core/messages/schema';
   import SettingsSection from '../components/ui/SettingsSection.svelte';
   import { actionForm } from '#lib/forms/action-form.svelte.js';
   import { toast } from '#lib/toaster.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { directMessagesSchema } from '@mesaaberta/core/messages/schema';
+  import { invitationFormSchema, type InvitationFormValues } from '#lib/invitations/schema.js';
   import { m } from '#lib/paraglide/messages.js';
 
   let { data, form: result = null } = $props();
@@ -33,6 +37,29 @@
     onError: restoreMessaging,
     errorMessage: m.messages_setting_failed,
   });
+
+  // "Receber convites" saves as soon as it flips, like the messages switch.
+  let invitingForm = $state<HTMLFormElement>();
+  const restoreInviting = () => {
+    inviting.change('enabled', inviting.values.enabled === 'true' ? 'false' : 'true');
+    toast.error(m.invitation_unavailable());
+  };
+  // svelte-ignore state_referenced_locally
+  const inviting = actionForm({
+    initial: {
+      username: '',
+      invitationId: '',
+      gmId: '',
+      enabled: data.invitationPreferences.enabled ? 'true' : 'false',
+      blocked: 'true',
+    } as InvitationFormValues,
+    schema: invitationFormSchema,
+    domain: 'account',
+    onSuccess: () => toast.success(m.invitation_saved()),
+    onFailure: restoreInviting,
+    onError: restoreInviting,
+    errorMessage: m.invitation_unavailable,
+  });
 </script>
 
 <SettingsSection title={m.profile_section_messages()} lede={m.profile_section_messages_lede()} />
@@ -43,6 +70,7 @@
     <Switch
       checked={messaging.values.enabled}
       disabled={messaging.pending}
+      aria-busy={messaging.pending || undefined}
       onCheckedChange={(event) => {
         messaging.change('enabled', event.checked);
         void tick().then(() => messagingForm?.requestSubmit());
@@ -60,6 +88,39 @@
   <p class="mt-3 max-w-prose text-muted">{m.messages_setting_help()}</p>
 </section>
 
+{#if data.blocked}
+  <!-- "Pessoas bloqueadas" (`use_message_safety`): each row unblocks on its own. -->
+  <section aria-labelledby="blocked-people" class={card}>
+    <h3 id="blocked-people" class={heading}>{m.messages_blocked_title()}</h3>
+    <p class="mt-3 max-w-prose text-muted">{m.messages_blocked_help()}</p>
+    {#if data.blocked.length === 0}
+      <p class="mt-3 text-muted">{m.messages_blocked_empty()}</p>
+    {:else}
+      <ul class="mt-2 divide-y divide-surface-200-800">
+        {#each data.blocked as person (person.id)}
+          <li class="flex flex-wrap items-center gap-3 py-3">
+            <MAAvatar src={person.avatarUrl} name={person.username} size={44} />
+            <span class="min-w-0 flex-1 truncate font-semibold">{atHandle(person.username)}</span>
+            <PostButton
+              action="?/block"
+              fields={{ profileId: person.id, blocked: 'false' }}
+              schema={blockSchema}
+              domain="account"
+              variant="secondary"
+              size="sm"
+              buttonClass="font-semibold"
+              errorMessage={m.messages_block_failed}
+              success={m.messages_unblocked_toast({ name: atHandle(person.username) })}
+            >
+              {m.messages_unblock()}
+            </PostButton>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </section>
+{/if}
+
 <section aria-labelledby="invitation-settings" class={card}>
   <h3 id="invitation-settings" class={heading}>{m.invitation_settings_title()}</h3>
   <p class="mt-3 text-muted">{m.invitation_settings_help()}</p>
@@ -69,18 +130,30 @@
     >
       {m.invitation_unavailable()}
     </p>{/if}
-  <p class="mt-3 font-semibold">
-    {data.invitationPreferences.enabled
-      ? m.invitation_settings_enabled()
-      : m.invitation_settings_disabled()}
-  </p>
-  <div class="mt-4">
-    <InvitationAction
-      action="?/invitations"
-      enabled={!data.invitationPreferences.enabled}
-      label={data.invitationPreferences.enabled ? m.invitation_disable() : m.invitation_enable()}
-    />
-  </div>
+  <MAForm
+    bind:element={invitingForm}
+    action="?/invitations"
+    onsubmit={inviting.submit}
+    class="mt-4"
+  >
+    <Switch
+      checked={inviting.values.enabled === 'true'}
+      disabled={inviting.pending}
+      aria-busy={inviting.pending || undefined}
+      onCheckedChange={(event) => {
+        inviting.change('enabled', event.checked ? 'true' : 'false');
+        void tick().then(() => invitingForm?.requestSubmit());
+      }}
+      class="flex items-center justify-between gap-4"
+    >
+      <Switch.Label class="font-semibold">{m.invitation_enable()}</Switch.Label>
+      <Switch.Control>
+        <Switch.Thumb />
+      </Switch.Control>
+      <Switch.HiddenInput />
+      <input type="hidden" name="enabled" value={inviting.values.enabled} />
+    </Switch>
+  </MAForm>
   <h4 class="mt-6 text-lg font-semibold">{m.invitation_blocks_title()}</h4>
   {#if data.invitationPreferences.blocks.length === 0}<p class="mt-2 text-muted">
       {m.invitation_blocks_empty()}

@@ -1,5 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import {
+  AdultOnly,
   AlreadyRated,
   AlreadyRegistered,
   DirectMessagesOff,
@@ -17,6 +18,7 @@ import {
  * is rethrown and becomes a 500 rather than a misleading 403.
  */
 export function failFrom(error: unknown) {
+  if (error instanceof AdultOnly) return fail(403, { error: 'adult_only' as const });
   if (error instanceof Forbidden) return fail(403, { error: 'forbidden' as const });
   if (error instanceof NotFound) return fail(404, { error: 'not_found' as const });
   if (error instanceof TableFull) return fail(409, { error: 'table_full' as const });

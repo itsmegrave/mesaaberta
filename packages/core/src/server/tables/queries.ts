@@ -1,6 +1,27 @@
-import { and, eq, gt, ne, sql, type SQL } from 'drizzle-orm';
+import {
+  and,
+  count,
+  desc,
+  eq,
+  gt,
+  gte,
+  inArray,
+  ne,
+  notExists,
+  or,
+  sql,
+  type SQL,
+} from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { gameTables, profiles, registrations, systems } from '../db/schema';
+import {
+  follows,
+  gameTables,
+  places,
+  profileFavoriteSystems,
+  profiles,
+  registrations,
+  systems,
+} from '../db/schema';
 import { publicName } from '../db/public-name';
 import { reservedSeatsSql } from '../invitations/seats';
 import { weeklyInterval } from './schedule';
@@ -20,6 +41,10 @@ const columns = {
   imagePath: gameTables.imagePath,
   capacity: gameTables.capacity,
   minPlayers: gameTables.minPlayers,
+  plannedSessions: gameTables.plannedSessions,
+  safetyTools: gameTables.safetyTools,
+  contentRating: gameTables.contentRating,
+  sessionSize: gameTables.sessionSize,
   startsAt: gameTables.startsAt,
   durationMinutes: gameTables.durationMinutes,
   timezone: gameTables.timezone,
@@ -28,13 +53,26 @@ const columns = {
   joinMode: gameTables.joinMode,
   modality: gameTables.modality,
   locationArea: gameTables.locationArea,
+  // The "Onde jogar" place it happens at, while that place is listed; its name for the card.
+  placeId: gameTables.placeId,
+  placeName: sql<
+    string | null
+  >`(select ${places.name} from ${places} where ${places.id} = ${gameTables.placeId} and ${places.approvedAt} is not null and ${places.removedAt} is null and ${places.hiddenAt} is null)`,
   systemName: systems.name,
   systemSlug: systems.slug,
   // Seats taken: confirmed registrations only. A pending request takes none.
   taken: sql<number>`(select count(*)::int from ${registrations} where ${registrations.tableId} = ${gameTables.id} and ${registrations.status} = 'confirmed')`,
   gmName: publicName(profiles.username),
+  // The GM's picture (still a storage path or the provider's URL: the caller makes it a URL) and
+  // their name, only when they chose to show it, for the card's byline.
+  gmAvatarPath: profiles.avatarPath,
+  gmAvatarUrl: profiles.avatarUrl,
+  gmShownName: sql<
+    string | null
+  >`case when ${profiles.showName} then nullif(${profiles.name}, '') end`,
   gmId: gameTables.gmId,
   status: gameTables.status,
+  publishedAt: gameTables.publishedAt,
 };
 
 export type TableView = ReturnType<typeof shape> & {
@@ -44,15 +82,18 @@ export type TableView = ReturnType<typeof shape> & {
   gmRating: GmRating;
 };
 
-const query = (db: AnyDb, where: SQL | undefined, now: Date) =>
+const query = (db: AnyDb, where: SQL | undefined, now: Date, newestFirst = false) =>
   db
     .select({ ...columns, reserved: reservedSeatsSql(gameTables.id, now) })
     .from(gameTables)
     .innerJoin(systems, eq(gameTables.systemId, systems.id))
     .innerJoin(profiles, eq(gameTables.gmId, profiles.id))
     .where(where)
-    // Soonest first; the slug keeps tables that start together in a steady order.
-    .orderBy(gameTables.startsAt, gameTables.slug);
+    // Soonest first, or most recently published first; the slug keeps ties in a steady order.
+    .orderBy(
+      ...(newestFirst ? [desc(gameTables.publishedAt)] : [gameTables.startsAt]),
+      gameTables.slug,
+    );
 
 type Row = Awaited<ReturnType<typeof query>>[number];
 
@@ -65,7 +106,8 @@ const shape = (row: Row) => {
     seatsLeft: seatsLeft(row.capacity, row.taken + row.reserved),
     // Weeks between sessions for a weekly campaign; null for a one-shot. Information only: the
     // platform keeps one date per table, `startsAt`.
-    everyWeeks: row.kind === 'campaign' ? weeklyInterval(row.recurrence) : null,
+    everyWeeks:
+      row.kind === 'campaign' || row.kind === 'open' ? weeklyInterval(row.recurrence) : null,
   };
 };
 
@@ -75,24 +117,97 @@ const shape = (row: Row) => {
 
 /**
  * Active tables that have not started yet, soonest first. A table leaves the list the moment its
- * session begins. `systemSlug` narrows the list to one system.
+ * session begins. `systemSlug` narrows the list to one system, `placeId` to one "Onde jogar" place.
  */
 export async function listUpcomingTables(
   db: AnyDb,
   now: Date,
-  { systemSlug }: { systemSlug?: string } = {},
+  { systemSlug, placeId, limit }: { systemSlug?: string; placeId?: string; limit?: number } = {},
 ): Promise<TableView[]> {
+  const where = and(
+    eq(gameTables.status, 'active'),
+    gt(gameTables.startsAt, now),
+    systemSlug ? eq(systems.slug, systemSlug) : undefined,
+    placeId ? eq(gameTables.placeId, placeId) : undefined,
+  );
+  const rows = await (limit === undefined
+    ? query(db, where, now)
+    : query(db, where, now).limit(limit));
+
+  return withExtras(db, rows.map(shape), now);
+}
+
+// How far back "Novas mesas" looks.
+export const NEW_TABLE_DAYS = 14;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Tables published in the last `NEW_TABLE_DAYS` that have not started and still have a seat,
+ * most recently published first, at most `limit`. The window starts from `now`, so a caller
+ * that rounds `now` (see `publicReadNow`) keeps the query's parameters stable for caching.
+ */
+export async function listNewTables(db: AnyDb, now: Date, limit: number): Promise<TableView[]> {
+  const since = new Date(now.getTime() - NEW_TABLE_DAYS * DAY_MS);
   const rows = await query(
     db,
     and(
       eq(gameTables.status, 'active'),
       gt(gameTables.startsAt, now),
-      systemSlug ? eq(systems.slug, systemSlug) : undefined,
+      gte(gameTables.publishedAt, since),
+    ),
+    now,
+    true,
+  );
+  const open = rows.map(shape).filter((table) => table.seatsLeft > 0);
+
+  return withExtras(db, open.slice(0, limit), now);
+}
+
+/**
+ * The candidates for the three table rows of a signed-in Início in one query: open tables that
+ * have not started, by someone the person follows, in one of their favorite systems, or published
+ * in the last `NEW_TABLE_DAYS`. Their own tables and the ones they already joined or asked to join
+ * are left out, and so are tables with no seat left. Soonest first, without the platforms, tags and
+ * GM score: the caller sorts them into rows and adds those (`withExtras`) only for what it shows.
+ */
+export async function listHomeCandidates(
+  db: AnyDb,
+  personId: string,
+  now: Date,
+  { follows: withFollows }: { follows: boolean },
+) {
+  const since = new Date(now.getTime() - NEW_TABLE_DAYS * DAY_MS);
+  const followed = db
+    .select({ id: follows.followeeId })
+    .from(follows)
+    .where(eq(follows.followerId, personId));
+  const favorites = db
+    .select({ id: profileFavoriteSystems.systemId })
+    .from(profileFavoriteSystems)
+    .where(eq(profileFavoriteSystems.profileId, personId));
+  const rows = await query(
+    db,
+    and(
+      eq(gameTables.status, 'active'),
+      gt(gameTables.startsAt, now),
+      ne(gameTables.gmId, personId),
+      notExists(
+        db
+          .select({ one: sql`1` })
+          .from(registrations)
+          .where(
+            and(eq(registrations.tableId, gameTables.id), eq(registrations.playerId, personId)),
+          ),
+      ),
+      or(
+        withFollows ? inArray(gameTables.gmId, followed) : undefined,
+        inArray(gameTables.systemId, favorites),
+        gte(gameTables.publishedAt, since),
+      ),
     ),
     now,
   );
-
-  return withExtras(db, rows.map(shape), now);
+  return { since, tables: rows.map(shape).filter((table) => table.seatsLeft > 0) };
 }
 
 /** A master's public upcoming tables, soonest first, one page of them and the total. */
@@ -103,23 +218,30 @@ export async function listUpcomingTablesByGm(
   page: number,
   pageSize: number,
 ) {
-  const rows = await query(
-    db,
-    and(eq(gameTables.gmId, gmId), eq(gameTables.status, 'active'), gt(gameTables.startsAt, now)),
-    now,
+  const where = and(
+    eq(gameTables.gmId, gmId),
+    eq(gameTables.status, 'active'),
+    gt(gameTables.startsAt, now),
   );
-  const upcoming = rows.map(shape);
-  return {
-    total: upcoming.length,
-    tables: await withExtras(db, upcoming.slice((page - 1) * pageSize, page * pageSize), now),
-  };
+  // Only the page is read; the total is counted on its own.
+  const [rows, [{ total }]] = await Promise.all([
+    query(db, where, now)
+      .limit(pageSize)
+      .offset((page - 1) * pageSize),
+    db.select({ total: count() }).from(gameTables).where(where),
+  ]);
+  return { total, tables: await withExtras(db, rows.map(shape), now) };
 }
 
 /**
  * Adds each table's approved platforms and tags, and its GM's score: one query for the catalogue
  * and one for all the GMs on the page, so a list does not cost a query per table.
  */
-async function withExtras<T extends { id: string; gmId: string }>(db: AnyDb, list: T[], now: Date) {
+export async function withExtras<T extends { id: string; gmId: string }>(
+  db: AnyDb,
+  list: T[],
+  now: Date,
+) {
   const [catalog, scores] = await Promise.all([
     catalogOf(
       db,

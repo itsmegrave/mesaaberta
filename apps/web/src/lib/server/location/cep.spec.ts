@@ -23,7 +23,7 @@ describe('lookupCep', () => {
 
     expect(await lookupCep(test.db, '51020000', fetch)).toEqual({
       status: 'found',
-      place: { neighbourhood: 'Boa Viagem', city: 'Recife', state: 'PE' },
+      place: { street: null, neighbourhood: 'Boa Viagem', city: 'Recife', state: 'PE' },
     });
     expect(fetch).toHaveBeenCalledWith(
       'https://viacep.com.br/ws/51020000/json/',
@@ -41,8 +41,67 @@ describe('lookupCep', () => {
     const fetch = answer({ bairro: '', localidade: 'Triunfo', uf: 'PE' });
     expect(await lookupCep(test.db, '56870000', fetch)).toEqual({
       status: 'found',
-      place: { neighbourhood: null, city: 'Triunfo', state: 'PE' },
+      place: { street: null, neighbourhood: null, city: 'Triunfo', state: 'PE' },
     });
+  });
+
+  it('gives the street the CEP is on, and keeps it', async () => {
+    const fetch = answer({
+      logradouro: ' Avenida Boa Viagem ',
+      bairro: 'Boa Viagem',
+      localidade: 'Recife',
+      uf: 'PE',
+    });
+    const found = {
+      status: 'found',
+      place: {
+        street: 'Avenida Boa Viagem',
+        neighbourhood: 'Boa Viagem',
+        city: 'Recife',
+        state: 'PE',
+      },
+    };
+    expect(await lookupCep(test.db, '51021000', fetch)).toEqual(found);
+    const again = answer({});
+    expect(await lookupCep(test.db, '51021000', again)).toEqual(found);
+    expect(again).not.toHaveBeenCalled();
+  });
+
+  it('asks ViaCEP once more for the street of a CEP kept before streets were', async () => {
+    await test.db
+      .insert(postalCodes)
+      .values({ cep: '50030230', neighbourhood: 'Recife', city: 'Recife', state: 'PE' });
+
+    // ViaCEP down: still found, without a street, and asked again next time.
+    expect(await lookupCep(test.db, '50030230', answer({}, 500))).toEqual({
+      status: 'found',
+      place: { street: null, neighbourhood: 'Recife', city: 'Recife', state: 'PE' },
+    });
+
+    const fetch = answer({
+      logradouro: 'Rua do Bom Jesus',
+      bairro: 'Recife',
+      localidade: 'Recife',
+      uf: 'PE',
+    });
+    expect(await lookupCep(test.db, '50030230', fetch)).toMatchObject({
+      place: { street: 'Rua do Bom Jesus' },
+    });
+    const [row] = await test.db.select().from(postalCodes).where(eq(postalCodes.cep, '50030230'));
+    expect(row?.street).toBe('Rua do Bom Jesus');
+  });
+
+  it('keeps a town-wide CEP as having no street, and does not ask again', async () => {
+    expect(
+      await lookupCep(
+        test.db,
+        '56880000',
+        answer({ logradouro: '', localidade: 'Afogados', uf: 'PE' }),
+      ),
+    ).toMatchObject({ place: { street: null } });
+    const again = answer({});
+    expect(await lookupCep(test.db, '56880000', again)).toMatchObject({ place: { street: null } });
+    expect(again).not.toHaveBeenCalled();
   });
 
   it('says a CEP does not exist, and keeps nothing', async () => {

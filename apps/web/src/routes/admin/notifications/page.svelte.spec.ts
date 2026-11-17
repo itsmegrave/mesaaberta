@@ -20,7 +20,7 @@ const sent = {
   body: 'Sugira tags ao abrir uma mesa.',
   icon: 'sparkles' as const,
   tone: 'announcement' as const,
-  link: '/t',
+  link: '/tables',
   audience: 'specific_user' as const,
   recipient: 'bruno',
   author: 'admin',
@@ -51,7 +51,7 @@ describe('admin notifications', () => {
     const drawn = () => preview().element().querySelector('svg')!.innerHTML;
     const infoIcon = drawn();
 
-    await page.getByText('Presente').click();
+    await page.getByTitle('Presente').click();
     await expect.poll(drawn).not.toBe(infoIcon);
   });
 

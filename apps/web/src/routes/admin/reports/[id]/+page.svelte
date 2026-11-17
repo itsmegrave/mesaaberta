@@ -16,7 +16,9 @@
     closeTableSchema,
     removeCrowdfundingSchema,
     removePartnerSchema,
+    removePlaceSchema,
     reportIdSchema,
+    restorePlaceSchema,
     RESOLUTION_NOTE_MAX,
   } from '@mesaaberta/core/moderation/reports';
   import {
@@ -24,7 +26,9 @@
     closeTable,
     removeCrowdfunding,
     removePartner,
+    removePlace,
   } from '#lib/admin/moderation-presets.js';
+  import { placeArea, placeKindLabels } from '#lib/places/labels.js';
   import { atHandle } from '@mesaaberta/core/profile/handle';
   import { networkIcons, networkLabels } from '#lib/profile/social-presentation.js';
   import { m } from '#lib/paraglide/messages.js';
@@ -45,15 +49,22 @@
   const isTable = $derived(kind === 'table');
   const campaign = $derived(report.crowdfunding);
   const partner = $derived(report.partner);
+  const place = $derived(report.place);
   const target = $derived(
     kind === 'crowdfunding'
       ? (campaign?.name ?? m.admin_report_crowdfunding_gone())
       : kind === 'partner'
         ? (partner?.name ?? m.admin_report_partner_gone())
-        : isTable
-          ? m.admin_reports_target_table({ table: report.table?.title ?? '' })
-          : handle(report.player?.username ?? null),
+        : kind === 'place'
+          ? (place?.name ?? m.admin_report_place_gone())
+          : isTable
+            ? m.admin_reports_target_table({ table: report.table?.title ?? '' })
+            : kind === 'message'
+              ? m.admin_reports_target_message({ name: handle(report.player?.username ?? null) })
+              : handle(report.player?.username ?? null),
   );
+  // What a message or person report copied of the conversation, oldest first.
+  const excerpt = $derived(report.report.excerpt);
   const fields = $derived({ id: report.report.id });
   const note = {
     name: 'note' as const,
@@ -61,10 +72,10 @@
     hint: m.moderation_note_hint({ max: RESOLUTION_NOTE_MAX }),
   };
 
-  const ghost = 'btn h-12 w-full rounded-lg btn-secondary px-4 font-semibold';
-  const primary = 'btn h-12 w-full rounded-lg preset-filled-primary-500 px-4 font-semibold';
+  const ghost = 'btn h-11 w-full rounded-lg btn-secondary px-4 font-semibold';
+  const primary = 'btn h-11 w-full rounded-lg preset-filled-primary-500 px-4 font-semibold';
   const danger =
-    'btn h-12 w-full rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-700-300 hover:preset-tonal-error';
+    'btn h-11 w-full rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-700-300 hover:preset-tonal-error';
 </script>
 
 <AdminPage
@@ -85,9 +96,15 @@
           ? m.admin_report_kind_crowdfunding()
           : kind === 'partner'
             ? m.admin_report_kind_partner()
-            : isTable
-              ? m.admin_report_kind_table()
-              : m.admin_report_kind_player()} · {reasonLabel(report.report.reason, kind)}
+            : kind === 'place'
+              ? m.admin_report_kind_place()
+              : isTable
+                ? m.admin_report_kind_table()
+                : kind === 'message'
+                  ? m.admin_report_kind_message()
+                  : kind === 'person'
+                    ? m.admin_report_kind_person()
+                    : m.admin_report_kind_player()} · {reasonLabel(report.report.reason, kind)}
       </span>
     </p>
   {/snippet}
@@ -171,7 +188,7 @@
                 >
                 <!-- eslint-enable svelte/no-navigation-without-resolve -->
               {:else}
-                <span class="text-warning-700-300">{m.admin_partners_not_informed()}</span>
+                <span class="text-lamp">{m.admin_partners_not_informed()}</span>
               {/if}
             </DetailRow>
             <DetailRow label={m.partner_sent_by_label()} class="flex flex-wrap items-center gap-2">
@@ -183,13 +200,42 @@
               <DetailRow label={m.admin_partners_contact_email()}>
                 <!-- eslint-disable svelte/no-navigation-without-resolve -- a mail address, not a page -->
                 <a
-                  class="inline-flex items-center gap-1.5 anchor"
+                  class="inline-flex items-center gap-2 anchor"
                   href="mailto:{partner.contactEmail}"
                   ><Icon name="mail" size={18} class="shrink-0" />{partner.contactEmail}</a
                 >
                 <!-- eslint-enable svelte/no-navigation-without-resolve -->
               </DetailRow>
             {/if}
+          {/if}
+          {#if place}
+            <DetailRow label={m.admin_report_place()} class="flex flex-wrap items-center gap-2">
+              {#if place.removedAt}
+                <span class="font-semibold">{place.name}</span>
+                <span class="text-sm text-muted">{m.partner_status_removed()}</span>
+              {:else}
+                <a class="anchor font-semibold" href="/pp/{place.slug}">{place.name}</a>
+                {#if place.hiddenAt}
+                  <span class="text-sm font-semibold text-error-700-300"
+                    >{m.place_status_hidden()}</span
+                  >
+                {:else if !place.approvedAt}
+                  <span class="text-sm text-muted">{m.partner_status_pending()}</span>
+                {/if}
+              {/if}
+            </DetailRow>
+            <DetailRow label={m.admin_places_col_kind()}>
+              {placeKindLabels[place.kind]()} · {placeArea(place)}
+            </DetailRow>
+            <DetailRow label={m.admin_report_place_reports()}>{place.openReports}</DetailRow>
+            <DetailRow
+              label={m.admin_places_col_sender()}
+              class="flex flex-wrap items-center gap-2"
+            >
+              {#if place.submitter}
+                <AdminPersonLink person={place.submitter} />
+              {/if}
+            </DetailRow>
           {/if}
           {#if campaign}
             <DetailRow
@@ -226,7 +272,7 @@
               {#if campaign.submitter}
                 <AdminPersonLink person={campaign.submitter} />
               {:else}
-                <span class="inline-flex items-center gap-1.5">
+                <span class="inline-flex items-center gap-2">
                   <Icon name="import" size={18} class="shrink-0 text-muted" />
                   {submissionLabel(null, campaign.importSource)}
                 </span>
@@ -258,6 +304,44 @@
           <p class="mt-4 text-sm text-muted">{m.admin_report_table_ban_hint()}</p>
         {/if}
       </Panel>
+
+      {#if excerpt}
+        <Panel title={m.admin_report_excerpt()}>
+          <p class="mt-2 text-sm text-muted">
+            {excerpt.kind === 'table'
+              ? m.admin_report_excerpt_table()
+              : m.admin_report_excerpt_direct()}
+          </p>
+          {#if excerpt.messages.length === 0}
+            <p class="mt-4 text-muted">{m.admin_report_excerpt_empty()}</p>
+          {:else}
+            <ol class="mt-4 grid gap-2">
+              {#each excerpt.messages as message (message.id)}
+                {@const reported = message.id === excerpt.messageId}
+                <li
+                  aria-current={reported ? 'true' : undefined}
+                  class="grid gap-1 rounded-lg px-3 py-2 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-3 {reported
+                    ? 'border-2 border-error-500 bg-surface-wash'
+                    : ''}"
+                >
+                  <span class="text-sm text-muted">
+                    {message.username
+                      ? atHandle(message.username)
+                      : m.admin_report_excerpt_closed_account()}<br />{when(
+                      new Date(message.createdAt),
+                    )}
+                    {#if reported}<br /><strong class="text-error-700-300"
+                        >{m.admin_report_excerpt_reported()}</strong
+                      >{/if}
+                  </span>
+                  <!-- Text a member wrote: shown as text, never as markup. -->
+                  <span class="wrap-break-word whitespace-pre-wrap">{message.body}</span>
+                </li>
+              {/each}
+            </ol>
+          {/if}
+        </Panel>
+      {/if}
     </div>
 
     <Panel
@@ -284,6 +368,33 @@
           schema={removePartnerSchema}
           fields={{ id: partner.id, reportId: report.report.id }}
           {...removePartner(partner.name)}
+          triggerClass={danger}
+        />
+      {/if}
+      {#if report.can.restorePlace && place}
+        <ModerationDialog
+          action="?/restorePlace"
+          schema={restorePlaceSchema}
+          fields={{ id: place.id, reportId: report.report.id }}
+          write={{
+            name: 'note',
+            label: m.admin_places_restore_note(),
+            hint: m.admin_places_restore_note_hint({ max: RESOLUTION_NOTE_MAX }),
+          }}
+          label={m.admin_places_restore()}
+          title={m.admin_places_restore_title({ name: place.name })}
+          text={m.admin_places_restore_text({ count: place.openReports })}
+          confirm={m.admin_places_restore_confirm()}
+          success={m.admin_places_restore_done()}
+          triggerClass={primary}
+        />
+      {/if}
+      {#if report.can.removePlace && place}
+        <ModerationDialog
+          action="?/removePlace"
+          schema={removePlaceSchema}
+          fields={{ id: place.id, reportId: report.report.id }}
+          {...removePlace(place.name, !!place.approvedAt)}
           triggerClass={danger}
         />
       {/if}

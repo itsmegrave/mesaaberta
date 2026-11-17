@@ -19,6 +19,7 @@
 </script>
 
 <script lang="ts" generics="T extends RowData">
+  import MAButton, { buttonClass } from '#lib/components/ui/MAButton.svelte';
   // Every list an admin works through is this one pattern on TanStack Table: one bordered card with
   // the toolbar, a header row on the wash, the rows and a footer; on a phone no table, but a list of
   // cards with a "Filtros" sheet and "Mostrar mais". The address is the state (`?q=&status=&sort=&dir=
@@ -35,7 +36,7 @@
   } from '@tanstack/svelte-table';
   import Icon from '#lib/components/ui/Icon.svelte';
   import KebabMenu from '#lib/components/ui/KebabMenu.svelte';
-  import SearchSelect from '#lib/components/ui/SearchSelect.svelte';
+  import SegmentedChoice from '#lib/components/ui/SegmentedChoice.svelte';
   import FilterSheet from '#lib/components/admin/ui/FilterSheet.svelte';
   import ListSearch from '#lib/components/admin/ListSearch.svelte';
   import ListPanel from '#lib/components/admin/ListPanel.svelte';
@@ -120,7 +121,8 @@
     menu
       ? [
           ...columns,
-          { id: 'actions', header: m.admin_profile_actions(), hideHeader: true, width: 'w-16' },
+          // 80px: the 44px round kebab inside the cell's 16px padding.
+          { id: 'actions', header: m.admin_profile_actions(), hideHeader: true, width: 'w-20' },
         ]
       : columns,
   );
@@ -166,6 +168,7 @@
 {/snippet}
 
 {#snippet toolbar()}
+  <!-- One row, as on the layout: search, the status tabs, selects, then the count; it wraps. -->
   <div class="flex flex-wrap items-center gap-3">
     {#if search}
       <ListSearch
@@ -173,35 +176,31 @@
         label={search.label}
         placeholder={search.placeholder}
         maxlength={search.maxlength}
+        class="max-w-96"
         {hash}
       />
     {/if}
+    {#if segments}<div>{@render segments({ inSheet: false })}</div>{/if}
     {@render selects?.({ inSheet: false })}
     <p role="status" class="ml-auto text-sm font-semibold text-muted">{totalLabel}</p>
   </div>
-  {#if segments}<div>{@render segments({ inSheet: false })}</div>{/if}
 {/snippet}
 
 {#snippet sizeChoice()}
-  <div class="w-44">
-    <SearchSelect
-      id="page-size"
-      name="size"
-      label={m.admin_profile_size()}
-      labelClass="text-sm"
-      class="flex items-center gap-2"
-      compact
-      items={PAGE_SIZES.map((size) => ({ name: String(size), slug: String(size) }))}
-      value={[String(pageSize)]}
-      placeholder={String(pageSize)}
-      disabled={busy}
-      onchange={(picked) => {
-        // The select also reports the size the page already has; only a new size starts over.
-        const size = Number(picked[0] ?? pageSize);
-        if (size !== pageSize) void go({ size: size === PAGE_SIZES[0] ? null : size });
-      }}
-    />
-  </div>
+  <SegmentedChoice
+    name="size"
+    legend={m.admin_profile_size()}
+    legendClass="float-left mr-2 flex h-9 items-center text-sm"
+    class=""
+    size="sm"
+    options={PAGE_SIZES.map((size) => ({ value: String(size), label: String(size) }))}
+    value={String(pageSize)}
+    disabled={busy}
+    onchange={(picked) => {
+      const size = Number(picked);
+      if (size !== pageSize) void go({ size: size === PAGE_SIZES[0] ? null : size });
+    }}
+  />
 {/snippet}
 
 <section aria-label={caption} aria-busy={busy} class="mt-6">
@@ -241,8 +240,8 @@
                   {#if column?.hideHeader}
                     <span class="sr-only"><FlexRender {header} /></span>
                   {:else if column?.sortable}
-                    <button
-                      type="button"
+                    <MAButton
+                      size="custom"
                       class="-mx-2 inline-flex min-h-10 items-center gap-1 rounded-md px-2 font-semibold hover:preset-tonal"
                       onclick={() => {
                         const next = nextSort(sort ?? { id: '', dir: 'asc' }, header.column.id);
@@ -259,7 +258,7 @@
                             : 'text-inherit'
                           : 'opacity-40'}
                       />
-                    </button>
+                    </MAButton>
                   {:else}
                     <FlexRender {header} />
                   {/if}
@@ -291,9 +290,8 @@
               <td colspan={allColumns.length} class="px-4 py-10 text-center text-muted">
                 <p>{empty}</p>
                 {#if filtered}
-                  <a
-                    class="mt-2 inline-flex min-h-11 items-center anchor font-semibold"
-                    href={clearHref}>{m.admin_list_clear()}</a
+                  <a class="mt-3 {buttonClass('secondary', 'sm')} font-semibold" href={clearHref}
+                    >{m.admin_list_clear()}</a
                   >
                 {/if}
               </td>
@@ -360,7 +358,7 @@
       <div class="rounded-lg border border-surface-200-800 bg-panel p-6 text-center text-muted">
         <p>{empty}</p>
         {#if filtered}
-          <a class="mt-2 inline-flex min-h-11 items-center anchor font-semibold" href={clearHref}
+          <a class="mt-3 {buttonClass('secondary', 'sm')} font-semibold" href={clearHref}
             >{m.admin_list_clear()}</a
           >
         {/if}
@@ -368,7 +366,7 @@
     {/if}
     {#if moreHref}
       <a
-        class="btn h-12 rounded-lg btn-secondary px-4 font-semibold"
+        class="btn h-11 rounded-lg btn-secondary px-4 font-semibold"
         href={moreHref}
         data-sveltekit-noscroll
         >{more ? m.admin_list_more({ count: more.more }) : m.admin_list_next_page()}</a

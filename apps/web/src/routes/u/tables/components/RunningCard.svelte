@@ -2,8 +2,9 @@
   import UserLink from '#lib/components/ui/UserLink.svelte';
   import Pill from '#lib/components/ui/Pill.svelte';
   import { Collapsible } from '@skeletonlabs/skeleton-svelte';
-  import type { TableStatus } from '#lib/tables/status.js';
+  import { isTableOver, tableStatusLabel, type TableStatus } from '#lib/tables/status.js';
   import { m } from '#lib/paraglide/messages.js';
+  import { seatSummary } from '#lib/tables/format.js';
   import ActionForm from '#lib/components/ActionForm.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import { buttonClass } from '#lib/components/ui/MAButton.svelte';
@@ -16,6 +17,8 @@
   type Item = {
     slug: string;
     title: string;
+    /** "Shadow of the Weird Wizard", the eyebrow over the title. */
+    systemName?: string;
     tableStatus: TableStatus;
     capacity: number;
     reserved?: number;
@@ -46,7 +49,7 @@
       id: 'duplicate',
       label: m.table_duplicate(),
       icon: 'copy',
-      href: `/t/new?duplicate=${encodeURIComponent(item.slug)}`,
+      href: `/tables/new?duplicate=${encodeURIComponent(item.slug)}`,
     },
     ...(['draft', 'active', 'awaiting_confirmation'].includes(item.tableStatus)
       ? [
@@ -61,6 +64,11 @@
       : []),
   ]);
   const manage = $derived(`/t/${item.slug}/manage`);
+  // A table that is over has no next session, even when its date is still ahead (a campaign the
+  // GM finished keeps the date of the session that would have come next).
+  const over = $derived(isTableOver(item.tableStatus));
+  // A concluded table is history: it can't be edited (policy) and its players stay on it.
+  const concluded = $derived(item.tableStatus === 'concluded');
 </script>
 
 <article
@@ -68,25 +76,25 @@
   class="scroll-mt-6 rounded-lg border border-surface-200-800 bg-panel p-6"
 >
   <p class="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold text-muted">
-    {#if item.tableStatus === 'draft'}
-      <Pill tone="outline">{m.table_status_draft()}</Pill>
+    {#if item.tableStatus === 'draft' || over}
+      <Pill tone="outline">{tableStatusLabel(item.tableStatus)}</Pill>
     {/if}
+    {#if item.systemName}<span>{item.systemName}</span>{/if}
     <span class="ml-auto"
       >{m.dash_seats_taken({ taken: item.players.length, capacity: item.capacity })}</span
     >
   </p>
   {#if item.reserved}
     <p class="mt-2 text-sm text-muted">
-      {m.invitation_seats({
-        confirmed: item.players.length,
-        reserved: item.reserved,
-        available:
-          item.seatsLeft ?? Math.max(0, item.capacity - item.players.length - item.reserved),
-      })}
+      {seatSummary(
+        item.players.length,
+        item.reserved,
+        item.seatsLeft ?? Math.max(0, item.capacity - item.players.length - item.reserved),
+      )}
     </p>
   {/if}
 
-  <!-- The date has passed: the GM says whether it happened. Table statuses are only for admin. -->
+  <!-- The date has passed: the GM says whether it happened. Only a table that is over gets a status tag. -->
   {#if item.tableStatus === 'awaiting_confirmation'}
     <div
       role="group"
@@ -96,13 +104,11 @@
       <p class="font-semibold">{m.dash_session_prompt({ title: item.title })}</p>
       <p class="mt-1 text-sm text-muted">{m.dash_session_prompt_text()}</p>
       <div class="mt-3 flex flex-wrap gap-3">
-        <ActionForm
-          action="{manage}?/happened"
-          {next}
-          label={m.dash_session_yes()}
-          buttonClass="{buttonClass('primary')} font-semibold"
-          success={m.toast_table_concluded()}
-        />
+        <!-- "It happened" opens the attendance step on Gerenciar mesa: only who showed up rates and earns badges. -->
+        <a
+          href="{manage}?etapa=presenca#session-confirmation"
+          class="{buttonClass('primary')} font-semibold">{m.dash_session_yes()}</a
+        >
         <ActionForm
           action="{manage}?/notHeld"
           {next}
@@ -117,17 +123,23 @@
   <h3 class="mt-2 text-2xl leading-tight font-semibold tracking-tight">
     <a href={page} class="hover:underline">{item.title}</a>
   </h3>
-  <p class="mt-3"><SeatDots taken={item.players.length} capacity={item.capacity} /></p>
+  <p class="mt-3">
+    <SeatDots taken={item.players.length} capacity={item.capacity} reserved={item.reserved} />
+  </p>
 
-  <NextSession startsAt={item.startsAt} timezone={item.timezone} />
+  {#if !over}
+    <NextSession startsAt={item.startsAt} timezone={item.timezone} />
+  {/if}
 
   <div class="mt-4 flex flex-wrap items-center gap-3">
     <a href={`/t/${item.slug}/manage`} class="{buttonClass('primary')} font-semibold"
       >{m.dash_manage()}</a
     >
-    <a href={`/t/${item.slug}/edit`} class="{buttonClass('secondary')} font-semibold"
-      >{m.dash_edit()}</a
-    >
+    {#if !concluded}
+      <a href={`/t/${item.slug}/edit`} class="{buttonClass('secondary')} font-semibold"
+        >{m.dash_edit()}</a
+      >
+    {/if}
     <KebabMenu name={item.title} items={menu} class="ml-auto" />
   </div>
 
@@ -167,11 +179,15 @@
     </div>
   {/if}
 
-  <Collapsible open={playersOpen} onOpenChange={(details) => (playersOpen = details.open)}>
+  <Collapsible
+    class="block"
+    open={playersOpen}
+    onOpenChange={(details) => (playersOpen = details.open)}
+  >
     <!-- A heading on a wide screen, a button that folds the list on a phone. -->
     <h4 class="mt-5 font-semibold max-lg:hidden">{m.dash_players()}</h4>
     <Collapsible.Trigger
-      class="mt-3 flex min-h-12 w-full items-center justify-between gap-3 text-left font-semibold lg:hidden"
+      class="mt-3 flex min-h-11 w-full items-center justify-between gap-3 text-left font-semibold lg:hidden"
     >
       {m.dash_players_count({ count: item.players.length })}
       <Icon name="chevron-down" class="transition-transform {playersOpen ? 'rotate-180' : ''}" />
@@ -188,14 +204,16 @@
                   class="flex items-center justify-between gap-3 rounded-lg bg-surface-950-50/5 px-3 py-2"
                 >
                   <span><UserLink username={player.username} /></span>
-                  <ActionForm
-                    action="{page}?/remove"
-                    playerId={player.playerId}
-                    {next}
-                    label={m.table_remove()}
-                    buttonClass="btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-alert"
-                    success={m.toast_removed()}
-                  />
+                  {#if !concluded}
+                    <ActionForm
+                      action="{page}?/remove"
+                      playerId={player.playerId}
+                      {next}
+                      label={m.table_remove()}
+                      buttonClass="btn h-11 rounded-lg border-2 border-surface-200-800 px-4 font-semibold text-error-alert"
+                      success={m.toast_removed()}
+                    />
+                  {/if}
                 </li>
               {/each}
             </ul>

@@ -42,7 +42,7 @@ it('paginates all admin tables and joins publishing status without private field
   const data = await listAdminTables(test.db, new URLSearchParams());
   expect(data.total).toBe(22);
   expect(data.rows).toHaveLength(20);
-  expect(data.rows[0]).toMatchObject({ title: 'Mesa 21', instagramStatus: 'published' });
+  expect(data.rows[0]).toMatchObject({ title: 'Mesa 21', postStatus: 'published' });
   expect(JSON.stringify(data)).not.toContain('PRIVATE');
   const last = await listAdminTables(test.db, new URLSearchParams('page=99'));
   expect(last.page).toBe(2);

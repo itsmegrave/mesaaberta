@@ -3,17 +3,20 @@ import type { Actor } from '@mesaaberta/core/server/auth/policy';
 import { callApiRaw, routeTemplate } from './api-client';
 import { refusalOf } from './api-write';
 
-/** New features are API-owned. An unavailable API is a service failure, never a local write. */
+/**
+ * New features are API-owned. An unavailable API is a service failure, never a local write. A null
+ * actor calls as a visitor (no actor header), for the reads anyone may see.
+ */
 export async function requireApi<T = Record<string, unknown>>(
   locals: App.Locals,
-  actor: Actor,
+  actor: Pick<Actor, 'id'> | null,
   path: string,
   options: { method?: 'GET' | 'POST' | 'DELETE'; body?: Record<string, unknown> } = {},
 ): Promise<T> {
   const answer = await callApiRaw(
     locals.env,
     path,
-    actor.id,
+    actor?.id ?? null,
     locals.log,
     options.body,
     {},
@@ -24,9 +27,9 @@ export async function requireApi<T = Record<string, unknown>>(
   const refusal = refusalOf(answer.status, (answer.body ?? {}) as Record<string, unknown>);
   if (refusal) throw refusal;
   const reason = (answer.body as { error?: unknown } | null)?.error;
-  locals.log.warn('api answered with a failure', {
+  locals.log.warn('api.call_failed_answer', {
     code: 'api_call_failed',
-    route: routeTemplate(path),
+    apiRoute: routeTemplate(path),
     status: answer.status,
     reason: typeof reason === 'string' ? reason : undefined,
   });

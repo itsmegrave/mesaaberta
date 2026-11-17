@@ -51,6 +51,8 @@ describe('parseTableForm', () => {
         kind: 'one_shot',
         capacity: 5,
         minPlayers: null,
+        plannedSessions: null,
+        sessionSize: null,
         startsAtLocal: '2026-10-10T19:00',
         timezone: 'America/Sao_Paulo',
         durationMinutes: 240,
@@ -65,6 +67,9 @@ describe('parseTableForm', () => {
         locationNeighbourhood: null,
         locationCity: null,
         locationState: null,
+        placeId: null,
+        safetyTools: [],
+        contentRating: null,
         platforms: [],
         tags: [],
         removeImage: false,
@@ -146,6 +151,52 @@ describe('parseTableForm', () => {
     });
   });
 
+  it('asks an adventure how many sessions it plans, and keeps the count only on adventures', () => {
+    expect(errorsOf({ kind: 'adventure' }).plannedSessions).toBe('required');
+    expect(parseTableForm(form({ kind: 'adventure', plannedSessions: '4' }))).toMatchObject({
+      ok: true,
+      data: { kind: 'adventure', plannedSessions: 4 },
+    });
+    // A GM who typed a count and then picked another kind does not keep it.
+    expect(
+      parseTableForm(form({ kind: 'campaign', repeat: 'weekly', plannedSessions: '4' })),
+    ).toMatchObject({ ok: true, data: { plannedSessions: null } });
+  });
+
+  describe('westmarch', () => {
+    it('takes a roster past the largest table and how many play each session', () => {
+      const result = parseTableForm(
+        form({ kind: 'open', capacity: '40', sessionSize: '5', repeat: '' }),
+      );
+      expect(result.ok && result.data).toMatchObject({
+        kind: 'open',
+        capacity: 40,
+        sessionSize: 5,
+        recurrence: null,
+      });
+    });
+
+    it('may repeat weekly, like a campaign', () => {
+      const result = parseTableForm(
+        form({ kind: 'open', capacity: '12', sessionSize: '4', repeat: 'weekly' }),
+      );
+      expect(result.ok && result.data.recurrence).toBe('FREQ=WEEKLY');
+    });
+
+    it('needs the players per session, no more than the roster', () => {
+      expect(errorsOf({ kind: 'open', capacity: '12' })).toEqual({ sessionSize: 'required' });
+      expect(errorsOf({ kind: 'open', capacity: '3', sessionSize: '5' })).toEqual({
+        sessionSize: 'above_capacity',
+      });
+    });
+
+    it('keeps the other kinds to the largest table, and drops a session size on them', () => {
+      expect(errorsOf({ capacity: '40' })).toEqual({ capacity: 'too_big' });
+      const result = parseTableForm(form({ sessionSize: '4' }));
+      expect(result.ok && result.data.sessionSize).toBeNull();
+    });
+  });
+
   it('accepts a minimum equal to the seats, and says a larger one is above the capacity', () => {
     expect(parseTableForm(form({ capacity: '4', minPlayers: '4' }))).toMatchObject({ ok: true });
     expect(errorsOf({ capacity: '4', minPlayers: '5' }).minPlayers).toBe('above_capacity');
@@ -167,6 +218,9 @@ describe('parseTableForm', () => {
     ['minPlayers', { minPlayers: '2.5' }],
     ['minPlayers', { minPlayers: 'alguns' }],
     ['minPlayers', { capacity: '4', minPlayers: '5' }],
+    ['plannedSessions', { kind: 'adventure', plannedSessions: '1' }],
+    ['plannedSessions', { kind: 'adventure', plannedSessions: '21' }],
+    ['plannedSessions', { kind: 'adventure', plannedSessions: 'umas' }],
     ['durationHours', { durationHours: '0' }],
     ['durationHours', { durationHours: '24.5' }],
     ['durationHours', { durationHours: '1.25' }],
@@ -263,5 +317,39 @@ describe('parseTableForm', () => {
     expect(result.ok && Object.keys(result.data)).not.toEqual(
       expect.arrayContaining(['gmId', 'status', 'slug']),
     );
+  });
+});
+
+describe('safety tools and content rating', () => {
+  const parse = (extra: Record<string, unknown>) =>
+    tableFormSchema.safeParse({ ...Object.fromEntries(form()), ...extra });
+
+  it('keeps the tools in the catalogue order and a blank rating as not said', () => {
+    const parsed = parse({ safetyTools: ['x_card', 'session_zero'] });
+    if (!parsed.success) throw new Error('expected the form to pass');
+
+    expect(toTableInput(parsed.data)).toMatchObject({
+      safetyTools: ['session_zero', 'x_card'],
+      contentRating: null,
+    });
+  });
+
+  it('takes a known rating', () => {
+    const parsed = parse({ contentRating: '16' });
+    if (!parsed.success) throw new Error('expected the form to pass');
+
+    expect(toTableInput(parsed.data).contentRating).toBe('16');
+  });
+
+  it('takes the 6-year band, the newest ClassInd one', () => {
+    const parsed = parse({ contentRating: '6' });
+    if (!parsed.success) throw new Error('expected the form to pass');
+
+    expect(toTableInput(parsed.data).contentRating).toBe('6');
+  });
+
+  it('refuses an unknown tool or rating', () => {
+    expect(parse({ safetyTools: ['dice_jail'] }).success).toBe(false);
+    expect(parse({ contentRating: '21' }).success).toBe(false);
   });
 });

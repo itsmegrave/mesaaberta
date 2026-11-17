@@ -25,11 +25,26 @@ type Resources = {
   'table:end': { gmId: string };
   /** After the session: say it happened, that it did not, or move it to a new date. */
   'table:confirm': { gmId: string; tableStatus: TableStatus };
+  /** A campaign or adventure that goes on: the GM schedules, moves, notes or cancels its sessions. */
+  'table:sessions': {
+    gmId: string;
+    tableStatus: TableStatus;
+    kind: 'campaign' | 'one_shot' | 'adventure' | 'open';
+  };
+  /**
+   * Campanha aberta: a player on the roster (a confirmed seat) signs up for one session of an
+   * active table, or leaves it.
+   */
+  'session:signup': {
+    tableStatus: TableStatus;
+    kind: 'campaign' | 'one_shot' | 'adventure' | 'open';
+    confirmed: boolean;
+  };
   /** A campaign or adventure that went on: the GM ends it, or lets players rate it meanwhile. */
   'table:finish': {
     gmId: string;
     tableStatus: TableStatus;
-    kind: 'campaign' | 'one_shot' | 'adventure';
+    kind: 'campaign' | 'one_shot' | 'adventure' | 'open';
   };
   /** The facts a join depends on, read inside the capacity transaction. */
   'table:join': {
@@ -51,6 +66,16 @@ type Resources = {
     /** The GM let this player rate before the table is concluded. */
     ratingOpened?: boolean;
   };
+  /**
+   * The GM rating a player of their table: only one the GM marked present (`markedPresent`), and
+   * only while a session that happened is behind them (`playerRatingOpen`).
+   */
+  'player:rate': {
+    gmId: string;
+    tableStatus: TableStatus;
+    kind: 'campaign' | 'one_shot' | 'adventure' | 'open';
+    markedPresent: boolean;
+  };
   /** Approve or decline a request, or remove a player. */
   'registration:manage': { gmId: string };
   /** A player leaving their own registration. */
@@ -64,20 +89,59 @@ type Resources = {
     reporterSeated: boolean;
     target: { type: 'table' } | { type: 'player'; playerId: string; playerSeated: boolean };
   };
+  /**
+   * Reporting a message, or a person, from a conversation: the reporter is in it and the subject
+   * (the message's sender, or the person) is someone else. `subjectId` is null for a message whose
+   * sender closed their account.
+   */
+  'message:report': { member: boolean; subjectId: string | null };
   /** Adding a crowdfunding campaign: any signed-in member, public at once. */
   'crowdfunding:add': undefined;
   /** Reporting a campaign. Not one's own: its submitter would be reporting themselves. */
   'crowdfunding:report': { submitterId: string | null };
   /** Sending a partner: any signed-in member. An admin approves it before it is listed. */
   'partner:add': undefined;
-  /** Editing or withdrawing a partner: only the member who sent it. */
-  'partner:edit': { submitterId: string };
-  /** Reporting a partner. Not one's own: its submitter would be reporting themselves. */
-  'partner:report': { submitterId: string };
+  /** Suggesting a tool for "Ferramentas": any signed-in member. An admin approves it first. */
+  'tool:suggest': undefined;
+  /**
+   * Editing or withdrawing a partner, and choosing who looks after it: only those accounts
+   * (`ownersOf`: the submitter alone until someone accepts an invite).
+   */
+  'partner:edit': { ownerIds: readonly string[] };
+  /** Reporting a partner. Not one's own: an owner would be reporting themselves. */
+  'partner:report': { ownerIds: readonly string[] };
+  /** Sending an "Onde jogar" place: any signed-in member. An admin approves it before it is listed. */
+  'place:submit': undefined;
+  /**
+   * Editing a place: its submitter (the edit sends it back to review), the member an admin made its
+   * owner, or an admin. Withdrawing it: its submitter or its owner.
+   */
+  'place:edit': { submitterId: string; ownerId: string | null };
+  'place:withdraw': { submitterId: string; ownerId: string | null };
+  /** Claiming a listed place nobody owns: any signed-in member. */
+  'place:claim': undefined;
+  /** Taking the owner off a place: the owner themself, or an admin. */
+  'place:release': { ownerId: string | null };
+  /** Inviting and taking off its house GMs ("Quem mestra na casa"): its owner, or an admin. */
+  'place:hosts': { ownerId: string | null };
+  /**
+   * Asking to link a place and a partner ("Parceiro Mesa Aberta"): someone who is the place's owner
+   * and looks after the partner too, or an admin. An admin approves the request before it shows.
+   */
+  'place:linkPartner': { placeOwnerId: string | null; partnerOwnerIds: readonly string[] };
+  /** Taking that link down, or withdrawing the request: either side, or an admin. */
+  'place:unlinkPartner': { placeOwnerId: string | null; partnerOwnerIds: readonly string[] };
+  /** Reporting a listed place: any signed-in member but the ones who look after it. */
+  'place:report': { submitterId: string; ownerId: string | null };
   /** The report queue, its decisions and the audit log. */
   'moderation:manage': undefined;
   /** Banning an account or revoking a ban. Never one's own, never another admin's. */
   'account:ban': Pick<Actor, 'id' | 'role'>;
+  /**
+   * Following someone: any active profile with an @, never oneself, and not across a block (either
+   * of the two blocked the other from invitations).
+   */
+  'follow:create': { followeeId: string; followeeActive: boolean; blocked: boolean };
 };
 
 export type Action = keyof Resources;
@@ -139,6 +203,19 @@ export function rateBlocker(
   return null;
 }
 
+/**
+ * Whether a table's GM can rate its players now. A one-shot once the GM said the session happened
+ * (concluded); a campaign or adventure also while it goes on, since a player marked present has
+ * played a session that happened. A table that did not happen, or was taken down, has nothing to rate.
+ */
+export const playerRatingOpen = (table: {
+  tableStatus: TableStatus;
+  kind: 'campaign' | 'one_shot' | 'adventure' | 'open';
+}): boolean =>
+  table.tableStatus === 'concluded' ||
+  (table.kind !== 'one_shot' &&
+    (table.tableStatus === 'active' || table.tableStatus === 'awaiting_confirmation'));
+
 const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean } = {
   'admin:access': (actor) => actor.role === 'admin',
   // Any signed-in user can open a table and becomes its GM.
@@ -152,6 +229,16 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
     table !== undefined &&
     nextStatus(table.tableStatus, 'HAPPENED') !== null &&
     isGmOrAdmin(actor, table),
+  'table:sessions': (actor, table) =>
+    table !== undefined &&
+    table.kind !== 'one_shot' &&
+    ['active', 'awaiting_confirmation'].includes(table.tableStatus) &&
+    isGmOrAdmin(actor, table),
+  'session:signup': (_actor, table) =>
+    table !== undefined &&
+    table.kind === 'open' &&
+    table.tableStatus === 'active' &&
+    table.confirmed,
   'table:finish': (actor, table) =>
     table !== undefined &&
     table.kind !== 'one_shot' &&
@@ -159,6 +246,12 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
     isGmOrAdmin(actor, table),
   'table:join': (actor, facts) => joinBlocker(actor, facts) === null,
   'table:rate': (actor, facts) => rateBlocker(actor, facts) === null,
+  // Only the GM: an admin did not play with them.
+  'player:rate': (actor, facts) =>
+    facts !== undefined &&
+    actor.id === facts.gmId &&
+    facts.markedPresent &&
+    playerRatingOpen(facts),
   'registration:manage': isGmOrAdmin,
   'registration:leave': (actor, registration) =>
     registration !== undefined && actor.id === registration.playerId,
@@ -170,18 +263,46 @@ const rules: { [A in Action]: (actor: Actor, resource: Resources[A]) => boolean 
     const playerShares = playerId === facts.gmId || playerSeated;
     return playerId !== actor.id && reporterShares && playerShares;
   },
+  'message:report': (actor, facts) =>
+    facts !== undefined && facts.member && facts.subjectId !== null && facts.subjectId !== actor.id,
   'crowdfunding:add': () => true,
   'crowdfunding:report': (actor, campaign) =>
     campaign !== undefined && actor.id !== campaign.submitterId,
   'partner:add': () => true,
-  'partner:edit': (actor, partner) => partner !== undefined && actor.id === partner.submitterId,
-  'partner:report': (actor, partner) => partner !== undefined && actor.id !== partner.submitterId,
+  'tool:suggest': () => true,
+  'partner:edit': (actor, partner) => partner !== undefined && partner.ownerIds.includes(actor.id),
+  'partner:report': (actor, partner) =>
+    partner !== undefined && !partner.ownerIds.includes(actor.id),
+  'place:submit': () => true,
+  'place:edit': (actor, place) =>
+    place !== undefined &&
+    (actor.role === 'admin' || actor.id === place.submitterId || actor.id === place.ownerId),
+  'place:claim': () => true,
+  'place:linkPartner': (actor, link) =>
+    link !== undefined &&
+    (actor.role === 'admin' ||
+      (actor.id === link.placeOwnerId && link.partnerOwnerIds.includes(actor.id))),
+  'place:unlinkPartner': (actor, link) =>
+    link !== undefined &&
+    (actor.role === 'admin' ||
+      actor.id === link.placeOwnerId ||
+      link.partnerOwnerIds.includes(actor.id)),
+  'place:hosts': (actor, place) =>
+    place !== undefined && (actor.role === 'admin' || actor.id === place.ownerId),
+  'place:release': (actor, place) =>
+    place !== undefined && (actor.role === 'admin' || actor.id === place.ownerId),
+  'place:report': (actor, place) =>
+    place !== undefined && actor.id !== place.submitterId && actor.id !== place.ownerId,
+  'place:withdraw': (actor, place) =>
+    place !== undefined && (actor.id === place.submitterId || actor.id === place.ownerId),
   'moderation:manage': (actor) => actor.role === 'admin',
   'account:ban': (actor, target) =>
     target !== undefined &&
     actor.role === 'admin' &&
     target.id !== actor.id &&
     target.role !== 'admin',
+  'follow:create': (actor, facts) =>
+    facts !== undefined && facts.followeeId !== actor.id && facts.followeeActive && !facts.blocked,
 };
 
 export function can<A extends Action>(

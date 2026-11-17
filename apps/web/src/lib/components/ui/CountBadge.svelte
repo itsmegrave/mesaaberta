@@ -26,7 +26,7 @@
     tertiary: 'preset-filled-tertiary-500',
     success: 'preset-filled-success-500',
     warning: 'preset-filled-warning-500',
-    error: 'preset-filled-error-500',
+    error: 'preset-filled-error-700',
     surface: 'preset-filled-surface-500',
   };
 </script>

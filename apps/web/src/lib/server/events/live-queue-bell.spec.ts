@@ -56,10 +56,15 @@ describe('the bell on the queue', () => {
       'in-app-notifications-v1',
       'system-announcements-v1',
       'moderation-notifications-v1',
+      'place-alert-notifications-v1',
+      'directory-link-notifications-v1',
       'catalog-notifications-v1',
       'player-invitation-notifications-v1',
+      'partner-owner-notifications-v1',
       'badges-v1',
       'badge-notice-v1',
+      'follows-v1',
+      'matches-v1',
     ]);
   });
 

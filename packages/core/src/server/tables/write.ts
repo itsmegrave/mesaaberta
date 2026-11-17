@@ -1,4 +1,9 @@
 import { and, count, eq, like, or, sql } from 'drizzle-orm';
+import {
+  isContentRating,
+  orderedSafetyTools,
+  type ContentRating,
+} from '@mesaaberta/core/tables/safety';
 import { addTableMember } from '../messages/service';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { gameTables, playerInvitations, systems } from '@mesaaberta/core/server/db/schema';
@@ -19,6 +24,9 @@ import { cancelPendingInvitations } from '../invitations/service';
 import { NEW_CATALOG_PREFIX, SUGGESTION_NAME } from '@mesaaberta/core/tables/catalog';
 
 import { guardTableSchedule, lockTableSchedule } from './schedule-guard';
+import { syncTableSessions } from './sessions';
+import { checkTablePlace, placeSlugOf } from '../places/picker';
+import { promoteWaitlistOf } from '../registrations/waitlist';
 
 const MAX_SLUG_ATTEMPTS = 5;
 
@@ -107,6 +115,8 @@ function columnsOf(input: TableInput) {
     kind: input.kind,
     capacity: input.capacity,
     minPlayers: input.minPlayers,
+    plannedSessions: input.plannedSessions,
+    sessionSize: input.sessionSize ?? null,
     startsAt: localToInstant(input.startsAtLocal, input.timezone),
     durationMinutes: input.durationMinutes,
     timezone: input.timezone,
@@ -123,6 +133,9 @@ function columnsOf(input: TableInput) {
     locationNeighbourhood: input.locationNeighbourhood,
     locationCity: input.locationCity,
     locationState: input.locationState,
+    placeId: input.placeId ?? null,
+    safetyTools: input.safetyTools ?? [],
+    contentRating: input.contentRating ?? null,
   };
 }
 
@@ -160,6 +173,7 @@ export async function createTable(
 
   const columns = { ...columnsOf(input), imagePath };
   if (columns.startsAt < now) throw new Invalid('startsAtLocal', 'in_the_past');
+  await checkTablePlace(db, input.placeId ?? null, null);
 
   const base = slugify(input.title, { fallback: 'mesa' });
 
@@ -206,9 +220,10 @@ export async function createTable(
             slug,
             gmId: actor!.id,
             systemId: system.id,
-            ...(asDraft ? { status: 'draft' as const } : {}),
+            ...(asDraft ? { status: 'draft' as const } : { publishedAt: now }),
           })
           .returning({ id: gameTables.id });
+        await syncTableSessions(tx as unknown as AnyDb, [created.id]);
         await setTableCatalog(tx as unknown as AnyDb, created.id, {
           ...catalogPicks(input, actor!.id),
           inheritedFromTableId: duplicatedFromTableId,
@@ -297,6 +312,8 @@ export async function loadTableForEdit(
     kind: table.kind,
     capacity: table.capacity,
     minPlayers: table.minPlayers === null ? '' : String(table.minPlayers),
+    plannedSessions: table.plannedSessions === null ? '' : String(table.plannedSessions),
+    sessionSize: table.sessionSize === null ? '' : String(table.sessionSize),
     startsAtLocal: instantToLocal(table.startsAt, timezone),
     timezone,
     durationHours: minutesToHours(table.durationMinutes),
@@ -308,6 +325,11 @@ export async function loadTableForEdit(
     locationArea: table.locationArea ?? '',
     joinDetails: table.joinDetails ?? '',
     postalCode: table.postalCode ? formatCep(table.postalCode) : '',
+    placeSlug: await placeSlugOf(db, table.placeId),
+    safetyTools: orderedSafetyTools(table.safetyTools),
+    contentRating: (table.contentRating && isContentRating(table.contentRating)
+      ? table.contentRating
+      : '') as ContentRating | '',
     platforms: catalog.platforms.map((p) => p.slug),
     tags: catalog.tags.map((t) => t.slug),
     imagePath: table.imagePath,
@@ -344,6 +366,8 @@ const AUDITED = [
   'kind',
   'capacity',
   'minPlayers',
+  'plannedSessions',
+  'sessionSize',
   'startsAt',
   'durationMinutes',
   'timezone',
@@ -357,6 +381,9 @@ const AUDITED = [
   'locationNeighbourhood',
   'locationCity',
   'locationState',
+  'placeId',
+  'safetyTools',
+  'contentRating',
 ] as const;
 const PRIVATE_FIELDS = [
   'welcomeMessage',
@@ -397,9 +424,10 @@ export async function updateTable(
   slug: string,
   input: TableInput,
   { imagePath }: { imagePath?: string } = {},
-): Promise<{ eventId: string | null }> {
+): Promise<{ eventId: string | null; promoted: string[] }> {
   const table = await findForWrite(db, slug);
   authorizeEdit(actor, table);
+  await checkTablePlace(db, input.placeId ?? null, table.placeId);
 
   const columns = columnsOf(input);
   // Invites and notifications go out only for a change players would see.
@@ -413,7 +441,7 @@ export async function updateTable(
 
   // A new image replaces the current one; without one, the GM may take the current one off.
   const image = imagePath ? { imagePath } : input.removeImage ? { imagePath: null } : {};
-  const eventId = await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     await lockTableSchedule(tx as unknown as AnyDb, table.gmId);
     const locked = await guardTableSchedule(tx as unknown as AnyDb, table.id, columns);
     authorizeEdit(actor, locked);
@@ -458,6 +486,11 @@ export async function updateTable(
         ...(changed ? { icalSequence: table.icalSequence + 1 } : {}),
       })
       .where(eq(gameTables.id, table.id));
+    // A new rule, time or length writes the later dates nobody moved again.
+    const reflow = (
+      ['startsAt', 'durationMinutes', 'timezone', 'recurrence', 'until'] as const
+    ).some((field) => !sameValue(locked[field], columns[field]));
+    await syncTableSessions(tx as unknown as AnyDb, [table.id], { reflow });
     await setTableCatalog(tx as unknown as AnyDb, table.id, catalogPicks(input, actor!.id));
 
     const changes = tableChanges(
@@ -477,10 +510,15 @@ export async function updateTable(
         image: 'imagePath' in image ? image.imagePath : table.imagePath,
       } as unknown as Record<Audited, Fact>,
     );
-    if (!changed && !hasChanges(changes)) return null;
+    // More seats: the lista de espera moves up into them.
+    const promoted =
+      input.capacity > table.capacity
+        ? await promoteWaitlistOf(tx as unknown as AnyDb, table.id)
+        : [];
+    if (!changed && !hasChanges(changes)) return { eventId: null, promoted };
 
     // Players hear about what they see; anything else is written for the history alone.
-    return recordEvent(tx as unknown as AnyDb, {
+    const eventId = await recordEvent(tx as unknown as AnyDb, {
       type: changed ? 'TableUpdated' : 'TableEdited',
       actorId: actor!.id,
       payload: {
@@ -491,9 +529,10 @@ export async function updateTable(
         ...(table.status === 'draft' ? { draft: true as const } : {}),
       },
     });
+    return { eventId, promoted };
   });
 
-  return { eventId };
+  return result;
 }
 
 /**
@@ -529,7 +568,7 @@ export async function publishTable(
     await enforceRateLimit(tx as unknown as AnyDb, actor!.id, TABLE_CREATION_LIMIT, now);
     const published = await tx
       .update(gameTables)
-      .set({ status: 'active' })
+      .set({ status: 'active', publishedAt: now })
       .where(and(eq(gameTables.id, table.id), eq(gameTables.status, 'draft')))
       .returning({ id: gameTables.id });
     if (!published.length) throw new Invalid('slug', 'not_a_draft');
@@ -572,6 +611,7 @@ export async function disableTable(
       .update(gameTables)
       .set({ status: 'disabled', icalSequence: locked.icalSequence + 1 })
       .where(eq(gameTables.id, table.id));
+    await syncTableSessions(tx as unknown as AnyDb, [table.id]);
 
     await cancelPendingInvitations(
       tx as unknown as AnyDb,

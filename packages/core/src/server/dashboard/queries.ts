@@ -11,15 +11,16 @@ import { publicName } from '@mesaaberta/core/server/db/public-name';
 import { rateBlocker } from '@mesaaberta/core/server/auth/policy';
 import { firstSessionEnded } from '@mesaaberta/core/server/ratings/service';
 import { hasStarted } from '@mesaaberta/core/server/tables/schedule';
+import { isTableOver, type TableStatus } from '../../tables/status-values';
 import { reservedSeatsSql } from '../invitations/seats';
 import { seatsLeft } from '@mesaaberta/core/server/tables/queries';
 
 // The "My tables" page: what I play in, and what I run. Sessions coming up come first, soonest
-// first; the ones that have started go last, the most recent first.
-const byStart = <T extends { startsAt: Date }>(items: T[], now: Date) =>
+// first; the ones that have started, and tables that are over, go last, the most recent first.
+const byStart = <T extends { startsAt: Date; tableStatus: TableStatus }>(items: T[], now: Date) =>
   items.sort((a, b) => {
-    const aStarted = hasStarted(a.startsAt, now);
-    const bStarted = hasStarted(b.startsAt, now);
+    const aStarted = hasStarted(a.startsAt, now) || isTableOver(a.tableStatus);
+    const bStarted = hasStarted(b.startsAt, now) || isTableOver(b.tableStatus);
     if (aStarted !== bStarted) return aStarted ? 1 : -1;
     const order = a.startsAt.getTime() - b.startsAt.getTime();
     return aStarted ? -order : order;
@@ -86,11 +87,20 @@ export async function listPlaying(db: AnyDb, playerId: string, now: Date) {
 /** The tables this person is the GM of, with who has a seat and who is waiting. */
 export async function listRunning(db: AnyDb, gmId: string, now: Date) {
   const rows = await db
-    .select({ table: gameTables, reserved: reservedSeatsSql(gameTables.id, now) })
+    .select({
+      table: gameTables,
+      systemName: systems.name,
+      reserved: reservedSeatsSql(gameTables.id, now),
+    })
     .from(gameTables)
+    .innerJoin(systems, eq(gameTables.systemId, systems.id))
     .where(eq(gameTables.gmId, gmId))
     .orderBy(asc(gameTables.startsAt));
-  const tables = rows.map(({ table, reserved }) => ({ ...table, reserved }));
+  const tables = rows.map(({ table, systemName, reserved }) => ({
+    ...table,
+    systemName,
+    reserved,
+  }));
   if (tables.length === 0) return [];
 
   const people = await db
@@ -123,6 +133,7 @@ export async function listRunning(db: AnyDb, gmId: string, now: Date) {
       return {
         slug: table.slug,
         title: table.title,
+        systemName: table.systemName,
         tableStatus: table.status,
         joinMode: table.joinMode,
         capacity: table.capacity,

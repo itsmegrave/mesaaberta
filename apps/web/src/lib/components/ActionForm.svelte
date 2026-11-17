@@ -25,8 +25,11 @@
     onsuccess?: () => void;
     /** Runs when the server refused, after the error is shown as a toast. */
     onfail?: (message: FormMessage) => void;
-    /** Custom content instead of `label` (a button of its own must be `type="submit"`). */
-    children?: Snippet;
+    /**
+     * Custom content instead of `label` (a button of its own must be `type="submit"`); it gets the
+     * form's state for that button's `controller`.
+     */
+    children?: Snippet<[{ pending: boolean; delayed: boolean; timeout: boolean }]>;
   };
 
   let {

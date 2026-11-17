@@ -2,6 +2,7 @@
   import type { Snippet } from 'svelte';
   import AdminPage from '#lib/components/admin/AdminPage.svelte';
   import CatalogDialog from '../components/CatalogDialog.svelte';
+  import { buttonClass } from '#lib/components/ui/MAButton.svelte';
   import DataTable, { type DataColumn } from '#lib/components/admin/DataTable.svelte';
   import ListCard from '#lib/components/admin/ui/ListCard.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
@@ -17,12 +18,20 @@
   const number = new Intl.NumberFormat(locale);
   type Row = (typeof data.rows)[number];
 
-  const columns: DataColumn[] = [
+  // A place's tag is used by places, every other entry by tables.
+  const forPlaces = $derived(data.kind === 'placeTag');
+  const columns: DataColumn[] = $derived([
     { id: 'name', header: m.admin_catalog_name(), sortable: true },
     { id: 'origin', header: m.admin_catalog_origin(), width: 'w-56' },
-    { id: 'uses', header: m.admin_catalog_uses(), sortable: true, align: 'right', width: 'w-28' },
+    {
+      id: 'uses',
+      header: forPlaces ? m.admin_catalog_uses_places() : m.admin_catalog_uses(),
+      sortable: true,
+      align: 'right',
+      width: 'w-28',
+    },
     { id: 'status', header: m.admin_catalog_status(), width: 'w-40' },
-  ];
+  ]);
   // A rejected entry is not shown as its own state: the admin sees it as disabled.
   const badge = (row: Row) =>
     `catalog:${row.status === 'rejected' ? 'disabled' : row.status}` as Status;
@@ -62,12 +71,21 @@
   ];
   const tab = '-mb-px inline-flex h-11 items-center border-b-2 px-3 font-semibold';
   const sortLabel = $derived(
-    data.sort?.id === 'uses' ? m.admin_catalog_uses() : m.admin_catalog_name(),
+    data.sort?.id === 'uses'
+      ? forPlaces
+        ? m.admin_catalog_uses_places()
+        : m.admin_catalog_uses()
+      : m.admin_catalog_name(),
   );
 </script>
 
 <AdminPage title={m.admin_catalog_title()} lede={m.admin_catalog_lede()}>
   {#snippet actions()}
+    {#if data.kind === 'system'}
+      <a href="/admin/catalog/logos" class="{buttonClass('secondary', 'sm')} font-semibold"
+        >{m.admin_logos_tab()}</a
+      >
+    {/if}
     <!-- A different catalog needs new defaults; refetches within the same kind preserve drafts. -->
     {#key data.kind}
       <CatalogDialog
@@ -77,7 +95,9 @@
           ? m.admin_catalog_new_platform()
           : data.kind === 'tag'
             ? m.admin_catalog_new_tag()
-            : m.admin_catalog_new_system()}
+            : data.kind === 'placeTag'
+              ? m.admin_catalog_new_place_tag()
+              : m.admin_catalog_new_system()}
         triggerClass="btn h-11 rounded-lg preset-filled-primary-500 px-4 font-semibold"
       />
     {/key}
@@ -85,7 +105,7 @@
 
   <nav aria-label={m.admin_catalog_title()} class="mt-6 border-b border-surface-200-800">
     <ul class="flex gap-1">
-      {#each [['platform', m.admin_catalog_tab_platforms()], ['tag', m.admin_catalog_tab_tags()], ['system', m.admin_catalog_tab_systems()]] as const as [kind, label] (kind)}
+      {#each [['platform', m.admin_catalog_tab_platforms()], ['tag', m.admin_catalog_tab_tags()], ['system', m.admin_catalog_tab_systems()], ['placeTag', m.admin_catalog_tab_place_tags()]] as const as [kind, label] (kind)}
         <li>
           <a
             href={`/admin/catalog?kind=${kind}`}
@@ -154,7 +174,9 @@
         {#snippet badges()}
           <StatusBadge status={badge(row)} />
           <span class="text-sm text-muted"
-            >{m.admin_catalog_uses_phone({ count: number.format(row.uses) })}</span
+            >{(forPlaces ? m.admin_catalog_uses_places_phone : m.admin_catalog_uses_phone)({
+              count: number.format(row.uses),
+            })}</span
           >
         {/snippet}
       </ListCard>

@@ -12,16 +12,16 @@ const setup = (send = vi.fn(async () => {}), configured = true) => {
   const factories: AnalyticsProviderFactory<AnalyticsEnv>[] = [
     () => (configured ? provider : null),
   ];
-  const queued: ((db: never) => Promise<unknown>)[] = [];
+  const queued: (() => Promise<unknown>)[] = [];
   const log = { warn: vi.fn() };
   const track = createTracker({
     env: undefined,
-    afterResponse: (task) => void queued.push(task as never),
+    afterResponse: (task) => void queued.push(task),
     log: log as never,
     factories,
     now: () => new Date('2026-09-30T12:00:00Z'),
   });
-  const flush = () => Promise.all(queued.map((task) => task({} as never)));
+  const flush = () => Promise.all(queued.map((task) => task()));
   return { track, flush, queued, send, log };
 };
 
@@ -56,6 +56,22 @@ describe('request event tracking', () => {
     track('player_seat_claim_initiated', user, async () => null);
     await flush();
     expect(send).not.toHaveBeenCalled();
+  });
+
+  it('also sets profile labels where the provider keeps profiles', async () => {
+    const setProfile = vi.fn(async () => {});
+    const send = vi.fn(async () => {});
+    const queued: (() => Promise<unknown>)[] = [];
+    const track = createTracker({
+      env: undefined,
+      afterResponse: (task) => void queued.push(task),
+      log: { warn: vi.fn() } as never,
+      factories: [() => ({ name: 'acme', send, setProfile })],
+    });
+    track('theme_in_use', user, { theme: 'overdrive' }, { profile: { theme: 'overdrive' } });
+    await Promise.all(queued.map((task) => task()));
+    expect(send).toHaveBeenCalledOnce();
+    expect(setProfile).toHaveBeenCalledWith(user, { theme: 'overdrive' });
   });
 
   it('logs a failing provider without throwing, and without the response text', async () => {

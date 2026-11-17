@@ -69,6 +69,8 @@ export async function listAdminCrowdfundings(
       submitter: sql<
         string | null
       >`CASE WHEN ${crowdfundings.submitterId} IS NULL THEN NULL ELSE ${publicName(profiles.username)} END`,
+      // Who to write to from the admin list ("Mandar mensagem"); null for an imported campaign.
+      contactId: crowdfundings.submitterId,
       importSource: crowdfundings.importSource,
       reports: sql<number>`coalesce(${waiting.waiting}, 0)`.mapWith(Number),
     })

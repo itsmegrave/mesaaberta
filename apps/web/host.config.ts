@@ -41,14 +41,9 @@ export const hostBindingsPath = fileURLToPath(
   ),
 );
 
-/** What `sentrySvelteKit` needs to know about the adapter's output. */
-export const hostSentry = bun
-  ? { adapter: 'node' as const, sourcemapAssets: undefined }
-  : {
-      adapter: 'cloudflare' as const,
-      // adapter-cloudflare only writes the client assets to `.svelte-kit/cloudflare`: the server code
-      // stays in `.svelte-kit/output/server` until Wrangler bundles it on deploy. Sentry's default
-      // (the adapter directory) would upload the client maps only, leaving server stack traces
-      // unmapped.
-      sourcemapAssets: ['.svelte-kit/cloudflare/**', '.svelte-kit/output/server/**'],
-    };
+/**
+ * What `sentrySvelteKit` needs to know about the adapter's output. Source maps are the deploy's
+ * job: it uploads the browser's (`.svelte-kit/cloudflare/_app`) and Wrangler's server bundle's,
+ * since Wrangler bundles the server into one `_worker.js` that Vite's server maps never match.
+ */
+export const hostSentry = { adapter: bun ? ('node' as const) : ('cloudflare' as const) };

@@ -1,3 +1,4 @@
+import { currentRequestId } from '@mesaaberta/contracts';
 import { safeFields, scrubString, type AppName } from '../observability/privacy';
 export { scrubString, type AppName } from '../observability/privacy';
 
@@ -23,6 +24,8 @@ export type TelemetrySink = {
   log(level: Level, msg: string, fields: Fields): void;
   /** Reports a handled operational error as an issue. `tags` are already safe. */
   capture(error: Error, tags: Fields): void;
+  /** Notes a flag the request read and its value, so an issue shows which flags were on. */
+  flag?(name: string, enabled: boolean): void;
 };
 
 let sink: TelemetrySink | null = null;
@@ -31,6 +34,11 @@ let app: AppName | null = null;
 /** Installs (or, with `null`, removes) the process-wide telemetry sink. */
 export const setTelemetrySink = (next: TelemetrySink | null) => {
   sink = next;
+};
+
+/** Hands a flag evaluation to the telemetry sink, if it records them. */
+export const recordFlag = (name: string, enabled: boolean) => {
+  sink?.flag?.(name, enabled);
 };
 
 /** Names the app this process runs (web, api or worker); every line and issue carries it as `app`. */
@@ -72,8 +80,10 @@ export function createLogger(
   bindings: Fields = {},
 ): Logger {
   const log = (level: Level, msg: string, fields: Fields = {}) => {
+    // A line written for a request names it even through a logger that was not bound to it.
+    const requestId = currentRequestId();
     const line = {
-      ...safeFields({ ...fields, ...bindings }),
+      ...safeFields({ ...(requestId && { requestId }), ...fields, ...bindings }),
       ...safeError(fields.error),
       ...(app && { app }),
       service: 'mesaaberta',
@@ -90,12 +100,18 @@ export function createLogger(
         write === consoleWrite &&
         level === 'error' &&
         fields.error instanceof Error &&
-        msg !== 'unhandled error' &&
+        msg !== 'request.unhandled_error' &&
         msg !== 'request.failed'
       ) {
         sink?.capture(
           fields.error,
-          safeFields({ ...fields, ...bindings, ...safeError(fields.error), app }),
+          safeFields({
+            ...(requestId && { requestId }),
+            ...fields,
+            ...bindings,
+            ...safeError(fields.error),
+            app,
+          }),
         );
       }
     } catch {

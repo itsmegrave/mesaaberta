@@ -7,11 +7,6 @@
   const controller = $derived(controllerOf(page.data.site));
 </script>
 
-<svelte:head>
-  <title>{m.terms_title()} · Mesa Aberta</title>
-  <meta name="description" content={m.terms_description()} />
-</svelte:head>
-
 <LegalPage title={m.terms_title()}>
   <p>
     Estes termos valem para quem usa a Mesa Aberta, a plataforma em que mestres abrem mesas de RPG e

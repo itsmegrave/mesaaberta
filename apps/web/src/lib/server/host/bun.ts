@@ -1,4 +1,8 @@
+import { enforceLocalOnly } from '@mesaaberta/core/server/local-only';
 import type { HostBindings } from './types';
+
+// A self-hosted stack with `LOCAL_ONLY=true` refuses to start pointed outside, and its fetches stay local.
+enforceLocalOnly(process.env);
 
 /**
  * A Bun (or Node) server, for self-hosting and for the tests: the variables are the process's, the

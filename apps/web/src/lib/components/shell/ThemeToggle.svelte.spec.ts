@@ -81,7 +81,8 @@ describe('ThemeToggle', () => {
     const button = page.getByRole('button', { name: 'Tema escuro' });
     await button.click();
 
-    expect(root.dataset.mode).toBe('dark');
+    // The new theme lands once the view transition has taken its snapshot.
+    await expect.poll(() => root.dataset.mode).toBe('dark');
     mql.dispatchEvent(new MediaQueryListEvent('change', { matches: false }));
     expect(root.dataset.mode).toBe('dark');
   });
@@ -90,10 +91,62 @@ describe('ThemeToggle', () => {
     render(ThemeToggle);
 
     const button = page.getByRole('button', { name: 'Tema escuro' });
-    expect(button.element().querySelector('[data-icon="moon"]')).not.toBeNull();
+    const shown = () => button.element().querySelector('[data-shown="true"] [data-icon]');
+    expect(shown()?.getAttribute('data-icon')).toBe('moon');
     await button.click();
 
-    expect(button.element().querySelector('[data-icon="sun"]')).not.toBeNull();
-    expect(button.element().querySelector('[data-icon="moon"]')).toBeNull();
+    await expect.poll(() => shown()?.getAttribute('data-icon')).toBe('sun');
+    // The moon stays in place to fade out; it is hidden, not removed.
+    expect(
+      button.element().querySelector('[data-shown="false"] [data-icon="moon"]'),
+    ).not.toBeNull();
+  });
+
+  it('turns the icon only after a change, and never with reduced motion', async () => {
+    render(ThemeToggle);
+
+    const button = page.getByRole('button', { name: 'Tema escuro' });
+    const glyph = () => button.element().querySelector('[data-shown]') as HTMLElement;
+    expect(glyph().className).not.toContain('transition');
+    await button.click();
+
+    expect(glyph().className).toContain('transition');
+    expect(glyph().className).toContain('motion-reduce:transition-none');
+  });
+
+  it('draws the rail item: the same icon and no label, pressed while dark', async () => {
+    render(ThemeToggle, { rail: true });
+
+    const button = page.getByRole('button', { name: 'Tema escuro' });
+    // Icons only on the rail: the tooltip names it.
+    expect(button.element().textContent?.trim()).toBe('');
+    await expect.element(button).toHaveAttribute('aria-pressed', 'false');
+    await button.click();
+
+    await expect.element(button).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      button.element().querySelector('[data-shown="true"] [data-icon]')?.getAttribute('data-icon'),
+    ).toBe('sun');
+  });
+
+  it('grows the new theme from the button, and changes in place with reduced motion', async () => {
+    const start = vi.spyOn(document, 'startViewTransition');
+    render(ThemeToggle);
+
+    const button = page.getByRole('button', { name: 'Tema escuro' });
+    await button.click();
+    await expect.element(button).toHaveAttribute('aria-pressed', 'true');
+    expect(start).toHaveBeenCalledOnce();
+
+    const reduce = window.matchMedia;
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) =>
+      query.includes('reduced-motion')
+        ? ({ matches: true, media: query } as MediaQueryList)
+        : reduce.call(window, query),
+    );
+    await button.click();
+    await expect.element(button).toHaveAttribute('aria-pressed', 'false');
+    expect(root.dataset.mode).toBe('light');
+    expect(start).toHaveBeenCalledOnce();
   });
 });

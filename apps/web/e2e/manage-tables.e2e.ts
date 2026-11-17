@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 // Signing in needs a Supabase project, so these cover what an anonymous visitor meets. The rest is
 // covered by unit tests with a fake signed-in user.
 test.describe('managing tables, anonymous', () => {
-  for (const path of ['/t/new', '/t/os-sinos-de-sablewood/edit', '/u/tables']) {
+  for (const path of ['/tables/new', '/t/os-sinos-de-sablewood/edit', '/u/tables']) {
     test(`${path} sends a visitor to log in, and back afterwards`, async ({ request }) => {
       const response = await request.get(path, { maxRedirects: 0 });
 
@@ -16,7 +16,7 @@ test.describe('managing tables, anonymous', () => {
     request,
     baseURL,
   }) => {
-    const response = await request.post('/t/new', {
+    const response = await request.post('/tables/new', {
       // A browser form asks for HTML; without it SvelteKit answers with a JSON redirect.
       headers: { origin: baseURL!, accept: 'text/html' },
       multipart: { title: 'Sem login', systemSlug: 'daggerheart' },
@@ -24,11 +24,11 @@ test.describe('managing tables, anonymous', () => {
     });
 
     expect(response.status()).toBe(303);
-    expect(response.headers()['location']).toBe('/login?next=%2Ft%2Fnew');
+    expect(response.headers()['location']).toBe('/login?next=%2Ftables%2Fnew');
   });
 
   test('a form posted from another origin is refused outright', async ({ request }) => {
-    const response = await request.post('/t/new', {
+    const response = await request.post('/tables/new', {
       headers: { origin: 'https://evil.example' },
       multipart: { title: 'Forjado' },
       maxRedirects: 0,
@@ -38,12 +38,12 @@ test.describe('managing tables, anonymous', () => {
   });
 
   test('the table list offers a way to open one', async ({ page }) => {
-    await page.goto('/t');
+    await page.goto('/tables');
 
     // The page's own button on a desktop, the bottom tab bar's "Abrir mesa" on a phone.
     await expect(page.getByRole('link', { name: /^Abrir (uma )?mesa$/ })).toHaveAttribute(
       'href',
-      '/t/new',
+      '/tables/new',
     );
   });
 });

@@ -46,4 +46,11 @@ describe('inbox profile links', () => {
       .element(page.getByRole('link', { name: 'Aventura @ana: Olá!', exact: true }))
       .toHaveAttribute('href', '/m/chat-ana');
   });
+
+  it('labels an admin conversation "[Admin] @username"', async () => {
+    render(InboxList, { items: [{ ...direct, admin: true }], page: 1, pages: 1 });
+    await expect
+      .element(page.getByRole('link', { name: '[Admin] @ana Olá!', exact: true }))
+      .toHaveAttribute('href', '/m/chat-ana');
+  });
 });

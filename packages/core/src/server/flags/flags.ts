@@ -1,4 +1,4 @@
-import { logger, type Logger } from '../logger';
+import { logger, recordFlag, type Logger } from '../logger';
 import { GrowthBook, type Attributes, type FeatureApiResponse } from '@growthbook/growthbook';
 import { flagDefaults, isFlagName, killSwitches, type FlagName } from './registry';
 
@@ -81,23 +81,29 @@ export function createFlags(
       }
     })());
 
+  const evaluate = async (name: AnyFlagName, attributes: Attributes): Promise<boolean> => {
+    const fixed = isFlagName(name) ? overrides[name] : undefined;
+    if (fixed !== undefined) return fixed;
+    if (forceAll) return !(isFlagName(name) && killSwitches.has(name));
+
+    const response = await load();
+    if (!response) return defaultFor(name);
+
+    try {
+      const growthbook = new GrowthBook({ attributes });
+      await growthbook.setPayload(response);
+      return growthbook.getFeatureValue(name, defaultFor(name));
+    } catch (error) {
+      log.warn('flags.evaluation.failed', { error });
+      return defaultFor(name);
+    }
+  };
+
   return {
     async isEnabled(name, attributes = {}) {
-      const fixed = isFlagName(name) ? overrides[name] : undefined;
-      if (fixed !== undefined) return fixed;
-      if (forceAll) return !(isFlagName(name) && killSwitches.has(name));
-
-      const response = await load();
-      if (!response) return defaultFor(name);
-
-      try {
-        const growthbook = new GrowthBook({ attributes });
-        await growthbook.setPayload(response);
-        return growthbook.getFeatureValue(name, defaultFor(name));
-      } catch (error) {
-        log.warn('flags.evaluation.failed', { error });
-        return defaultFor(name);
-      }
+      const enabled = await evaluate(name, attributes);
+      recordFlag(name, enabled);
+      return enabled;
     },
   };
 }

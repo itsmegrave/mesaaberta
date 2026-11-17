@@ -21,13 +21,21 @@ it.each([
   expect(db.select).not.toHaveBeenCalled();
 });
 
-it('reports an unavailable database to an authorized admin', async () => {
+it('reports an unavailable api to an authorized admin, never reading here', async () => {
+  const db = { select: vi.fn() };
   await expect(
     read({
-      locals: { getProfile: async () => ({ id: '1', role: 'admin', status: 'active' }), db: null },
+      locals: {
+        getProfile: async () => ({ id: '1', role: 'admin', status: 'active' }),
+        getUser: async () => ({ id: '1' }),
+        db,
+        env: {},
+        log: { warn: vi.fn() },
+      },
       setHeaders: vi.fn(),
     } as unknown as RequestEvent),
   ).rejects.toMatchObject({ status: 503 });
+  expect(db.select).not.toHaveBeenCalled();
 });
 
 it.each([overview, users, tables])(

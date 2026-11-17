@@ -63,12 +63,26 @@ export type DomainEvent =
     }
   // The session is over and the GM has not said whether it happened (the sweeper records it, with no actor).
   | { type: 'TableAwaitingConfirmation'; payload: { tableId: string; slug: string; title: string } }
+  // The GM still has not answered: the sweeper e-mails them an hour after the session ended (`1h`)
+  // and again a week after (`7d`), the last notice before the session is settled for them.
+  | {
+      type: 'TableCloseReminder';
+      payload: { tableId: string; slug: string; title: string; step: '1h' | '7d' };
+    }
   // The GM confirmed the session happened, or that it did not.
   // `absentPlayerIds` are the confirmed players the GM said did not show up (they cannot rate the
   // GM and are not asked to). Absent when attendance was not recorded.
+  // `autoClosed`: nobody answered in ten days, so the sweeper concluded the one-shot (no actor), and
+  // every confirmed player is asked to rate by e-mail as well as in the bell.
   | {
       type: 'TableConcluded';
-      payload: { tableId: string; slug: string; title: string; absentPlayerIds?: string[] };
+      payload: {
+        tableId: string;
+        slug: string;
+        title: string;
+        absentPlayerIds?: string[];
+        autoClosed?: true;
+      };
     }
   // A session of a campaign or adventure happened and more follow: the table stays open for the next
   // one (`nextStartsAt`, ISO). `absentPlayerIds` as in `TableConcluded`.
@@ -80,23 +94,66 @@ export type DomainEvent =
         title: string;
         nextStartsAt: string;
         absentPlayerIds?: string[];
+        // Nobody answered in ten days, so the sweeper held it (no actor) and moved to the next date.
+        autoClosed?: true;
       };
     }
   // The GM let these players rate a table that is still going. Each rates once, whatever the sessions.
+  // `autoClosed`: the sweeper did, with the session it held for the GM; the players are e-mailed too.
   | {
       type: 'RatingsOpened';
-      payload: { tableId: string; slug: string; title: string; playerIds: string[] };
+      payload: {
+        tableId: string;
+        slug: string;
+        title: string;
+        playerIds: string[];
+        autoClosed?: true;
+      };
     }
   | { type: 'TableNotHeld'; payload: { tableId: string; slug: string; title: string } }
+  // Quem mestra changed one session of a campaign or adventure that is not its next one (a change
+  // to the next one is a `TableUpdated` of `startsAt`): added it, moved it (`from`, ISO) or
+  // cancelled it. `startsAt` (ISO) is the session's date, the new one for a move.
+  | { type: 'SessionScheduled'; payload: SessionFact }
+  | { type: 'SessionMoved'; payload: SessionFact & { from: string } }
+  | { type: 'SessionCancelled'; payload: SessionFact }
+  // Campanha aberta (`use_session_signup`): a player on the roster plays one session, or waits for
+  // it (`waiting`). `by`: the player signed up, quem mestra put them in, or a place opened and the
+  // first who waited took it (the actor is whoever left).
+  | {
+      type: 'SessionSignedUp';
+      payload: SessionFact & {
+        playerId: string;
+        waiting: boolean;
+        by: 'player' | 'gm' | 'waitlist';
+      };
+    }
+  // A player is off one session: they left it, or quem mestra took them out (`removed`).
+  | {
+      type: 'SessionSignupLeft';
+      payload: SessionFact & { playerId: string; waiting: boolean; reason: 'left' | 'removed' };
+    }
   // A player asked for a seat at a table that approves each one. Takes no seat.
-  | { type: 'JoinRequested'; payload: Registration }
+  // `fromWaitlist`: no one asked just now; a seat freed up and the first in the table's lista de espera
+  // moved up (the actor is that player). They are told too.
+  | { type: 'JoinRequested'; payload: Registration & { fromWaitlist?: true } }
   | { type: 'JoinApproved'; payload: Registration }
   | { type: 'JoinDeclined'; payload: Registration }
   // A seat was confirmed by an automatic join. An approval records `JoinApproved` alone, so a player is never told twice.
-  | { type: 'PlayerJoined'; payload: Registration }
-  | { type: 'PlayerLeft'; payload: Registration & { reason: 'left' | 'removed' } }
+  | { type: 'PlayerJoined'; payload: Registration & { fromWaitlist?: true } }
+  // `wasFull`: the table had no seat left before this one was given up (followers of its GM hear of it).
+  | {
+      type: 'PlayerLeft';
+      payload: Registration & { reason: 'left' | 'removed'; wasFull?: true };
+    }
   // A player rated the table and its GM (or changed their rating). Scores and comments are not in the payload.
   | { type: 'RatingSubmitted'; payload: Registration }
+  // The GM rated a player they marked present (the actor is the GM). No score or comment either.
+  | { type: 'PlayerRated'; payload: Registration }
+  // Someone followed a person (the actor is the follower). Unfollowing records nothing.
+  | { type: 'FollowStarted'; payload: { followeeId: string } }
+  // A person saved their favorite systems: the ids as saved, in no order.
+  | { type: 'FavoriteSystemsChanged'; payload: { systemIds: string[] } }
   // A session started (OAuth or email/password). This is the connection record Marco Civil da
   // Internet (art. 15) requires kept for 6 months — longer than other events, see CONNECTION_RETENTION_DAYS.
   | { type: 'UserSignedIn'; payload: { ip: string | null } }
@@ -133,13 +190,76 @@ export type DomainEvent =
   // Nobody is told.
   | { type: 'PartnerAdded'; payload: PartnerFact }
   | { type: 'PartnerUpdated'; payload: PartnerFact & { changes: Changes } }
-  // An admin approved a partner: it is on the page. `submitterId` is who is told.
+  // An admin approved a partner: it is on the page. Every account that looks after it is told
+  // (`submitterId` alone for a partner with no `partner_owners` row).
   // A rule awarded a badge (never a backfill or a grant). The bell notice is written from this event.
   | { type: 'BadgeEarned'; payload: { profileId: string; badgeId: string } }
+  // An admin gave a badge by hand (a manual one, or one revoked earlier given back), or took one
+  // away. `reason` is the admin's note for the audit log; the person is told of a grant only.
+  | { type: 'BadgeGranted'; payload: { profileId: string; badgeId: string; reason: string } }
+  | { type: 'BadgeRevoked'; payload: { profileId: string; badgeId: string; reason: string } }
   | { type: 'PartnerApproved'; payload: PartnerFact & { submitterId: string } }
-  // An admin rejected or took a partner down, or its submitter withdrew it (then `submitterId`
-  // is the actor, so nobody is told).
+  // An admin rejected or took a partner down, or one of its owners withdrew it (then `reason` is
+  // null and the other owners are told). Who is told as for `PartnerApproved`.
   | { type: 'PartnerRemoved'; payload: PartnerRemoval }
+  // An owner of a partner invited another account to look after it, and how that ended. The
+  // invitee hears of the invite, the inviter of the answer; a cancelled or lapsed one tells nobody.
+  | { type: 'PartnerOwnerInvited'; payload: PartnerInvitationFact }
+  | { type: 'PartnerInvitationAccepted'; payload: PartnerInvitationFact }
+  | { type: 'PartnerInvitationDeclined'; payload: PartnerInvitationFact }
+  | { type: 'PartnerInvitationCancelled'; payload: PartnerInvitationFact }
+  | { type: 'PartnerInvitationExpired'; payload: PartnerInvitationFact }
+  // An account stopped looking after a partner: taken off by another owner (who tells them), or
+  // it left (the actor is `profileId`, so nobody is told).
+  | { type: 'PartnerOwnerRemoved'; payload: PartnerFact & { profileId: string } }
+  // A member suggested a tool for "Ferramentas": it waits for an admin. Nobody is told.
+  | { type: 'ToolSuggested'; payload: ToolFact }
+  // An admin edited a tool. It stays as it was (on the page or waiting).
+  | { type: 'ToolUpdated'; payload: ToolFact & { changes: Changes } }
+  // An admin approved a suggestion: it is on /tools and whoever suggested it is told.
+  | { type: 'ToolApproved'; payload: ToolFact & { submitterId: string | null } }
+  // An admin turned a suggestion down or took a tool off. Whoever suggested it is told why.
+  | {
+      type: 'ToolRemoved';
+      payload: ToolFact & { submitterId: string | null; reason: ReportFiled['reason'] };
+    }
+  // A member sent an "Onde jogar" place, or its submitter edited it (which clears its approval):
+  // it waits for an admin. An admin's edit keeps it up. Nobody is told.
+  | { type: 'PlaceSubmitted'; payload: PlaceFact }
+  | { type: 'PlaceUpdated'; payload: PlaceFact & { changes: Changes } }
+  // An admin approved a place: it is on /places and its tags were rebuilt. The submitter is told.
+  | { type: 'PlaceApproved'; payload: PlaceFact & { submitterId: string } }
+  // An admin rejected or took a place down, or its submitter withdrew it (then `reason` is null).
+  | { type: 'PlaceRemoved'; payload: PlaceRemoval }
+  // The report that made more than PLACE_REPORTS_TO_HIDE - 1 open ones hid the place until an admin
+  // acts: every admin gets a high alert, its submitter and owner a neutral notice.
+  | { type: 'PlaceHidden'; payload: PlaceKeepers & { reportId: string } }
+  // An admin put a hidden place back, dismissing the reports that hid it. Its keepers are told.
+  | { type: 'PlaceRestored'; payload: PlaceKeepers }
+  // A member asked to manage a place; an admin approved (they own it now) or rejected the claim.
+  // The claimant hears the decision. The contact they gave is never in the log.
+  | { type: 'PlaceClaimed'; payload: PlaceClaimFact }
+  | { type: 'PlaceClaimApproved'; payload: PlaceClaimFact }
+  | { type: 'PlaceClaimRejected'; payload: PlaceClaimFact }
+  // A place lost its owner: they handed it back (`actorId` is `profileId`), or an admin took them
+  // off (then they are told).
+  | { type: 'PlaceOwnerRemoved'; payload: PlaceFact & { profileId: string } }
+  // Someone who looks after a place and a partner asked to link them; an admin approved (the place
+  // shows "Parceiro Mesa Aberta", the partner the place) or rejected it, and the requester hears.
+  // A link taken down later, by an admin or either side, is `PlacePartnerUnlinked`.
+  | { type: 'PlacePartnerLinkRequested'; payload: PlacePartnerLinkFact }
+  | { type: 'PlacePartnerLinkApproved'; payload: PlacePartnerLinkFact }
+  | { type: 'PlacePartnerLinkRejected'; payload: PlacePartnerLinkFact }
+  | { type: 'PlacePartnerUnlinked'; payload: PlacePartnerLinkFact }
+  // "Quem mestra na casa": whoever owns a place (or an admin) invites someone; they accept or
+  // decline, or it is cancelled or lapses. A house GM leaves (`actorId` is `profileId`) or is
+  // taken off by the place's owner or an admin (then they are told).
+  | { type: 'PlaceHostInvited'; payload: PlaceHostInvitationFact }
+  | { type: 'PlaceHostInvitationAccepted'; payload: PlaceHostInvitationFact }
+  | { type: 'PlaceHostInvitationDeclined'; payload: PlaceHostInvitationFact }
+  | { type: 'PlaceHostInvitationCancelled'; payload: PlaceHostInvitationFact }
+  | { type: 'PlaceHostInvitationExpired'; payload: PlaceHostInvitationFact }
+  | { type: 'PlaceHostRemoved'; payload: PlaceFact & { profileId: string } }
   // An admin closed a table over a report. A `TableDisabled` is recorded with it, for the
   // cancellations; this one tells the GM.
   | { type: 'TableClosedByModeration'; payload: TableClosure }
@@ -155,9 +275,27 @@ export type DomainEvent =
   // A person saved their profile. `changes` names the fields; the personal ones (name, age range,
   // gender, city) are hidden, so the log says that they changed and not what they became.
   | { type: 'ProfileUpdated'; payload: { profileId: string; changes: Changes } }
+  // "Estou procurando mesa" turned on (or on again) or off, in Procuro mesa. The note is not kept.
+  | { type: 'PlayerLookingChanged'; payload: { profileId: string; looking: boolean } }
+  // Combinar: a person switched their card on (or saved it again) or off. The card is not kept.
+  | { type: 'MatchCardChanged'; payload: { profileId: string; enabled: boolean } }
+  // Two people both said yes on Combinar (the actor gave the second yes). The pair is in order.
+  | { type: 'MatchCreated'; payload: { matchId: string; profileIds: [string, string] } }
+  // One of the two undid a Combinar match (the actor). The other is not told.
+  | { type: 'MatchEnded'; payload: { matchId: string } }
+  // The calendar feed got a new secret (`on`; the old address stops working) or was turned off.
+  // The secret itself is never in the log.
+  | { type: 'CalendarFeedChanged'; payload: { profileId: string; on: boolean } }
+  // "Quando posso jogar" saved on the profile: how many slots it now has (0: cleared).
+  | { type: 'AvailabilityChanged'; payload: { profileId: string; slots: number } }
+  // The person made their Retrospectiva public (anyone with the link) or private again.
+  | { type: 'YearReviewShared'; payload: { profileId: string; shared: boolean } }
   // An admin ran an event again from the event queue (one is recorded per event, also when they ask
   // for every given-up one). No handler listens to it: it is for the audit log alone.
-  | { type: 'EventForced'; payload: { eventId: string; eventType: string } };
+  | { type: 'EventForced'; payload: { eventId: string; eventType: string } }
+  // An admin opened a section of the admin area (`/admin/users`), at most once per section in
+  // half an hour: who looked at what, for the audit log.
+  | { type: 'AdminAreaEntered'; payload: { section: string } };
 
 /** What an edit changed, per field. A hidden field says that it changed, never the value. */
 export type FieldChange =
@@ -184,9 +322,10 @@ export type TableClosure = {
 
 export type ReportFiled = {
   reportId: string;
-  targetType: 'table' | 'player' | 'crowdfunding' | 'partner';
+  targetType: 'table' | 'player' | 'crowdfunding' | 'partner' | 'message' | 'person' | 'place';
   targetId: string;
-  // Null for a report about a crowdfunding campaign or a partner, which belong to no table.
+  // Null for a report about a crowdfunding campaign or a partner, which belong to no table, and
+  // for one made in a direct conversation.
   tableId: string | null;
   reason:
     | 'spam'
@@ -197,7 +336,10 @@ export type ReportFiled = {
     | 'broken_link'
     | 'scam'
     | 'off_topic'
-    | 'no_backlink';
+    | 'no_backlink'
+    | 'place_closed'
+    | 'wrong_address'
+    | 'not_public';
 };
 
 export type CrowdfundingFact = { crowdfundingId: string; name: string };
@@ -211,17 +353,56 @@ export type CrowdfundingRemoval = CrowdfundingFact & {
 
 export type PartnerFact = { partnerId: string; name: string };
 
-// `reason` is null when the submitter withdrew it. `reportId` is null with no report behind it.
+// `reason` is null when an owner withdrew it. `reportId` is null with no report behind it.
 export type PartnerRemoval = PartnerFact & {
   submitterId: string;
   reason: ReportFiled['reason'] | null;
   reportId: string | null;
 };
 
+export type ToolFact = { toolId: string; name: string };
+
+export type PlaceFact = { placeId: string; slug: string; name: string };
+
+// A claim on a place, and who made it.
+export type PlaceClaimFact = PlaceFact & { claimId: string; claimantId: string };
+
+// A request to link a place and a partner, and who asked (null once their account is gone).
+export type PlacePartnerLinkFact = PlaceFact & {
+  linkId: string;
+  partnerId: string;
+  partnerName: string;
+  requestedBy: string | null;
+};
+
+// An invite to be a place's house GM.
+export type PlaceHostInvitationFact = PlaceFact & {
+  inviterId: string;
+  inviteeId: string;
+  invitationId: string;
+};
+
+// A place and who looks after it: whoever sent it, and the owner an admin accepted, if any.
+export type PlaceKeepers = PlaceFact & { submitterId: string; ownerId: string | null };
+
+// `reason` is null when the submitter withdrew it. `reportId` is null with no report behind it.
+export type PlaceRemoval = PlaceFact & {
+  submitterId: string;
+  reason: ReportFiled['reason'] | null;
+  reportId: string | null;
+};
+
+export type PartnerInvitationFact = PartnerFact & {
+  inviterId: string;
+  inviteeId: string;
+  invitationId: string;
+};
+
 export type ReportClosure = { reportId: string; reporterId: string };
 
 export type CatalogDecision = {
-  kind: 'platform' | 'tag' | 'system';
+  /** `placeTag` is a place's tag (`place_features`); the rest are what tables pick. */
+  kind: 'platform' | 'tag' | 'system' | 'placeTag';
   entryId: string;
   name: string;
 };
@@ -238,6 +419,8 @@ export type SystemAnnouncement = {
   recipientId: string | null;
   /** How many were in the audience when it was sent: what the admin confirmed. */
   estimated: number;
+  /** Set when the platform announces a changelog day itself: that day's date, the key it is sent once by. */
+  changelogDate?: string;
 };
 
 export type EventType = DomainEvent['type'];
@@ -256,4 +439,13 @@ export type PlayerInvitationFact = {
   gmId: string;
   playerId: string;
   invitationId: string;
+};
+
+/** One session of a table, in the session events. */
+export type SessionFact = {
+  tableId: string;
+  slug: string;
+  title: string;
+  sessionId: string;
+  startsAt: string;
 };

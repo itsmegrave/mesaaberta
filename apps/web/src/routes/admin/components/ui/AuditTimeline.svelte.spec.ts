@@ -13,7 +13,9 @@ const entry = (over: Partial<HistoryEntry> = {}): HistoryEntry => ({
   subject: null,
   table: 'Mesa A',
   removed: false,
+  autoClosed: false,
   changes: null,
+  badgeId: null,
   ...over,
 });
 const show = (entries: HistoryEntry[], more = false, showTable = false) =>
@@ -41,6 +43,12 @@ describe('AuditTimeline', () => {
   it('names the system when nobody did it', async () => {
     show([entry({ type: 'TableAwaitingConfirmation', actor: null })]);
     await expect.element(page.getByText('Sistema')).toBeVisible();
+  });
+
+  it('tells a table the system concluded apart from one its GM confirmed', async () => {
+    show([entry({ type: 'TableConcluded', actor: null, autoClosed: true })]);
+    await expect.element(page.getByText(/não respondeu em 10 dias/)).toBeVisible();
+    expect(document.body.textContent).not.toMatch(/confirmou que a sessão aconteceu/);
   });
 
   it('shows what an edit changed, from and to, and hides what is private', async () => {
@@ -74,5 +82,19 @@ describe('AuditTimeline', () => {
     show([entry()]);
     await expect.element(page.getByText('@ana')).toBeVisible();
     expect(document.body.textContent).not.toContain('Mesa A');
+  });
+
+  it('names the badge an admin granted or revoked', async () => {
+    show([
+      entry({ type: 'BadgeGranted', subject: 'bia', badgeId: 'community-helper', table: null }),
+      entry({ type: 'BadgeRevoked', subject: 'bia', badgeId: 'first-table', table: null }),
+    ]);
+    await expect.element(page.getByRole('listitem').first()).toBeVisible();
+    expect(document.body.textContent).toMatch(
+      /concedeu\s+a\s+conquista\s+Ajuda\s+na\s+comunidade\s+a\s+@bia/,
+    );
+    expect(document.body.textContent).toMatch(
+      /revogou\s+a\s+conquista\s+Primeira\s+mesa\s+de\s+@bia/,
+    );
   });
 });

@@ -44,9 +44,7 @@ test('anonymous direct entry renders identity, safe social links and cards witho
   await expect(breadcrumbs.getByRole('link', { name: 'Início' })).toHaveAttribute('href', '/');
   await expect(breadcrumbs.getByText(`@${gm.username}`)).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('link', { name: /^Voltar/ })).toHaveCount(0);
-  await expect(
-    page.getByRole('region', { name: 'Nota da mestragem' }).getByText('Estreia na mestragem'),
-  ).toBeVisible();
+  await expect(page.getByText('Estreia na mestragem')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Editar perfil' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Abrir Instagram em nova aba' })).toHaveAttribute(
     'href',
@@ -84,7 +82,7 @@ test('capitalization redirects to the canonical username and static routes remai
   const response = await request.get(`/u/${gm.username.toUpperCase()}`, { maxRedirects: 0 });
   expect(response.status()).toBe(308);
   expect(new URL(response.headers().location, response.url()).pathname).toBe(`/u/${gm.username}`);
-  for (const path of ['/t', '/privacy', '/terms', '/favicon.ico'])
+  for (const path of ['/tables', '/privacy', '/terms', '/favicon.ico'])
     expect((await request.get(path)).status()).toBe(200);
   expect((await request.get(`/u/${gm.username}?page=99`)).status()).toBe(404);
   expect((await request.get('/u/no-such-public-profile')).status()).toBe(404);

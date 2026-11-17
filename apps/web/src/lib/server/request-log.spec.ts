@@ -87,7 +87,7 @@ describe('handleRequestLog', () => {
 
     expect(lines).toHaveLength(1);
     expect(lines[0]).toMatchObject({
-      msg: 'request',
+      msg: 'request.completed',
       method: 'POST',
       route: '/healthz',
       status: 204,
@@ -115,7 +115,7 @@ describe('handleRequestLog', () => {
 
     expect(lines).toEqual([
       expect.objectContaining({ msg: 'from a route', userId }),
-      expect.objectContaining({ msg: 'request', userId }),
+      expect.objectContaining({ msg: 'request.completed', userId }),
     ]);
   });
 
@@ -156,7 +156,7 @@ describe('resourceOf', () => {
     ['/u/[username]', { username: 'ana' }, { resourceType: 'user', resourceId: 'ana' }],
     ['/m/[id]', { id: 'c1' }, { resourceType: 'conversation', resourceId: 'c1' }],
     ['/p/[id]/edit', { id: 'p1' }, { resourceType: 'partner', resourceId: 'p1' }],
-    ['/cf/[id]', { id: 'cf1' }, { resourceType: 'crowdfunding', resourceId: 'cf1' }],
+    ['/crowdfunding/[id]', { id: 'cf1' }, { resourceType: 'crowdfunding', resourceId: 'cf1' }],
     ['/admin/tables/[id]', { id: 't1' }, { resourceType: 'table', resourceId: 't1' }],
     ['/api/messages/[id]', { id: 'c1' }, { resourceType: 'conversation', resourceId: 'c1' }],
     ['/api/partners/[id]', { id: 'p1' }, { resourceType: 'partner', resourceId: 'p1' }],

@@ -1,11 +1,12 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
-import { pageMenu } from './support/app';
+import { openSection, pageMenu, showAllTables } from './support/app';
+import { getHealth } from './support/health';
 import { sidewaysOverflow } from './support/overflow';
 
 // These need the seeded database: `bun run db:up && bun run db:migrate && bun run db:seed` (CI does the same).
 // Locally they skip when there is none; in CI a missing database is a failure, not a skip.
 const databaseIsUp = async (request: APIRequestContext) =>
-  (await (await request.get('/healthz')).json()).database === 'ok';
+  (await (await getHealth(request)).json()).database === 'ok';
 
 test.beforeEach(async ({ request }) => {
   test.skip(!process.env.CI && !(await databaseIsUp(request)), 'needs the seeded database');
@@ -13,7 +14,8 @@ test.beforeEach(async ({ request }) => {
 
 test.describe('table list', () => {
   test('shows a seeded table, and opens its own page', async ({ page }) => {
-    await page.goto('/t');
+    await page.goto('/tables');
+    await showAllTables(page);
 
     await expect(page.getByRole('heading', { level: 1, name: 'Mesas abertas' })).toBeVisible();
     await page.getByRole('link', { name: 'Os Sinos de Sablewood' }).click();
@@ -25,7 +27,8 @@ test.describe('table list', () => {
   test("shows what a card needs: system, kind, seats and the session in the visitor's timezone", async ({
     page,
   }) => {
-    await page.goto('/t');
+    await page.goto('/tables');
+    await showAllTables(page);
     const card = page.getByRole('article').filter({ hasText: 'Os Sinos de Sablewood' });
 
     await expect(card).toContainText('Daggerheart');
@@ -37,7 +40,8 @@ test.describe('table list', () => {
   test('shows where an in-person table plays, and the Old Dragon one is listed too', async ({
     page,
   }) => {
-    await page.goto('/t');
+    await page.goto('/tables');
+    await showAllTables(page);
 
     await expect(page.getByRole('article').filter({ hasText: 'Noites de Neon' })).toContainText(
       'Presencial · Boa Viagem, Recife - PE',
@@ -48,7 +52,8 @@ test.describe('table list', () => {
   });
 
   test('badges a campaign as one, and lists the soonest session first', async ({ page }) => {
-    await page.goto('/t');
+    await page.goto('/tables');
+    await showAllTables(page);
     const cards = page.getByRole('article');
     const titles = await cards.evaluateAll((elements) =>
       elements.map((card) => card.querySelector('h2, h3')?.textContent?.trim()),
@@ -64,7 +69,8 @@ test.describe('table list', () => {
   });
 
   test('never shows a disabled table, in the list or by its address', async ({ page }) => {
-    await page.goto('/t');
+    await page.goto('/tables');
+    await showAllTables(page);
     await expect(page.getByText('A Última Estrada')).toHaveCount(0);
 
     const response = await page.goto('/t/a-ultima-estrada');
@@ -73,7 +79,8 @@ test.describe('table list', () => {
 
   test('filters by system, and says so when nothing matches', async ({ page, isMobile }) => {
     test.skip(isMobile, 'on a phone the system is picked in the filter sheet (see TablesFilters)');
-    await page.goto('/t');
+    await page.goto('/tables');
+    await showAllTables(page);
     const filter = page.getByRole('combobox', { name: 'Sistema' });
     await expect(filter).toBeVisible();
 
@@ -93,6 +100,8 @@ test.describe('table list', () => {
     await filter.fill('dagger');
     await page.getByRole('option', { name: 'Daggerheart', exact: true }).click();
     await expect(page).toHaveURL(/system=cosmere-roleplaying-game&system=daggerheart/);
+    // A new filter draws the list again, folded to 3 cards.
+    await showAllTables(page);
     await expect(page.getByRole('link', { name: 'Os Sinos de Sablewood' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Crônicas de Roshar' })).toBeVisible();
 
@@ -102,16 +111,16 @@ test.describe('table list', () => {
     await expect(page).toHaveURL(/\?system=daggerheart$/);
     await expect(page.getByRole('link', { name: 'Crônicas de Roshar' })).toHaveCount(0);
 
-    await page.goto('/t?system=gurps');
+    await page.goto('/tables?system=gurps');
     await expect(page.getByRole('status')).toContainText('Nenhuma mesa aberta com esses filtros');
     await expect(page.getByRole('link', { name: 'Ver todas as mesas' })).toHaveAttribute(
       'href',
-      '/t',
+      '/tables',
     );
   });
 
   test('does not scroll sideways on a phone', async ({ page }) => {
-    await page.goto('/t');
+    await page.goto('/tables');
 
     expect(await sidewaysOverflow(page)).toBeLessThanOrEqual(0);
   });
@@ -141,7 +150,7 @@ test.describe('table page', () => {
 
     await expect(page.getByRole('link', { name: /^Voltar/ })).toHaveCount(0);
     await expect(trail.getByRole('link', { name: 'Início' })).toHaveAttribute('href', '/');
-    await expect(trail.getByRole('link', { name: 'Mesas' })).toHaveAttribute('href', '/t');
+    await expect(trail.getByRole('link', { name: 'Mesas' })).toHaveAttribute('href', '/tables');
     await expect(trail.getByText('Os Sinos de Sablewood')).toHaveAttribute('aria-current', 'page');
   });
 
@@ -154,7 +163,7 @@ test.describe('table page', () => {
     await expect(page.getByText('@mestre-de-testes')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Daggerheart' })).toHaveAttribute(
       'href',
-      /\/t\?system=daggerheart$/,
+      /\/tables\?system=daggerheart$/,
     );
     await expect(page.getByText('Sessão única')).toBeVisible();
     await expect(page.getByText('4 horas')).toBeVisible();
@@ -172,6 +181,7 @@ test.describe('table page', () => {
     page,
   }) => {
     await page.goto('/t/os-sinos-de-sablewood');
+    await openSection(page, /^Informações extras/);
 
     await expect(page.getByText('Traga dados e lápis.')).toBeVisible();
     await expect(page.locator('.rich-text strong', { hasText: 'lápis' })).toBeVisible();
@@ -232,11 +242,11 @@ test.describe('table page', () => {
       if (/content security policy/i.test(message.text())) violations.push(message.text());
     });
 
-    await page.goto('/t');
+    await page.goto('/tables');
     await page.goto('/t/os-sinos-de-sablewood');
     await page.waitForLoadState('networkidle');
 
-    await expect(page).toHaveTitle('Os Sinos de Sablewood');
+    await expect(page).toHaveTitle(/Os Sinos de Sablewood.*Daggerheart.*Mesa Aberta/);
     expect(violations).toEqual([]);
   });
 });

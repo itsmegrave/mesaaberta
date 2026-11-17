@@ -21,7 +21,7 @@
 </script>
 
 <Breadcrumbs items={[...parents, { label: title }]} class="pt-2 md:pt-6" />
-<section class="grid items-center gap-10 py-6 md:pt-8 lg:grid-cols-2 lg:gap-24">
+<section class="grid items-center gap-8 py-6 md:pt-8 lg:grid-cols-2 lg:gap-24">
   <div
     class="relative hidden h-160 flex-col items-center justify-center gap-7 overflow-hidden rounded-lg preset-filled-primary-500 p-10 lg:flex"
   >
@@ -38,7 +38,7 @@
   </div>
 
   <div class="min-w-0">
-    <h1 class="text-5xl leading-none font-semibold tracking-tight text-balance md:text-6xl">
+    <h1 class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-5xl">
       {title}
     </h1>
     {#if lede}<p class="mt-2 max-w-sm text-lg text-muted md:mt-3 md:max-w-md md:text-xl">

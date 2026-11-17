@@ -2,8 +2,10 @@
   import {
     CROWDFUNDING_REPORT_REASONS,
     PARTNER_REPORT_REASONS,
+    PLACE_REPORT_REASONS,
     reportCrowdfundingSchema,
     reportPartnerSchema,
+    reportPlaceSchema,
   } from '@mesaaberta/core/moderation/reports';
   import { m } from '#lib/paraglide/messages.js';
 
@@ -21,13 +23,19 @@
       title: m.partner_report_title,
       lede: m.partner_report_lede,
     },
+    place: {
+      schema: reportPlaceSchema,
+      reasons: PLACE_REPORT_REASONS,
+      title: m.place_report_title,
+      lede: m.place_report_lede,
+    },
   };
 
   export type ReportKind = keyof typeof kinds;
 </script>
 
 <script lang="ts">
-  // "Denunciar" a crowdfunding campaign or a partner. The reporter stays anonymous; the server
+  // "Denunciar" a crowdfunding campaign, a partner or a place. The reporter stays anonymous; the server
   // decides again whether this member may report it and whether they already did.
   import ReportForm from '#lib/components/report/ReportForm.svelte';
   import DialogShell from '#lib/components/ui/DialogShell.svelte';

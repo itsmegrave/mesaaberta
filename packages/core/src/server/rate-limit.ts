@@ -61,6 +61,30 @@ export const CROWDFUNDING_LIMIT = {
   windowSeconds: 86_400,
 } as const satisfies RateLimit;
 
+// A place waits for an admin, so a flood costs the review queue, not the public list. A member who
+// knows a few stores sends them in one sitting; dozens a day is someone filling the queue.
+export const PLACE_LIMIT = {
+  events: ['PlaceSubmitted'],
+  max: 10,
+  windowSeconds: 86_400,
+} as const satisfies RateLimit;
+
+// A tool waits for an admin, so a flood costs the review queue. Someone who knows a few apps sends
+// them together; more than a handful a day is someone filling the queue.
+export const TOOL_LIMIT = {
+  events: ['ToolSuggested'],
+  max: 5,
+  windowSeconds: 86_400,
+} as const satisfies RateLimit;
+
+// A claim waits for an admin too. Someone who runs a few places claims them together; more than a
+// handful a day is not a store.
+export const PLACE_CLAIM_LIMIT = {
+  events: ['PlaceClaimed'],
+  max: 5,
+  windowSeconds: 86_400,
+} as const satisfies RateLimit;
+
 // Reading a link makes this server fetch an address a member typed. Filling one form takes a few
 // reads (a mistyped link is read again); a script walking addresses takes hundreds.
 export const LINK_READ_LIMIT = {

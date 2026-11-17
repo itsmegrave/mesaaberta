@@ -16,6 +16,11 @@
     | 'table:disabled'
     | 'seat:pending'
     | 'seat:confirmed'
+    | 'invitation:pending'
+    | 'invitation:accepted'
+    | 'invitation:declined'
+    | 'invitation:expired'
+    | 'invitation:cancelled'
     | 'report:open'
     | 'report:reviewing'
     | 'report:resolved'
@@ -28,6 +33,16 @@
     | 'partner:up'
     | 'partner:removed'
     | 'partner:withdrawn'
+    | 'tool:pending'
+    | 'tool:up'
+    | 'tool:removed'
+    | 'place:pending'
+    | 'place:up'
+    | 'place:hidden'
+    | 'place:removed'
+    | 'claim:pending'
+    | 'claim:approved'
+    | 'claim:rejected'
     | 'catalog:approved'
     | 'catalog:pending'
     | 'catalog:disabled'
@@ -97,6 +112,24 @@
       dot: 'border-2 border-warning-500 bg-transparent',
     },
     'seat:confirmed': { label: () => m.status_seat_confirmed(), dot: 'bg-success-500' },
+    // An invite holds a seat while it waits; once answered or lapsed it holds nothing.
+    'invitation:pending': {
+      label: () => m.invitation_status_pending(),
+      dot: 'border-2 border-warning-500 bg-transparent',
+    },
+    'invitation:accepted': { label: () => m.invitation_status_accepted(), dot: 'bg-success-500' },
+    'invitation:declined': {
+      label: () => m.invitation_status_declined(),
+      dot: 'border-2 border-surface-500 bg-transparent',
+    },
+    'invitation:expired': {
+      label: () => m.invitation_status_expired(),
+      dot: 'border-2 border-surface-500 bg-transparent',
+    },
+    'invitation:cancelled': {
+      label: () => m.invitation_status_cancelled(),
+      dot: 'border-2 border-surface-500 bg-transparent',
+    },
     // Admin only: a report waits (open, in review), or it was decided (accepted, archived).
     'report:open': { label: () => m.report_status_open(), dot: 'bg-error-500' },
     'report:reviewing': { label: () => m.report_status_reviewing(), dot: 'bg-warning-500' },
@@ -134,6 +167,30 @@
       dot: 'border-2 border-surface-500 bg-transparent',
       text: 'muted',
     },
+    // A tool waits for an admin, is on Ferramentas, or was turned down or taken off.
+    'tool:pending': { label: () => m.partner_status_pending(), dot: 'bg-warning-500' },
+    'tool:up': { label: () => m.partner_status_up(), dot: 'bg-success-500' },
+    'tool:removed': { label: () => m.tool_status_removed(), dot: 'bg-error-500', text: 'danger' },
+    // A place waits for an admin, is listed, was hidden by reports, or was taken down.
+    'place:pending': { label: () => m.partner_status_pending(), dot: 'bg-warning-500' },
+    'place:up': { label: () => m.partner_status_up(), dot: 'bg-success-500' },
+    'place:hidden': {
+      label: () => m.place_status_hidden(),
+      dot: 'border-2 border-warning-500 bg-transparent',
+    },
+    'place:removed': {
+      label: () => m.partner_status_removed(),
+      dot: 'bg-error-500',
+      text: 'danger',
+    },
+    // A claim on a place waits for an admin, or was approved or turned down.
+    'claim:pending': { label: () => m.partner_status_pending(), dot: 'bg-warning-500' },
+    'claim:approved': { label: () => m.admin_claims_status_approved(), dot: 'bg-success-500' },
+    'claim:rejected': {
+      label: () => m.admin_claims_status_rejected(),
+      dot: 'bg-surface-500',
+      text: 'muted',
+    },
     'catalog:approved': { label: () => m.admin_catalog_status_approved(), dot: 'bg-success-500' },
     'catalog:pending': { label: () => m.admin_catalog_status_pending(), dot: 'bg-warning-500' },
     'catalog:disabled': { label: () => m.admin_catalog_status_disabled(), dot: 'bg-surface-500' },
@@ -147,18 +204,18 @@
     },
     'notification:failed': { label: () => m.admin_history_status_failed(), dot: 'bg-error-500' },
     // A table's Instagram post: published, on its way, to be checked, failed, or none to speak of.
-    'post:published': { label: () => m.instagram_status_published(), dot: 'bg-success-500' },
-    'post:queued': { label: () => m.instagram_status_queued(), dot: 'bg-primary-500' },
-    'post:processing': { label: () => m.instagram_status_processing(), dot: 'bg-primary-500' },
-    'post:publishing': { label: () => m.instagram_status_publishing(), dot: 'bg-primary-500' },
-    'post:uncertain': { label: () => m.instagram_status_uncertain(), dot: 'bg-warning-500' },
-    'post:failed': { label: () => m.instagram_status_failed(), dot: 'bg-error-500' },
+    'post:published': { label: () => m.post_status_published(), dot: 'bg-success-500' },
+    'post:queued': { label: () => m.post_status_queued(), dot: 'bg-primary-500' },
+    'post:processing': { label: () => m.post_status_processing(), dot: 'bg-primary-500' },
+    'post:publishing': { label: () => m.post_status_publishing(), dot: 'bg-primary-500' },
+    'post:uncertain': { label: () => m.post_status_uncertain(), dot: 'bg-warning-500' },
+    'post:failed': { label: () => m.post_status_failed(), dot: 'bg-error-500' },
     'post:skipped': {
-      label: () => m.instagram_status_skipped(),
+      label: () => m.post_status_skipped(),
       dot: 'border-2 border-surface-500 bg-transparent',
     },
     'post:none': {
-      label: () => m.instagram_status_none(),
+      label: () => m.post_status_none(),
       dot: 'border-2 border-surface-500 bg-transparent',
     },
     'instagram:connected': { label: () => m.instagram_status_connected(), dot: 'bg-success-500' },
@@ -172,7 +229,8 @@
 </script>
 
 <span
-  class="inline-flex h-7 max-w-full shrink-0 items-center gap-2 rounded-full border border-surface-200-800 bg-panel px-3 text-sm font-[650] whitespace-nowrap {look.text ===
+  data-status-badge
+  class="inline-flex h-6 max-w-full shrink-0 items-center gap-2 rounded-full border border-surface-200-800 bg-panel px-2 text-xs font-[650] whitespace-nowrap {look.text ===
   'danger'
     ? 'text-error-700-300'
     : look.text === 'muted'

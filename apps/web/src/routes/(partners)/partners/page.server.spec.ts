@@ -1,0 +1,79 @@
+import type { RequestEvent } from '@sveltejs/kit';
+import { describe, expect, it, vi } from 'vitest';
+import { listPartners } from '@mesaaberta/core/server/partners/service';
+import { actorsOnly, apiOver } from '#lib/server/db/test-api.js';
+import { load } from './+page.server';
+
+vi.mock('@mesaaberta/core/server/partners/service', () => ({
+  listPartners: vi.fn(),
+  filePartnerReport: vi.fn(),
+  withdrawPartner: vi.fn(),
+}));
+
+const SUBMITTER = '00000000-0000-4000-8000-0000000000aa';
+const CO_OWNER = '00000000-0000-4000-8000-0000000000bb';
+const card = {
+  id: '00000000-0000-4000-8000-000000000001',
+  name: 'Taverna do Dado',
+  description: null,
+  logoPath: 'partners/x/a.png',
+  siteUrl: 'https://taverna.example',
+  couponCode: null,
+  couponDescription: null,
+  pending: false,
+  ownerIds: [SUBMITTER, CO_OWNER],
+  links: [],
+};
+
+const visit = (profile: { id: string; role: string; status: string } | null, search = '') =>
+  ({
+    locals: {
+      // The api answers over the mocked service; the stand-in database only names the viewer.
+      env: apiOver(actorsOnly(profile ? [profile] : [])),
+      log: { warn: vi.fn() },
+      getProfile: async () => profile,
+      flags: { isEnabled: async () => true },
+    },
+    url: new URL(`https://x.test/p${search}`),
+    platform: undefined,
+  }) as unknown as RequestEvent;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- the tests read whatever shape the load returns
+const run = (e: RequestEvent) => (load as (e: RequestEvent) => Promise<any>)(e);
+
+describe('the partners page load', () => {
+  it("never sends the owners' account ids to the browser", async () => {
+    vi.mocked(listPartners).mockResolvedValue({ cards: [card], total: 1, pages: 1 } as never);
+    const data = await run(visit(null));
+    expect(JSON.stringify(data)).not.toContain(SUBMITTER);
+    expect(JSON.stringify(data)).not.toContain(CO_OWNER);
+    expect(data.cards[0]).toMatchObject({ canEdit: false, canReport: false });
+  });
+
+  it('lets every owner edit the card but not report it, and others report but not edit', async () => {
+    vi.mocked(listPartners).mockResolvedValue({ cards: [card], total: 1, pages: 1 } as never);
+    for (const id of [SUBMITTER, CO_OWNER]) {
+      const own = await run(visit({ id, role: 'member', status: 'active' }));
+      expect(own.cards[0]).toMatchObject({ canEdit: true, canReport: false });
+    }
+    const other = await run(visit({ id: 'other', role: 'member', status: 'active' }));
+    expect(other.cards[0]).toMatchObject({ canEdit: false, canReport: true });
+    // Each card links to its own page while use_directory_links is on.
+    expect(other.partnerPages).toBe(true);
+  });
+
+  it('does not offer to report a card that still waits for review', async () => {
+    vi.mocked(listPartners).mockResolvedValue({
+      cards: [{ ...card, pending: true }],
+      total: 1,
+      pages: 1,
+    } as never);
+    const data = await run(visit({ id: 'other', role: 'member', status: 'active' }));
+    expect(data.cards[0].canReport).toBe(false);
+  });
+
+  it('answers 404 for a page past the last', async () => {
+    vi.mocked(listPartners).mockResolvedValue(null);
+    await expect(run(visit(null, '?page=9'))).rejects.toMatchObject({ status: 404 });
+  });
+});

@@ -12,7 +12,13 @@
   import KebabMenu from '#lib/components/ui/KebabMenu.svelte';
   import Pager from '#lib/components/ui/Pager.svelte';
   import { buttonClass } from '#lib/components/ui/MAButton.svelte';
+  import MAAvatar from '#lib/components/ui/MAAvatar.svelte';
+  import Pill from '#lib/components/ui/Pill.svelte';
+  import MAAccordion from '#lib/components/ui/MAAccordion.svelte';
+  import MAAccordionItem from '#lib/components/ui/MAAccordionItem.svelte';
+  import { formatSession } from '@mesaaberta/core/tables/format';
   import { m } from '#lib/paraglide/messages.js';
+  import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data: serverData } = $props();
   const remote = pageQuery(() => serverData);
@@ -40,7 +46,10 @@
   type Tab = 'playing' | 'running';
   // svelte-ignore state_referenced_locally
   let tab = $state<Tab>(
-    data.totals.playing === 0 && data.totals.running > 0 ? 'running' : 'playing',
+    data.totals.playing + data.ended.playing.length === 0 &&
+      data.totals.running + data.ended.running.length > 0
+      ? 'running'
+      : 'playing',
   );
 
   // A link to one of the GM's tables (the banner, or a shared `#mesa-...`) opens their tab first,
@@ -73,8 +82,13 @@
     empty: string;
     href: string;
     cta: string;
+    /** How many tables that are over sit in the folded "Encerradas" section (page 1 only). */
+    ended: number;
+    /** The section starts open when it holds something to do now (a rating to give). */
+    endedOpen: boolean;
   },
   cards: Snippet,
+  endedCards: Snippet,
 )}
   <Tabs.Content value={list.value}>
     {#snippet element(attributes)}
@@ -82,7 +96,7 @@
         <!-- A region of its own, as it was before the tabs: on a wide screen the tabs are not drawn. -->
         <section aria-labelledby={list.value}>
           <div class="flex items-baseline gap-3">
-            <h2 id={list.value} class="text-3xl font-semibold tracking-tight">
+            <h2 id={list.value} class="text-2xl font-semibold tracking-tight">
               {list.title}
             </h2>
             <span class="text-sm font-semibold text-muted"
@@ -101,6 +115,24 @@
               {@render cards()}
             </ul>
           {/if}
+          {#if list.ended > 0}
+            <!-- Concluded, not held or disabled: kept for the record, folded away from the tables still on. -->
+            <MAAccordion
+              class="mt-6 border-y border-surface-200-800"
+              value={list.endedOpen ? ['ended'] : []}
+            >
+              <MAAccordionItem
+                value="ended"
+                level={3}
+                title={m.dash_ended()}
+                summary={m.dash_count({ count: list.ended })}
+              >
+                <ul class="grid gap-5">
+                  {@render endedCards()}
+                </ul>
+              </MAAccordionItem>
+            </MAAccordion>
+          {/if}
         </section>
       </div>
     {/snippet}
@@ -112,42 +144,61 @@
 </svelte:head>
 <QueryStatus failed={remote.isError} retry={() => remote.refetch()} />
 
-<section class="pt-2 pb-4 md:pt-12">
+<section class="pt-2 pb-4 md:pt-8">
   <Breadcrumbs class="mb-8" items={[{ label: m.nav_my_tables() }]} />
   {#if invitations.length > 0}
     <section
       aria-labelledby="received-invitations"
       class="mb-6 rounded-lg border border-surface-200-800 bg-panel p-6"
     >
-      <h2 id="received-invitations" class="text-2xl font-semibold">{m.invitation_received()}</h2>
-      <ul class="mt-4 grid gap-3">
+      <div class="flex items-center gap-3">
+        <h2 id="received-invitations" class="text-2xl font-semibold">
+          {m.invitation_received()}
+        </h2>
+        <Pill tone="warning"
+          ><span class="sr-only">{m.invitation_received_count({ count: invitations.length })}</span
+          ><span aria-hidden="true">{invitations.length}</span></Pill
+        >
+      </div>
+      <ul class="mt-3">
         {#each invitations as invitation (invitation.id)}
-          <li>
-            <a class="link-underline font-semibold" href={`/u/profile/invitations/${invitation.id}`}
-              >{invitation.table.title}</a
+          <li class="flex min-h-16 items-center gap-3 py-2">
+            <MAAvatar name={invitation.table.title} size={36} class="shrink-0" />
+            <span class="flex min-w-0 flex-1 flex-col">
+              <span class="truncate font-semibold">{invitation.table.title}</span>
+              <span class="text-sm text-muted">
+                {m.invitation_row({
+                  gm: invitation.gmUsername || '',
+                  date: formatSession(
+                    new Date(invitation.expiresAt),
+                    invitation.table.timezone,
+                    getLocale(),
+                  ),
+                })}
+              </span>
+            </span>
+            <a
+              href="/u/profile/invitations/{invitation.id}"
+              class="{buttonClass('primary', 'sm')} shrink-0 font-semibold"
+              aria-label={m.invitation_respond_to({ title: invitation.table.title })}
+              >{m.invitation_respond()}</a
             >
-            <p class="text-sm text-muted">
-              {m.invitation_from({
-                gm: invitation.gmUsername || '',
-                title: invitation.table.title,
-              })}
-            </p>
           </li>
         {/each}
       </ul>
     </section>
   {/if}
   <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-    <h1 class="text-4xl leading-none font-semibold tracking-tight text-balance md:text-7xl">
+    <h1 class="text-3xl leading-none font-semibold tracking-tight text-balance md:text-5xl">
       {m.dash_title()}
     </h1>
     <div class="flex flex-col gap-3 sm:flex-row">
-      <a href="/t" class="btn h-12 rounded-lg border-2 border-primary-500 px-6 font-semibold"
+      <a href="/tables" class="btn h-11 rounded-lg border-2 border-primary-500 px-6 font-semibold"
         >{m.dash_find_table()}</a
       >
       <a
-        href="/t/new"
-        class="btn h-12 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold"
+        href="/tables/new"
+        class="btn h-11 gap-2 rounded-lg preset-filled-primary-500 px-6 font-semibold"
       >
         <Icon name="game-icons:dice-twenty-faces-twenty" size={20} />
         {m.tables_open_cta()}
@@ -156,6 +207,16 @@
         name={m.dash_title()}
         class="self-end sm:self-auto"
         items={[
+          ...(data.calendarFeed
+            ? [
+                {
+                  id: 'feed',
+                  label: m.menu_subscribe_calendar(),
+                  icon: 'feed' as const,
+                  href: '/u/calendar',
+                },
+              ]
+            : []),
           {
             id: 'calendar',
             label: m.menu_download_calendar(),
@@ -176,7 +237,7 @@
       {#each tabs as [value, label] (value)}
         <Tabs.Trigger
           {value}
-          class="btn h-12 rounded-lg font-semibold aria-selected:preset-filled-primary-500"
+          class="btn h-11 rounded-lg font-semibold aria-selected:preset-filled-primary-500"
           >{label}</Tabs.Trigger
         >
       {/each}
@@ -217,7 +278,7 @@
       </div>
     {/if}
 
-    <div class="mt-6 grid gap-10 lg:mt-8 lg:grid-cols-2 lg:gap-12">
+    <div class="mt-6 grid gap-8 lg:mt-8 lg:grid-cols-2 lg:gap-12">
       {#snippet playingCards()}
         {#each data.playing as item (item.slug)}
           <li><PlayingCard {item} {next} /></li>
@@ -228,17 +289,35 @@
           <li><RunningCard {item} {next} openPlayers={index === 0} /></li>
         {/each}
       {/snippet}
+      {#snippet endedPlayingCards()}
+        {#each data.ended.playing as item (item.slug)}
+          <li><PlayingCard {item} {next} /></li>
+        {/each}
+      {/snippet}
+      {#snippet endedRunningCards()}
+        {#each data.ended.running as item (item.slug)}
+          <li><RunningCard {item} {next} /></li>
+        {/each}
+      {/snippet}
       {@render column(
         {
           value: 'playing',
           title: m.dash_playing(),
           total: data.totals.playing,
           shown: data.playing.length,
-          empty: data.totals.playing === 0 ? m.dash_playing_empty() : m.dash_page_empty(),
-          href: '/t',
+          empty:
+            data.totals.playing > 0
+              ? m.dash_page_empty()
+              : data.ended.playing.length > 0
+                ? m.dash_playing_none_on()
+                : m.dash_playing_empty(),
+          href: '/tables',
           cta: m.dash_find_table(),
+          ended: data.page === 1 ? data.ended.playing.length : 0,
+          endedOpen: data.ended.playing.some((item) => item.canRate && !item.rating),
         },
         playingCards,
+        endedPlayingCards,
       )}
       {@render column(
         {
@@ -246,11 +325,19 @@
           title: m.dash_running(),
           total: data.totals.running,
           shown: data.running.length,
-          empty: data.totals.running === 0 ? m.dash_running_empty() : m.dash_page_empty(),
-          href: '/t/new',
+          empty:
+            data.totals.running > 0
+              ? m.dash_page_empty()
+              : data.ended.running.length > 0
+                ? m.dash_running_none_on()
+                : m.dash_running_empty(),
+          href: '/tables/new',
           cta: m.tables_open_cta(),
+          ended: data.page === 1 ? data.ended.running.length : 0,
+          endedOpen: false,
         },
         runningCards,
+        endedRunningCards,
       )}
     </div>
   </Tabs>

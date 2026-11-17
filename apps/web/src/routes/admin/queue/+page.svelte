@@ -3,19 +3,25 @@
   import UserText from '#lib/components/ui/UserText.svelte';
   import CatalogApprove from './components/CatalogApprove.svelte';
   import CatalogDialog from '../components/CatalogDialog.svelte';
+  import Icon from '#lib/components/ui/Icon.svelte';
+  import MAButton from '#lib/components/ui/MAButton.svelte';
+  import { personMessages } from '#lib/admin/message-person.svelte.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
 
   let { data } = $props();
+  const messages = personMessages();
 
   const locale = getLocale();
   const day = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
-  const kindLabel = (kind: 'platform' | 'tag' | 'system') =>
+  const kindLabel = (kind: 'platform' | 'tag' | 'system' | 'placeTag') =>
     kind === 'platform'
       ? m.admin_kind_platform()
       : kind === 'tag'
         ? m.admin_kind_tag()
-        : m.admin_kind_system();
+        : kind === 'placeTag'
+          ? m.admin_kind_place_tag()
+          : m.admin_kind_system();
   const decisionText = (decision: (typeof data.decisions)[number]) => {
     const kind = kindLabel(decision.kind).toLowerCase();
     const { name, from, into } = decision;
@@ -35,11 +41,11 @@
     }
   };
 
-  const ghost = 'btn h-12 rounded-lg btn-secondary px-4 font-semibold';
-  const primary = 'btn h-12 rounded-lg preset-filled-primary-500 px-4 font-semibold';
-  const tonal = 'btn h-12 rounded-lg preset-tonal px-4 font-semibold';
+  const ghost = 'btn h-11 rounded-lg btn-secondary px-4 font-semibold';
+  const primary = 'btn h-11 rounded-lg preset-filled-primary-500 px-5 font-semibold';
+  const tonal = 'btn h-11 rounded-lg preset-tonal px-4 font-semibold';
   const danger =
-    'btn h-12 rounded-lg px-4 font-semibold text-error-700-300 hover:preset-tonal-error';
+    'btn h-11 rounded-lg px-4 font-semibold text-error-700-300 hover:preset-tonal-error';
 </script>
 
 <AdminPage title={m.admin_queue_title()} lede={m.admin_queue_lede()}>
@@ -54,14 +60,13 @@
           {#each data.queue as entry (entry.id)}
             {@const candidates = data.approved[entry.kind]}
             <li class="rounded-lg border border-surface-200-800 bg-panel p-5">
-              <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <h2 class="text-lg font-semibold">{entry.name}</h2>
-                <span
-                  class="rounded-full border border-surface-200-800 px-2 py-0.5 text-xs font-semibold text-muted"
-                  >{kindLabel(entry.kind)}</span
-                >
-              </div>
-              <p class="mt-1 text-sm text-muted">
+              <!-- As on the AdminQueue board: the kind as a pill, then the suggested name itself. -->
+              <span
+                class="chip h-6 rounded-full border border-surface-200-800 px-3 text-xs font-semibold"
+                >{kindLabel(entry.kind)}</span
+              >
+              <h2 class="mt-3 text-2xl font-semibold">{entry.name}</h2>
+              <p class="mt-2 text-sm text-muted">
                 {#if entry.suggestedBy}<UserText
                     text={m.admin_queue_suggested_by({ username: entry.suggestedBy })}
                     username={entry.suggestedBy}
@@ -77,6 +82,16 @@
                       ? ', '
                       : ''}
                   {/each}
+                {:else if entry.places.length > 0}
+                  <span class="font-semibold">{m.admin_queue_used_in()}:</span>
+                  {#each entry.places as place, index (place.slug)}
+                    <a href={`/pp/${place.slug}`} class="link-underline">{place.name}</a>{index <
+                    entry.places.length - 1
+                      ? ', '
+                      : ''}
+                  {/each}
+                {:else if entry.kind === 'placeTag'}
+                  <span class="text-muted">{m.admin_queue_unused_place()}</span>
                 {:else}
                   <span class="text-muted">{m.admin_queue_unused()}</span>
                 {/if}
@@ -125,6 +140,20 @@
                     triggerLabel="{m.admin_queue_merge()}: {entry.name}"
                     triggerClass={tonal}
                   />
+                {/if}
+                {#if messages.can(entry.contactId)}
+                  {@const contactId = entry.contactId}
+                  <MAButton
+                    variant="secondary"
+                    class="gap-2 font-semibold"
+                    submitting={messages.opening === contactId}
+                    aria-label="{m.admin_user_message()}: {entry.suggestedBy}"
+                    onclick={() => void messages.open(contactId)}
+                    ><Icon
+                      name="game-icons:scroll-quill"
+                      size={20}
+                    />{m.admin_user_message()}</MAButton
+                  >
                 {/if}
                 <CatalogDialog
                   mode="reject"

@@ -30,6 +30,13 @@ describe('PlayingCard', () => {
     await expect.element(page.getByText('Você tem uma vaga')).toBeVisible();
   });
 
+  it('marks a concluded table and shows no next session, even with its date ahead', async () => {
+    render(PlayingCard, props({ tableStatus: 'concluded' }));
+
+    await expect.element(page.getByText('Mesa concluída')).toBeVisible();
+    expect(document.body.textContent).not.toMatch(/10 de outubro/);
+  });
+
   it("leaves with a POST to the table's own action and comes back to the dashboard", async () => {
     render(PlayingCard, props());
 
@@ -70,9 +77,10 @@ describe('PlayingCard', () => {
     await expect.element(page.getByText(/Avalie a mestragem/)).not.toBeInTheDocument();
   });
 
-  it('shows no table status: a player only ever sees active tables', async () => {
-    render(PlayingCard, props({ tableStatus: 'disabled' }));
+  it('shows no table status while the table is on, only the next session', async () => {
+    render(PlayingCard, props({ tableStatus: 'awaiting_confirmation' }));
 
-    await expect.element(page.getByText('Mesa desativada')).not.toBeInTheDocument();
+    await expect.element(page.getByText(/sábado, 10 de outubro às 19:00/)).toBeVisible();
+    await expect.element(page.getByText(/Aguardando confirmação/)).not.toBeInTheDocument();
   });
 });

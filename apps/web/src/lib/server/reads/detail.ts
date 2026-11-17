@@ -1,47 +1,87 @@
-import { error, type RequestEvent } from '@sveltejs/kit';
+import type { RequestEvent } from '@sveltejs/kit';
 import { imageUrl, pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { pendingInvitationFor } from '#lib/server/invitations/api.js';
-import { readDetail } from '@mesaaberta/core/server/reads/detail';
-import { readViaApi } from '../api-read';
+import type { readDetail } from '@mesaaberta/core/server/reads/detail';
+import { readFromApi } from '../api-read';
+import { badgesEnabled } from '../badges/enabled';
+import { directoryEnabled } from '../directories/flags';
+import { waitlistEnabled } from '../waitlist/enabled';
+import { contentRatingSymbolShown, tableSafetyEnabled } from '../tables/safety-enabled';
+import { tableCalendarEnabled } from '../tables/calendar-enabled';
+import { sessionSignupEnabled, tableSessionsEnabled } from '../tables/sessions-enabled';
+import { sessionsFromJson } from '../tables/sessions-json';
 
 export const read = async ({ locals, params }: RequestEvent) => {
-  const signedIn = (await locals.getUser()) !== null;
-  const profile = await locals.getProfile().catch(() => null);
-  // Unknown, disabled, someone else's draft, or no database at all: the same translated 404.
-  if (!locals.db) error(404, 'Not found');
-
-  // Through the api Worker when `api_reads_detail` is on for the signed-in person (visitors stay
-  // here: a flag needs someone to target); here otherwise, which is also where a refusal ends in
-  // the page's own 404.
-  const remote = profile
-    ? await readViaApi<NonNullable<Awaited<ReturnType<typeof readDetail>>>>(
-        locals,
-        'api_reads_detail',
-        profile,
-        `/v1/reads/detail/${encodeURIComponent(params.slug!)}`,
-      )
-    : null;
-  // JSON turned the two dates into strings; the page gets them as dates either way.
-  const detail = remote
-    ? {
-        ...remote,
-        table: {
-          ...remote.table,
-          startsAt: new Date(remote.table.startsAt),
-          until: remote.table.until ? new Date(remote.table.until) : null,
-        },
-      }
-    : await readDetail(locals.db, profile, params.slug!, new Date());
-  if (!detail) error(404, 'Not found');
+  const user = await locals.getUser();
+  const signedIn = user !== null;
+  // The table, the profile and a pending invitation are read at once, not one after another.
+  const profileRead = user ? locals.getProfile().catch(() => null) : Promise.resolve(null);
+  const invitationRead = profileRead.then((profile) =>
+    profile ? pendingInvitationFor(locals, profile, params.slug!) : null,
+  );
+  // Awaited below once the table is known; a table that is not there is the page's 404 first.
+  invitationRead.catch(() => undefined);
+  // The api reads the table (visitors too). Unknown, disabled or someone else's draft: its 404,
+  // which becomes the page's.
+  const [remote, profile] = await Promise.all([
+    readFromApi<NonNullable<Awaited<ReturnType<typeof readDetail>>>>(
+      locals,
+      user?.id ?? null,
+      `/v1/reads/detail/${encodeURIComponent(params.slug!)}`,
+    ),
+    profileRead,
+  ]);
+  // JSON turned the two dates into strings; the page gets them as dates.
+  const detail = {
+    ...remote,
+    table: {
+      ...remote.table,
+      startsAt: new Date(remote.table.startsAt),
+      until: remote.table.until ? new Date(remote.table.until) : null,
+    },
+  };
 
   const { imagePath, ...table } = detail.table;
-  // An api Worker from before the field answers without it; the page then shows the handle alone.
-  const { gmProfile = null, ...rest } = detail;
+  // An api Worker from before a field answers without it: the page then shows the handle alone,
+  // and offers the players' page to whoever got the registrations, as it did before `canManage`.
+  const {
+    gmProfile = null,
+    canManage = detail.registrations !== null,
+    badges = null,
+    place = null,
+    waitlist = null,
+    sessions = null,
+    ...rest
+  } = detail;
   return {
     ...rest,
+    canManage,
+    // Signed-in people only, like the rest of the badge system (`use_badges` targets a person).
+    badges: badges && profile && (await badgesEnabled(locals, profile)) ? badges : null,
     gm: gmProfile && { avatarUrl: pictureOf(supabaseUrlOf(locals.env), gmProfile) },
-    table: { ...table, imageUrl: imageUrl(supabaseUrlOf(locals.env), imagePath) },
+    table: {
+      ...table,
+      imageUrl: imageUrl(supabaseUrlOf(locals.env), imagePath),
+      // Off (`use_table_safety`), or an api Worker from before them: nothing to show.
+      ...((await tableSafetyEnabled(locals, profile))
+        ? { safetyTools: table.safetyTools ?? [], contentRating: table.contentRating ?? null }
+        : { safetyTools: [] as string[], contentRating: null }),
+    },
+    // The rating drawn as its ClassInd symbol on the cover or by the title (`use_content_rating_symbol`).
+    ratingSymbol: await contentRatingSymbolShown(locals, profile),
     signedIn,
-    invitation: profile ? await pendingInvitationFor(locals, profile, params.slug!) : null,
+    invitation: await invitationRead,
+    // The "Onde jogar" place it happens at, while the places are on and that place is listed.
+    place: place && (await directoryEnabled(locals, 'places')) ? place : null,
+    // "Adicionar à agenda" for the GM and confirmed players (`use_table_calendar`).
+    tableCalendar: await tableCalendarEnabled(locals, profile),
+    // The lista de espera, while `use_waitlist` is on: how many wait and the viewer's place in line.
+    waitlist: waitlist && (await waitlistEnabled(locals, profile)) ? waitlist : null,
+    // Sessões, while `use_table_sessions` is on (and the api Worker sends them).
+    // A campanha aberta's places per session, while `use_session_signup` is on too.
+    sessions:
+      sessions && (await tableSessionsEnabled(locals, profile))
+        ? sessionsFromJson(sessions, await sessionSignupEnabled(locals, profile))
+        : null,
   };
 };

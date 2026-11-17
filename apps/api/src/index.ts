@@ -1,6 +1,14 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { setRequestContextStore } from '@mesaaberta/contracts';
 import * as Sentry from '@sentry/cloudflare';
-import { sentryOptionsForApp } from '@mesaaberta/core/observability/sentry-options';
+import {
+  sentryOptionsForApp,
+  sentryReleaseFor,
+  type ReleaseEnv,
+} from '@mesaaberta/core/observability/sentry-options';
+import { querySpans } from '@mesaaberta/core/observability/query-spans';
 import { logInstalled } from '@mesaaberta/core/server/extensions/observe';
+import { observeQueries } from '@mesaaberta/core/server/db/client';
 import { setAppName, setTelemetrySink } from '@mesaaberta/core/server/logger';
 import { createApi } from './app';
 import { sentrySink } from './sentry-sink';
@@ -10,16 +18,22 @@ import { sentrySink } from './sentry-sink';
 // console (Workers Logs). Handled errors reach Sentry through the logger (see `onError` in app.ts).
 setTelemetrySink(sentrySink);
 setAppName('api');
+// Carries the request id to every log line and outbox write of the request (Trello #278).
+setRequestContextStore(new AsyncLocalStorage());
 logInstalled();
+// Every query becomes a `db` span, so Sentry can flag N+1 and consecutive queries.
+observeQueries(querySpans(Sentry));
 
 const api = createApi();
 
 export default Sentry.withSentry(
-  (env: { SENTRY_DSN?: string; CF_VERSION_METADATA?: { id?: string } }) => ({
+  (env: { SENTRY_DSN?: string } & ReleaseEnv) => ({
     ...sentryOptionsForApp('api'),
     dsn: env.SENTRY_DSN,
     environment: 'production',
-    release: env.CF_VERSION_METADATA?.id,
+    ...sentryReleaseFor('api', env),
+    // Puts the flags the request read (`recordFlag`) on its issues.
+    integrations: [Sentry.featureFlagsIntegration()],
   }),
   { fetch: api.fetch },
 );

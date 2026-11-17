@@ -1,5 +1,19 @@
 import { routes } from '../../routes';
-import { and, count, desc, eq, gt, inArray, isNull, lte, lt, ne, sql } from 'drizzle-orm';
+import {
+  and,
+  count,
+  desc,
+  eq,
+  gt,
+  inArray,
+  isNull,
+  lte,
+  lt,
+  ne,
+  not,
+  sql,
+  type AnyColumn,
+} from 'drizzle-orm';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import {
   conversationMembers,
@@ -10,15 +24,23 @@ import {
   profiles,
 } from '@mesaaberta/core/server/db/schema';
 import { publicName } from '@mesaaberta/core/server/db/public-name';
-import type { Actor } from '@mesaaberta/core/server/auth/policy';
+import { can, type Actor } from '@mesaaberta/core/server/auth/policy';
 import {
   DirectMessagesOff,
   Forbidden,
   NotFound,
   RateLimited,
 } from '@mesaaberta/core/server/errors';
-import { INBOX_PAGE_SIZE, THREAD_PAGE_SIZE, pairKey } from '../../messages/schema';
+import {
+  ADMIN_KEY_PREFIX,
+  INBOX_PAGE_SIZE,
+  THREAD_PAGE_SIZE,
+  adminPairKey,
+  isAdminConversation,
+  pairKey,
+} from '../../messages/schema';
 import { canRead, canSend, directBlocker, isMember, tableChatState } from './access';
+import { blockState } from '../blocks/service';
 
 type Tx = Parameters<Parameters<AnyDb['transaction']>[0]>[0];
 const asDb = (tx: Tx) => tx as unknown as AnyDb;
@@ -102,7 +124,8 @@ export async function openDirect(db: AnyDb, actor: Actor | null, recipientId: st
   if (existing) return existing;
 
   const blocker = await directBlocker(db, actor, recipientId);
-  if (blocker === 'forbidden') throw new Forbidden('message:start');
+  // `blocked`: the actor blocked them, and unblocks from the person's profile first.
+  if (blocker === 'forbidden' || blocker === 'blocked') throw new Forbidden('message:start');
   if (blocker === 'disabled') throw new DirectMessagesOff();
 
   return db.transaction(async (tx) => {
@@ -123,6 +146,55 @@ export async function openDirect(db: AnyDb, actor: Actor | null, recipientId: st
       .values([
         { conversationId: conversation.id, profileId: actor.id },
         { conversationId: conversation.id, profileId: recipientId },
+      ])
+      .onConflictDoNothing();
+    return conversation;
+  });
+}
+
+/**
+ * The admin conversation between the actor (an admin) and `profileId`, made when there is none: a
+ * `direct` conversation apart from their everyday one, shown to both as "[Admin] @username". It
+ * reaches someone with direct messages off or who blocked the admin. Refused to anyone who is not
+ * an admin, towards oneself, and towards an account that is gone or not active.
+ */
+export async function openAdminConversation(db: AnyDb, actor: Actor | null, profileId: string) {
+  if (!actor || actor.status !== 'active' || actor.id === profileId) {
+    throw new Forbidden('message:start');
+  }
+  if (!can(actor, 'moderation:manage')) throw new Forbidden('message:start');
+
+  const key = adminPairKey(actor.id, profileId);
+  const [existing] = await db
+    .select()
+    .from(conversations)
+    .where(and(eq(conversations.pairKey, key), eq(conversations.kind, 'direct')));
+  if (existing) return existing;
+
+  const [recipient] = await db
+    .select({ status: profiles.status })
+    .from(profiles)
+    .where(eq(profiles.id, profileId));
+  if (!recipient || recipient.status !== 'active') throw new Forbidden('message:start');
+
+  return db.transaction(async (tx) => {
+    const t = asDb(tx);
+    await t
+      .insert(conversations)
+      .values({ kind: 'direct', pairKey: key })
+      .onConflictDoNothing({
+        target: conversations.pairKey,
+        where: sql`${conversations.kind} = 'direct'`,
+      });
+    const [conversation] = await t
+      .select()
+      .from(conversations)
+      .where(and(eq(conversations.pairKey, key), eq(conversations.kind, 'direct')));
+    await t
+      .insert(conversationMembers)
+      .values([
+        { conversationId: conversation.id, profileId: actor.id },
+        { conversationId: conversation.id, profileId },
       ])
       .onConflictDoNothing();
     return conversation;
@@ -159,7 +231,9 @@ export async function sendMessage(
         conversation.kind === 'direct' && actor.status === 'active'
           ? await otherMember(t, conversation.id, actor.id)
           : undefined;
-      if (other && !other.enabled) throw new DirectMessagesOff();
+      // Blocked by them reads as direct messages off: the blocked person is never told.
+      if (other && (!other.enabled || (await blockState(t, actor.id, other.id)).theirs))
+        throw new DirectMessagesOff();
       throw new Forbidden('message:send');
     }
 
@@ -227,15 +301,22 @@ export async function sendMessage(
     const metadata = JSON.stringify({
       conversationId,
       kind: conversation.kind,
+      ...(isAdminConversation(conversation) ? { admin: true } : {}),
       count: 1,
       ...(table ? { tableId: table.id, slug: table.slug, title: table.title } : {}),
     });
-    for (const { profileId } of recipients) {
+    // One statement for every member, however many are in a table chat.
+    if (recipients.length > 0)
       await t.execute(sql`
         insert into notifications (recipient_id, actor_id, category, type, link, metadata, created_at)
-        values (${profileId}, ${actor.id}, 'messages', 'message_received',
-          ${routes.conversation(conversationId)}, ${metadata}::jsonb,
-          ${now.toISOString()}::timestamptz)
+        values ${sql.join(
+          recipients.map(
+            ({ profileId }) => sql`(${profileId}, ${actor.id}, 'messages', 'message_received',
+              ${routes.conversation(conversationId)}, ${metadata}::jsonb,
+              ${now.toISOString()}::timestamptz)`,
+          ),
+          sql`, `,
+        )}
         on conflict (recipient_id, (metadata->>'conversationId'))
           where type = 'message_received' and read_at is null
         do update set
@@ -248,7 +329,6 @@ export async function sendMessage(
             to_jsonb((coalesce((notifications.metadata->>'count')::int, 1) + 1))
           )
       `);
-    }
 
     return message;
   });
@@ -265,6 +345,17 @@ async function otherMember(db: AnyDb, conversationId: string, actorId: string) {
 
 // Reading -----------------------------------------------------------------------------------------
 
+/**
+ * The conversation is a direct one with someone the person blocked: it leaves their inbox and
+ * counts nothing unread. Table chats stay, whoever is in them, and so do admin conversations.
+ */
+const blockedDirect = (conversationId: AnyColumn, profileId: string) => sql`exists (
+  select 1 from conversations c
+  join conversation_members cm on cm.conversation_id = c.id
+  join profile_blocks pb on pb.blocked_id = cm.profile_id and pb.blocker_id = ${profileId}
+  where c.id = ${conversationId} and c.kind = 'direct'
+    and c.pair_key not like ${ADMIN_KEY_PREFIX + '%'})`;
+
 export type InboxItem = Awaited<ReturnType<typeof listInbox>>['items'][number];
 
 /**
@@ -277,6 +368,7 @@ export async function listInbox(db: AnyDb, profileId: string, page = 1, kind?: '
     eq(conversationMembers.profileId, profileId),
     sql`(${conversations.kind} = 'table' OR exists (select 1 from ${messages} where ${messages.conversationId} = ${conversations.id}))`,
     kind ? eq(conversations.kind, kind) : undefined,
+    not(blockedDirect(conversations.id, profileId)),
   );
   const unreadByKind = await unreadConversationsByKind(db, profileId);
   const [{ total }] = await db
@@ -291,6 +383,7 @@ export async function listInbox(db: AnyDb, profileId: string, page = 1, kind?: '
     .select({
       id: conversations.id,
       kind: conversations.kind,
+      pairKey: conversations.pairKey,
       lastMessageAt: conversations.lastMessageAt,
       lastReadAt: conversationMembers.lastReadAt,
       mutedAt: conversationMembers.mutedAt,
@@ -335,6 +428,7 @@ export async function listInbox(db: AnyDb, profileId: string, page = 1, kind?: '
         inArray(messages.conversationId, ids),
         sql`${messages.senderId} is distinct from ${profileId}`,
         sql`(${conversationMembers.lastReadAt} is null or ${messages.createdAt} > ${conversationMembers.lastReadAt})`,
+        not(blockedDirect(messages.conversationId, profileId)),
       ),
     )
     .groupBy(messages.conversationId);
@@ -369,6 +463,8 @@ export async function listInbox(db: AnyDb, profileId: string, page = 1, kind?: '
       id: row.id,
       kind: row.kind,
       title: row.kind === 'table' ? row.tableTitle! : (other?.username ?? ''),
+      // An admin conversation: shown as "[Admin] @username".
+      admin: isAdminConversation(row),
       tableSlug: row.tableSlug,
       imagePath: row.tableImagePath,
       avatarUrl: other?.avatarUrl ?? null,
@@ -434,6 +530,7 @@ export async function loadConversation(
       ? (
           await db
             .select({
+              id: profiles.id,
               username: publicName(profiles.username),
               avatarUrl: profiles.avatarUrl,
               avatarPath: profiles.avatarPath,
@@ -451,13 +548,23 @@ export async function loadConversation(
         )[0]
       : undefined;
 
+  // Who blocked whom in a direct conversation. Being blocked shows as direct messages off.
+  const admin = isAdminConversation(conversation);
+  const block = other && !admin ? await blockState(db, actor!.id, other.id) : null;
   return {
     id: conversation.id,
     kind: conversation.kind,
+    // An admin conversation ("[Admin] @username"): it takes messages both ways, whatever the
+    // switch or a block says, and offers no block.
+    admin,
     table: table
       ? { slug: table.slug, title: table.title, imagePath: table.imagePath, status: table.status }
       : null,
-    other: other ?? null,
+    other: other
+      ? { ...other, acceptsDirect: admin || (other.acceptsDirect && !block?.theirs) }
+      : null,
+    // The actor blocked the other person: the page offers to unblock instead of the composer.
+    blocked: block?.mine ?? false,
     muted: (membership?.mutedAt ?? null) !== null,
     tableChat: table ? tableChatState(table, now) : null,
     canSend: await canSend(db, actor, conversation, now),
@@ -613,6 +720,7 @@ export async function unreadConversationsByKind(
       and(
         sql`${messages.senderId} is distinct from ${profileId}`,
         sql`(${conversationMembers.lastReadAt} is null or ${messages.createdAt} > ${conversationMembers.lastReadAt})`,
+        not(blockedDirect(messages.conversationId, profileId)),
       ),
     )
     .groupBy(conversations.kind);
@@ -636,6 +744,7 @@ export async function unreadConversations(db: AnyDb, profileId: string): Promise
       and(
         sql`${messages.senderId} is distinct from ${profileId}`,
         sql`(${conversationMembers.lastReadAt} is null or ${messages.createdAt} > ${conversationMembers.lastReadAt})`,
+        not(blockedDirect(messages.conversationId, profileId)),
       ),
     );
   return row?.unread ?? 0;

@@ -9,6 +9,7 @@
   import ModerationDialog from '#lib/components/admin/ModerationDialog.svelte';
   import SegmentedFilter from '#lib/components/admin/SegmentedFilter.svelte';
   import type { KebabItem } from '#lib/components/ui/KebabMenu.svelte';
+  import { personMessages } from '#lib/admin/message-person.svelte.js';
   import StatusBadge, { type Status } from '#lib/components/ui/StatusBadge.svelte';
   import { CROWDFUNDING_ADMIN_STATUSES } from '@mesaaberta/core/crowdfunding/admin-filters';
   import Icon from '#lib/components/ui/Icon.svelte';
@@ -40,6 +41,7 @@
   function copyId(row: Row) {
     return copyText(row.id, m.toast_id_copied());
   }
+  const messages = personMessages();
   const items = (row: Row): KebabItem[] => [
     {
       id: 'open',
@@ -48,6 +50,7 @@
       href: row.url,
       external: true,
     },
+    ...messages.item(row.contactId),
     {
       id: 'reports',
       label: m.admin_crowdfunding_see_reports(),
@@ -138,7 +141,7 @@
         {#if row.submitter}
           <a class="anchor" href={`/u/${row.submitter}`}>@{row.submitter}</a>
         {:else}
-          <span class="inline-flex items-center gap-1.5 text-muted">
+          <span class="inline-flex items-center gap-2 text-muted">
             <Icon name="import" size={18} class="shrink-0" />
             {submissionLabel(null, row.importSource)}
           </span>

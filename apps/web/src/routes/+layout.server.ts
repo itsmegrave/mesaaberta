@@ -1,44 +1,59 @@
 import { siteOf } from '@mesaaberta/core/server/site';
 import { loadRead } from '#lib/server/reads/load.js';
-import { pendingCount } from '@mesaaberta/core/server/admin/catalog';
 import { can } from '@mesaaberta/core/server/auth/policy';
 import { badgesEnabled } from '#lib/server/badges/enabled.js';
+import { NO_DIRECTORIES, directoryFlags } from '#lib/server/directories/flags.js';
+import { beginnersEnabled } from '#lib/server/tables/beginners.js';
 import { pictureOf, supabaseUrlOf } from '@mesaaberta/core/server/images';
-import { unreadConversations } from '@mesaaberta/core/server/messages/service';
-import {
-  BELL_LIMIT,
-  listNotifications,
-  unreadCount,
-} from '@mesaaberta/core/server/notifications/service';
+import { readShell } from '#lib/server/me.js';
 import { TIMEZONE_COOKIE, viewerTimezone } from '@mesaaberta/core/time/timezone';
+import { isPublished } from '#lib/blog.js';
+import { posts } from '#lib/server/blog.js';
 import type { LayoutServerLoad } from './$types';
 
 /**
- * postgres.js raises CONNECTION_ENDED only for a query submitted after this request's own `end()`
- * (see handleDatabase): the page's load already decided the response (a redirect, a 404) and this
- * layout load was still going. Nobody sees the account menu then, and the database is fine.
+ * The account menu while the api cannot read the profile: the name Supabase holds and nothing the
+ * api would have counted. `unavailable` lets the shell keep the full account it showed last.
  */
-const requestAlreadyEnded = (error: unknown) =>
-  [error, (error as { cause?: unknown } | null)?.cause].some(
-    (candidate) => (candidate as { code?: unknown } | null)?.code === 'CONNECTION_ENDED',
+const unavailableAccount = (user: { user_metadata?: Record<string, unknown> }) => {
+  const metadata = user.user_metadata ?? {};
+  const name = [metadata.full_name, metadata.name].find(
+    (value): value is string => typeof value === 'string' && value.trim() !== '',
   );
+  return {
+    displayName: name?.trim() ?? 'Pessoa sem nome',
+    username: null as string | null,
+    avatarUrl: null as string | null,
+    isAdmin: false,
+    pendingSuggestionsCount: 0,
+    notifications: { unread: 0, latest: [], seenAt: new Date().toISOString() },
+    messagesUnread: 0,
+    unavailable: true as const,
+  };
+};
 
 export const load: LayoutServerLoad = async (event) => {
   const { locals, cookies, route } = event;
   const authEnabled = locals.supabase !== null;
   const site = siteOf(locals.env, locals.log);
+  // The footer links the blog once a post is out.
+  const blogLive = posts.some((post) => isPublished(post));
 
   // The maintenance screen gets a bare shell: no account, no bell, no navigation into the product.
   if (route.id === '/maintenance') {
     return {
       authEnabled,
       site,
+      blogLive,
       maintenance: true,
       maintenanceBypass: false,
       viewer: viewerTimezone(null, cookies.get(TIMEZONE_COOKIE)),
       account: null,
       cacheIdentity: 'anonymous',
       accountRead: null,
+      directories: NO_DIRECTORIES,
+      beginners: false,
+      overdrive: false,
     };
   }
   // An admin still uses the site while it is down, with a banner saying so.
@@ -46,24 +61,35 @@ export const load: LayoutServerLoad = async (event) => {
 
   try {
     const profile = await locals.getProfile();
-    const cacheIdentity = (await locals.getUser())?.id ?? 'anonymous';
-    const accountRead = await loadRead(event, 'account');
-    // The bell: how many are unread, and the latest few for its menu.
-    const withAchievements = profile ? await badgesEnabled(locals, profile) : false;
-    const [unread, latest, messagesUnread] =
-      profile && locals.db
-        ? await Promise.all([
-            unreadCount(locals.db, profile.id, { withAchievements }),
-            listNotifications(locals.db, profile.id, { limit: BELL_LIMIT, withAchievements }),
-            unreadConversations(locals.db, profile.id),
-          ])
-        : [0, [], 0];
+    const viewerFlags = profile ? { id: profile.id, isAdmin: can(profile, 'admin:access') } : {};
+    // Everything below needs only the profile, so it is read at once instead of one after another.
+    const [cacheIdentity, accountRead, shell, directories, beginners, overdrive] =
+      await Promise.all([
+        locals.getUser().then((user) => user?.id ?? 'anonymous'),
+        loadRead(event, 'account'),
+        // The bell, the messages link and an admin's waiting suggestions, from the api Worker.
+        profile
+          ? badgesEnabled(locals, profile).then((withAchievements) =>
+              readShell(locals, profile.id, withAchievements),
+            )
+          : null,
+        // Which directories the menus and the footer link to.
+        directoryFlags(locals),
+        // Iniciantes: the mark on table cards and pages, and the guide's links.
+        beginnersEnabled(locals),
+        // The Overdrive pedal (`use_overdrive_theme`), for the person reading or for visitors.
+        locals.flags.isEnabled('use_overdrive_theme', viewerFlags),
+      ]);
 
     return {
       authEnabled,
       site,
+      blogLive,
       cacheIdentity,
       accountRead,
+      directories,
+      beginners,
+      overdrive,
       maintenance: false,
       maintenanceBypass,
       // Every time on the site is shown in this zone.
@@ -73,27 +99,35 @@ export const load: LayoutServerLoad = async (event) => {
         username: profile.username,
         avatarUrl: pictureOf(supabaseUrlOf(locals.env), profile),
         isAdmin: can(profile, 'admin:access'),
-        pendingSuggestionsCount:
-          locals.db && can(profile, 'admin:access') ? await pendingCount(locals.db) : 0,
+        pendingSuggestionsCount: shell?.pendingSuggestions ?? 0,
         // When the bell's list was read: "mark all read" leaves what came after it.
-        notifications: { unread, latest, seenAt: new Date().toISOString() },
-        messagesUnread,
+        notifications: {
+          unread: shell?.unread ?? 0,
+          latest: shell?.latest ?? [],
+          seenAt: new Date().toISOString(),
+        },
+        messagesUnread: shell?.messagesUnread ?? 0,
       },
     };
   } catch (error) {
-    // The page is still worth showing without the account menu.
-    if (requestAlreadyEnded(error))
-      locals.log.info('layout: the request ended before the account menu loaded');
-    else locals.log.error('layout: could not load the profile', { error });
+    // The page is still worth showing. Someone whose session Supabase just verified stays signed
+    // in: only the api's read of their profile failed, and a header with "Entrar" (and a cleared
+    // client cache) would look like being signed out on every link they follow until it answers.
+    locals.log.error('layout.profile_load_failed', { error });
+    const user = await locals.getUser().catch(() => null);
     return {
       authEnabled,
       site,
+      blogLive,
       maintenance: false,
       maintenanceBypass,
       viewer: viewerTimezone(null, cookies.get(TIMEZONE_COOKIE)),
-      account: null,
-      cacheIdentity: 'anonymous',
+      account: user && unavailableAccount(user),
+      cacheIdentity: user?.id ?? 'anonymous',
       accountRead: null,
+      directories: NO_DIRECTORIES,
+      beginners: false,
+      overdrive: false,
     };
   }
 };

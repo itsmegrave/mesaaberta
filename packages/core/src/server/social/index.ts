@@ -2,7 +2,17 @@ import { extensions, type Extension } from '../extensions/index';
 import { noSocial } from './none';
 import type { SocialEnv, SocialPublisher } from './port';
 
-export type { PublishResult, QueueResult, SocialEnv, SocialPublisher } from './port';
+export type {
+  PublishResult,
+  QueueResult,
+  SocialEnv,
+  SocialMedia,
+  SocialMediaKind,
+  SocialPostAnswer,
+  SocialPostInput,
+  SocialPostStatus,
+  SocialPublisher,
+} from './port';
 
 /**
  * The connector for this deployment, from the installed extensions. `SOCIAL_PROVIDER` names one

@@ -1,8 +1,11 @@
 import type { RequestEvent } from '@sveltejs/kit';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
 import { approveEntry, mergeEntry, renameEntry } from '@mesaaberta/core/server/admin/catalog';
+import { profiles } from '@mesaaberta/core/server/db/schema';
+import { createTestDb } from '#lib/server/db/test-db.js';
+import { apiOver } from '#lib/server/db/test-api.js';
 import { actions } from './+page.server';
 
 vi.mock('@mesaaberta/core/server/admin/catalog', async (original) => ({
@@ -14,7 +17,19 @@ vi.mock('@mesaaberta/core/server/admin/catalog', async (original) => ({
 }));
 vi.mock('@mesaaberta/core/server/events/dispatcher', () => ({ dispatchEvent: vi.fn() }));
 
-const admin = { id: 'admin', role: 'admin', status: 'active', username: 'ana' };
+const admin = {
+  id: '00000000-0000-4000-8000-0000000000ad',
+  role: 'admin',
+  status: 'active',
+  username: 'ana',
+};
+// The api Worker makes the decisions over the test database (the catalog services are mocked).
+let test: Awaited<ReturnType<typeof createTestDb>>;
+beforeAll(async () => {
+  test = await createTestDb();
+  await test.db.insert(profiles).values(admin as never);
+});
+afterAll(() => test.close());
 const entry = '00000000-0000-4000-8000-000000000001';
 const other = '00000000-0000-4000-8000-000000000002';
 
@@ -25,10 +40,10 @@ function event(form: Record<string, string>, profile: object = admin) {
     event: {
       locals: {
         db: {},
-        getUser: async () => ({ id: 'admin' }),
+        getUser: async () => ({ id: admin.id }),
         getProfile: async () => profile,
-        // api_admin_catalog off: these specs cover the in-process path.
-        flags: { isEnabled: async () => false },
+        env: apiOver(test.db),
+        log: { warn: vi.fn() },
         afterResponse: (task: (db: unknown) => Promise<unknown>) => void after.push(task),
       },
       url: new URL('https://x.test/admin/queue'),
@@ -53,22 +68,20 @@ describe('the queue actions', () => {
     expect(approveEntry).not.toHaveBeenCalled();
   });
 
-  it('approve, and dispatch the event after the response', async () => {
+  it('approve, and leave the event to the api', async () => {
     const { event: e, after } = event({ kind: 'tag', id: entry });
 
     const result = await run('approve', e);
 
     expect(result.form.valid).toBe(true);
-    expect(approveEntry).toHaveBeenCalledWith({}, admin, 'tag', entry);
-    expect(after).toHaveLength(1);
-    await after[0]({});
-    expect(dispatchEvent).toHaveBeenCalledWith(
-      {},
+    expect(approveEntry).toHaveBeenCalledWith(
       expect.anything(),
-      'event-1',
-      expect.any(Date),
-      e.locals.log,
+      expect.objectContaining({ id: admin.id }),
+      'tag',
+      entry,
     );
+    expect(after).toHaveLength(0);
+    expect(dispatchEvent).not.toHaveBeenCalled();
   });
 
   it('refuse an id that is not an id, and a kind that is not a catalog', async () => {
@@ -79,7 +92,13 @@ describe('the queue actions', () => {
 
   it('rename with the typed name, and refuse a name that is too short', async () => {
     await run('rename', event({ kind: 'platform', id: entry, name: 'Roll 20' }).event);
-    expect(renameEntry).toHaveBeenCalledWith({}, admin, 'platform', entry, 'Roll 20');
+    expect(renameEntry).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ id: admin.id }),
+      'platform',
+      entry,
+      'Roll 20',
+    );
 
     const short = await run('rename', event({ kind: 'platform', id: entry, name: 'a' }).event);
     expect(short.status).toBe(400);

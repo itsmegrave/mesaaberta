@@ -37,6 +37,7 @@ const setup = async () => {
     kind: 'one_shot',
     capacity: 5,
     minPlayers: 3,
+    plannedSessions: null,
     startsAtLocal: '2099-01-01T18:00',
     timezone: 'UTC',
     durationMinutes: 120,

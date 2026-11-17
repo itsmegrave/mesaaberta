@@ -45,7 +45,7 @@ describe('the sweeper when the social publisher fails', () => {
     ).resolves.toBe(0);
 
     expect(logger.warn).toHaveBeenCalledWith(
-      'social publish failed',
+      'social.publish_failed',
       expect.objectContaining({ code: 'social_publish_failed' }),
     );
     expect(close).toHaveBeenCalled();

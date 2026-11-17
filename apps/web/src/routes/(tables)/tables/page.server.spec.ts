@@ -1,0 +1,166 @@
+import type { RequestEvent } from '@sveltejs/kit';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createTestDb } from '#lib/server/db/test-db.js';
+import { apiOver } from '#lib/server/db/test-api.js';
+import { listSystems } from '@mesaaberta/core/server/systems';
+import { listUpcomingTables } from '@mesaaberta/core/server/tables/queries';
+import { load } from './+page.server';
+
+vi.mock('@mesaaberta/core/server/tables/queries', () => ({ listUpcomingTables: vi.fn() }));
+vi.mock('@mesaaberta/core/server/systems', () => ({ listSystems: vi.fn() }));
+vi.mock('@mesaaberta/core/server/catalog', () => ({
+  listCatalog: vi.fn(async () => ({
+    platforms: [{ name: 'Discord', slug: 'discord' }],
+    tags: [{ name: 'Terror', slug: 'terror' }],
+  })),
+}));
+
+type Table = Awaited<ReturnType<typeof listUpcomingTables>>[number];
+type System = Awaited<ReturnType<typeof listSystems>>[number];
+
+const system = (slug: string) => ({ slug, name: slug.toUpperCase() }) as System;
+const table = (slug: string, systemSlug: string) =>
+  ({
+    slug,
+    gmId: 'gm',
+    gmName: slug === 't2' ? 'ana' : 'bia',
+    imagePath: null,
+    system: { slug: systemSlug, name: '' },
+    platforms: slug === 't3' ? [{ name: 'Discord', slug: 'discord' }] : [],
+    tags: slug === 't1' ? [{ name: 'Terror', slug: 'terror' }] : [],
+  }) as unknown as Table;
+
+// Catalogue order: a, b, c, d, e.
+const catalogue = ['a', 'b', 'c', 'd', 'e'].map(system);
+
+let test: Awaited<ReturnType<typeof createTestDb>>;
+beforeAll(async () => {
+  test = await createTestDb();
+});
+afterAll(() => test.close());
+
+const tracked = vi.fn();
+let safetyOn = false;
+let symbolOn = false;
+const viewer = '00000000-0000-4000-8000-000000000001';
+const event = (search = '', referer = '') =>
+  ({
+    params: {},
+    locals: {
+      // The api Worker reads the list (over the test database; the queries are mocked).
+      env: apiOver(test.db),
+      log: { warn: vi.fn() },
+      track: tracked,
+      getUser: async () => ({ id: viewer }),
+      getProfile: async () => null,
+      flags: {
+        isEnabled: async (name: string) =>
+          (name === 'use_table_safety' && safetyOn) ||
+          (name === 'use_content_rating_symbol' && symbolOn),
+      },
+    },
+    request: new Request('https://x.test/tables', { headers: referer ? { referer } : {} }),
+    url: new URL(`https://x.test/t${search}`),
+    platform: undefined,
+  }) as unknown as RequestEvent;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- the tests read whatever shape the load returns
+const run = (e: RequestEvent) => (load as (e: RequestEvent) => Promise<any>)(e);
+const slugs = (list: { slug: string }[]) => list.map((item) => item.slug);
+
+describe('the table list load', () => {
+  beforeEach(() => {
+    tracked.mockClear();
+    vi.mocked(listSystems).mockResolvedValue(catalogue);
+    vi.mocked(listUpcomingTables).mockResolvedValue([
+      table('t1', 'd'),
+      table('t2', 'd'),
+      table('t3', 'c'),
+    ]);
+  });
+
+  it('lists the systems with the most tables first, then the catalogue order', async () => {
+    const data = await run(event());
+
+    expect(slugs(data.systems)).toEqual(['d', 'c', 'a', 'b', 'e']);
+    expect(slugs(data.tables)).toEqual(['t1', 't2', 't3']);
+    expect(data.tables[0]).not.toHaveProperty('gmId');
+  });
+
+  it('keeps 18+ tables out until asked for, while the safety fields are on', async () => {
+    vi.mocked(listUpcomingTables).mockResolvedValue([
+      table('t1', 'd'),
+      { ...table('t2', 'd'), contentRating: '18' } as Table,
+    ]);
+    safetyOn = true;
+    try {
+      const hidden = await run(event());
+      expect(slugs(hidden.tables)).toEqual(['t1']);
+      expect(hidden.adult).toEqual({ count: 1, shown: false });
+      expect(slugs((await run(event('?adult=1'))).tables)).toEqual(['t1', 't2']);
+    } finally {
+      safetyOn = false;
+    }
+    expect(slugs((await run(event())).tables)).toEqual(['t1', 't2']);
+  });
+
+  it('hands the cards their rating only while the symbol is on', async () => {
+    vi.mocked(listUpcomingTables).mockResolvedValue([
+      { ...table('t1', 'd'), contentRating: '14' } as Table,
+    ]);
+    expect((await run(event())).tables[0].contentRating).toBeNull();
+    safetyOn = true;
+    try {
+      expect((await run(event())).tables[0].contentRating).toBeNull();
+      symbolOn = true;
+      expect((await run(event())).tables[0].contentRating).toBe('14');
+    } finally {
+      safetyOn = false;
+      symbolOn = false;
+    }
+  });
+
+  it('narrows the list to the chosen system', async () => {
+    const data = await run(event('?system=c'));
+
+    expect(data.pickedSystems).toEqual(['c']);
+    expect(slugs(data.tables)).toEqual(['t3']);
+  });
+
+  it('shows no table for a system nobody runs', async () => {
+    const data = await run(event('?system=e'));
+
+    expect(data.pickedSystems).toEqual(['e']);
+    expect(data.tables).toEqual([]);
+  });
+
+  it('takes several systems, platforms and tags from the query string, any of each', async () => {
+    expect(slugs((await run(event('?system=c&system=d'))).tables)).toEqual(['t1', 't2', 't3']);
+    expect(slugs((await run(event('?platform=discord'))).tables)).toEqual(['t3']);
+    expect(slugs((await run(event('?tag=terror&tag=humor'))).tables)).toEqual(['t1']);
+    // Across groups, a table has to match both.
+    expect(slugs((await run(event('?tag=terror&platform=discord'))).tables)).toEqual([]);
+  });
+
+  it("narrows the list to one person's tables, the link from Quem mestra", async () => {
+    const data = await run(event('?gm=%40Ana'));
+    expect(data.pickedGm).toBe('ana');
+    expect(slugs(data.tables)).toEqual(['t2']);
+  });
+
+  it('records a browse view for the signed-in viewer, with where they came from and no table text', async () => {
+    await run(event('', 'https://x.test/'));
+    await run(event('?system=d', 'https://elsewhere.test/'));
+
+    expect(tracked).toHaveBeenNthCalledWith(1, 'player_browse_mesas_viewed', viewer, {
+      page_context: 'browse_feed',
+      source_channel: 'internal_link',
+      result_count: 3,
+    });
+    expect(tracked).toHaveBeenNthCalledWith(2, 'player_browse_mesas_viewed', viewer, {
+      page_context: 'search_results',
+      source_channel: 'referral',
+      result_count: 2,
+    });
+  });
+});

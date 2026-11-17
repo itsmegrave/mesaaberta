@@ -1,19 +1,18 @@
 import { error } from '@sveltejs/kit';
 import { stringify } from 'devalue';
-import { listInbox } from '@mesaaberta/core/server/messages/service';
 import { inboxWithPictures } from '@mesaaberta/core/server/messages/present';
 import { supabaseUrlOf } from '@mesaaberta/core/server/images';
+import { readInbox } from '#lib/server/messages/api.js';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ locals, url }) => {
   const user = await locals.getUser();
   if (!user) error(401, 'Sign in required');
-  if (!locals.db) error(503, 'Database not configured');
   const raw = url.searchParams.get('page');
   const page = raw && /^[1-9][0-9]*$/.test(raw) ? Number(raw) : 1;
   const kindParam = url.searchParams.get('kind');
   const kind = kindParam === 'direct' || kindParam === 'table' ? kindParam : undefined;
-  const inbox = await listInbox(locals.db, user.id, page, kind);
+  const inbox = await readInbox(locals, user.id, page, kind);
   return new Response(
     stringify({ ...inbox, items: inboxWithPictures(supabaseUrlOf(locals.env), inbox.items) }),
     {

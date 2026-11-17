@@ -1,13 +1,18 @@
 import { eq } from 'drizzle-orm';
+import { tablePlace } from '../places/picker';
 import type { AnyDb } from '../db/client';
 import { profiles } from '../db/schema';
 import { can, joinBlocker, rateBlocker, type Actor } from '../auth/policy';
 import { firstSessionEnded, ratingOf } from '../ratings/service';
 import { attendanceOf, listRegistrations, registrationStatus } from '../registrations/service';
+import { waitlistOf } from '../registrations/waitlist';
 import { findTableBySlug, joinDetailsOf } from '../tables/queries';
 import { hasStarted } from '../tables/schedule';
+import { listSessions } from '../tables/sessions';
+import { withSeats } from '../tables/session-signups';
 import { reportTargetsOf } from '../moderation/reports';
 import { systemWaitingOf } from '../systems';
+import { rosterBadges } from '../badges/reads';
 
 /**
  * Everything the table page shows one viewer (null for a visitor), or null when the table is
@@ -30,14 +35,14 @@ export async function readDetail(db: AnyDb, profile: Actor | null, slug: string,
   // The player's own place, and the GM's view of everyone's. Names are not public.
   const myStatus = profile ? await registrationStatus(db, id, profile.id) : null;
   const manage = can(profile, 'registration:manage', { gmId });
-  const canJoin =
-    joinBlocker(profile, {
-      gmId,
-      tableStatus: found.status,
-      started: hasStarted(found.startsAt, now),
-      seatsLeft: table.seatsLeft,
-      alreadyRegistered: myStatus !== null,
-    }) === null;
+  const blocker = joinBlocker(profile, {
+    gmId,
+    tableStatus: found.status,
+    started: hasStarted(found.startsAt, now),
+    seatsLeft: table.seatsLeft,
+    alreadyRegistered: myStatus !== null,
+  });
+  const canJoin = blocker === null;
 
   // The score is public (it comes with the table); the comment goes to no one but its author.
   const mine = profile ? await ratingOf(db, id, profile.id) : null;
@@ -68,6 +73,7 @@ export async function readDetail(db: AnyDb, profile: Actor | null, slug: string,
     .from(profiles)
     .where(eq(profiles.id, gmId));
   const gmActive = gm?.status === 'active';
+  const players = manage ? await listRegistrations(db, profile, slug) : null;
 
   return {
     gmUsername: gmActive ? gm.username : null,
@@ -81,17 +87,54 @@ export async function readDetail(db: AnyDb, profile: Actor | null, slug: string,
     },
     table,
     canEdit: can(profile, 'table:edit', { gmId, tableStatus: found.status }),
+    // "Participantes" in the menu: the GM and the administrators, the same rule as the manage page.
+    canManage: manage,
     systemWaiting: found.status === 'draft' ? await systemWaitingOf(db, found.system.slug) : null,
     // Whether the GM takes direct messages: "Falar com o mestre" is off when they do not.
     gmAcceptsDirect: gm?.enabled ?? false,
     isGm: profile?.id === gmId,
     myStatus,
     canJoin,
-    registrations: manage ? await listRegistrations(db, profile, slug) : null,
+    // The lista de espera (`use_waitlist`; the web drops it while the flag is off): how many wait,
+    // the viewer's place in line, and whether they may get in it (only a full table, for someone
+    // who could otherwise join).
+    waitlist: {
+      ...(await waitlistOf(db, id, profile?.id ?? null)),
+      canJoin: blocker === 'full',
+    },
+    registrations: players,
+    // The GM's strongest GM badge, and the confirmed players who are "Presença confiável" (only
+    // with the names, so only for the GM and the admins). The web drops it while `use_badges` is off.
+    badges: await rosterBadges(
+      db,
+      gmId,
+      (players ?? []).filter((row) => row.status === 'confirmed').map((row) => row.playerId),
+    ),
     // What "Denunciar" offers this visitor: the table, and the people they share it with.
     reportTargets: await reportTargetsOf(db, profile, { id, gmId }),
     // How to join is private: only the GM and the confirmed players get it.
     joinDetails:
       profile?.id === gmId || myStatus === 'confirmed' ? await joinDetailsOf(db, id) : null,
+    // The "Onde jogar" place it happens at, when that place is listed. The web drops it while the
+    // places directory is off.
+    place: table.placeId ? await tablePlace(db, table.placeId) : null,
+    // The table's sessions (`use_table_sessions`; the web drops them while the flag is off): dates
+    // for everyone, notes for the table, attendance for quem mestra and each player's own.
+    // A campanha aberta's sessions ahead carry their places (`use_session_signup`).
+    sessions: await withSeats(
+      db,
+      found,
+      await listSessions(
+        db,
+        { id, status: found.status },
+        manage
+          ? { role: 'gm' }
+          : profile && myStatus === 'confirmed'
+            ? { role: 'player', playerId: profile.id }
+            : { role: 'visitor' },
+      ),
+      { gm: false, playerId: profile && myStatus === 'confirmed' ? profile.id : null },
+      now,
+    ),
   };
 }

@@ -7,7 +7,6 @@ import { invitationAction } from '#lib/server/invitations/actions.js';
 import type { PageServerLoad, Actions } from './$types';
 export const load: PageServerLoad = async ({ locals, url, params }) => {
   await requireUser(locals, url);
-  if (!locals.db) error(503, 'Database not configured');
   if (!z.uuid().safeParse(params.id).success) error(404, 'Not found');
   try {
     return { invitation: await loadInvitation(locals, await locals.getProfile(), params.id) };

@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
 import {
   gameTables,
+  profileFavoriteSystems,
   profiles,
   profileSocialLinks,
   ratings,
@@ -9,7 +10,7 @@ import {
   systems,
 } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
-import { publicProfile } from '@mesaaberta/core/server/profile/public';
+import { publicProfile, tablesPlayed } from '@mesaaberta/core/server/profile/public';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -19,7 +20,7 @@ const read = (username = 'mestre-ana', page = 1, viewerId: string | null = null)
     page,
     now,
     viewerId,
-    supabaseUrl: 'https://example.supabase.co',
+    supabaseUrl: 'https://example.supabase.co/storage/v1/object/public',
   });
 
 beforeAll(async () => {
@@ -48,6 +49,8 @@ beforeAll(async () => {
     { id: id(6), username: 'sem-mesas' },
     { id: id(7), username: 'foto-provedor', avatarUrl: 'https://cdn.discordapp.com/provider.png' },
     { id: id(8), username: null },
+    { id: id(9), username: 'nome-publico', name: 'Bia Souza', showName: true },
+    { id: id(10), username: 'mestra-avaliada' },
   ]);
   await test.db.insert(profileSocialLinks).values([
     { profileId: id(1), network: 'website', url: 'https://example.com', position: 2 },
@@ -122,6 +125,18 @@ beforeAll(async () => {
     { tableId: done, playerId: id(2), gmScore: 5, comment: 'Private rating comment' },
     { tableId: done, playerId: id(6), gmScore: 3 },
   ]);
+  // "Avaliações da mestragem", on a GM of their own. The scores average 4, as above, so the
+  // site-wide mean the GM score leans on stays where it was.
+  const reviewed = await add('reviewed', { gmId: id(10), status: 'concluded' });
+  const removed = await add('removed-table', { gmId: id(10), status: 'disabled' });
+  await test.db.insert(ratings).values([
+    // Shown: the author chose to.
+    { tableId: reviewed, playerId: id(9), gmScore: 4, comment: 'Caprichada', commentPublic: true },
+    // Not shown: kept private, a suspended author, a table taken down.
+    { tableId: reviewed, playerId: id(2), gmScore: 5, comment: 'Só para mim' },
+    { tableId: reviewed, playerId: id(4), gmScore: 4, comment: 'Suspensa', commentPublic: true },
+    { tableId: removed, playerId: id(7), gmScore: 3, comment: 'Removida', commentPublic: true },
+  ]);
   for (const status of [
     'concluded',
     'not_held',
@@ -139,18 +154,33 @@ describe('public profiles', () => {
   it('returns only the allowlisted identity, aggregates and public cards', async () => {
     const data = (await read())!;
     expect(Object.keys(data.profile).sort()).toEqual([
+      'availability',
       'avatarUrl',
       'bannerUrl',
       'bio',
+      'favoriteSystems',
+      'hostedAt',
       'links',
+      'looksAfter',
+      'name',
+      'participantRating',
       'rating',
+      'tableRole',
       'totals',
       'username',
     ]);
+    // Off unless the `use_player_ratings` rollout reaches the profile.
+    expect(data.profile.participantRating).toBeNull();
+    // Off unless the `use_signed_in_home` rollout reaches the profile.
+    expect(data.profile.favoriteSystems).toBeNull();
     expect(Object.keys(data.tables[0]).sort()).toEqual([
       'capacity',
+      // The card's age rating, drawn only while the web app's flags say so.
+      'contentRating',
+      'gmAvatar',
       'gmName',
       'gmRating',
+      'gmShownName',
       'imageUrl',
       'kind',
       'locationArea',
@@ -184,6 +214,21 @@ describe('public profiles', () => {
       expect(serialized).not.toContain(secret);
   });
 
+  it('shows only the comments their authors chose to publish, from active people on public tables', async () => {
+    const { reviews } = (await read('mestra-avaliada'))!;
+    expect(reviews).toEqual([
+      {
+        username: 'nome-publico',
+        avatarUrl: null,
+        score: 4,
+        text: 'Caprichada',
+        createdAt: expect.any(Date),
+        table: { title: 'reviewed', slug: 'reviewed' },
+      },
+    ]);
+    expect((await read())!.reviews).toEqual([]);
+  });
+
   it('reads only safe known social links in the saved order', async () => {
     expect((await read())?.profile.links).toEqual([
       { network: 'instagram', text: '@ana', href: 'https://instagram.com/ana' },
@@ -210,6 +255,11 @@ describe('public profiles', () => {
     const bare = (await read('sem-mesas'))!;
     expect(bare.profile.bannerUrl).toBeNull();
     expect(bare.profile.bio).toBeNull();
+  });
+
+  it('shows the name under the @usuário only when the person chose to', async () => {
+    expect((await read())?.profile.name).toBeNull();
+    expect((await read('nome-publico'))?.profile.name).toBe('Bia Souza');
   });
 
   it('has an empty state for a person who has never run a table', async () => {
@@ -251,6 +301,15 @@ describe('public profiles', () => {
     expect((await read('jogador-bia'))?.profile.totals).toEqual({ played: 1, hosted: 0 });
   });
 
+  it('gives the same "Mesas jogadas" for many people at once, 0 for who played none', async () => {
+    const played = await tablesPlayed(test.db, [id(1), id(2), id(3)]);
+    expect([...played]).toEqual([
+      [id(1), 1],
+      [id(2), 1],
+      [id(3), 0],
+    ]);
+  });
+
   it('uses the GM score and keeps unreviewed profiles distinct from zero', async () => {
     expect((await read())?.profile.rating).toEqual({ score: 4, count: 2, isNew: true });
     expect((await read('foto-provedor'))?.profile.rating).toEqual({
@@ -258,6 +317,16 @@ describe('public profiles', () => {
       count: 0,
       isNew: true,
     });
+  });
+
+  it('adds the score as a participant once the rollout reaches the profile, asked by its id', async () => {
+    const asked: unknown[] = [];
+    const data = await publicProfile(test.db, 'mestre-ana', {
+      now,
+      showParticipantRating: async (target) => (asked.push(target), true),
+    });
+    expect(asked).toEqual([{ id: id(1), isAdmin: true }]);
+    expect(data?.profile.participantRating).toEqual({ score: null, count: 0, isNew: true });
   });
 
   it("paginates the right GM's tables that have not started, in a steady order, with seats", async () => {
@@ -288,5 +357,40 @@ describe('public profiles', () => {
       .set({ status: 'suspended' })
       .where(eq(profiles.id, id(7)));
     expect(await read('novo-username')).toBeNull();
+  });
+});
+
+describe('favorite systems on a public profile', () => {
+  it('shows them when the rollout reaches the profile and its owner did not hide them', async () => {
+    const [system] = await test.db.select().from(systems).limit(1);
+    await test.db.insert(profileFavoriteSystems).values({ profileId: id(6), systemId: system.id });
+    const on = async () => true;
+
+    const shown = await publicProfile(test.db, 'sem-mesas', { now, showFavoriteSystems: on });
+    expect(shown!.profile.favoriteSystems).toEqual([{ name: system.name, slug: system.slug }]);
+
+    await test.db
+      .update(profiles)
+      .set({ showFavoriteSystems: false })
+      .where(eq(profiles.id, id(6)));
+    const hidden = await publicProfile(test.db, 'sem-mesas', { now, showFavoriteSystems: on });
+    expect(hidden!.profile.favoriteSystems).toBeNull();
+  });
+});
+
+describe('the role tag on a public profile', () => {
+  it('shows what the person does at the table only while Quem mestra is on', async () => {
+    await test.db
+      .update(profiles)
+      .set({ tableRole: 'both' })
+      .where(eq(profiles.id, id(9)));
+
+    const on = await publicProfile(test.db, 'nome-publico', { now, showTableRole: true });
+    expect(on!.profile.tableRole).toBe('both');
+    const off = await publicProfile(test.db, 'nome-publico', { now });
+    expect(off!.profile.tableRole).toBeNull();
+    // No answer, no tag.
+    const none = await publicProfile(test.db, 'sem-mesas', { now, showTableRole: true });
+    expect(none!.profile.tableRole).toBeNull();
   });
 });

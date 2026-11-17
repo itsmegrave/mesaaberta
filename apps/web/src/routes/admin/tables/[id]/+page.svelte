@@ -34,7 +34,11 @@
     },
   ]}
 >
-  <Panel title={m.admin_table_page_title({ title: table.title })} titleClass="sr-only">
+  <Panel
+    title={m.admin_table_page_title({ title: table.title })}
+    titleClass="sr-only"
+    class="mt-6 p-4 md:p-5"
+  >
     <DetailList>
       <DetailRow label={m.admin_table_gm()} class="text-sm"
         ><UserLink username={table.gm} label={`@${table.gm}`} /></DetailRow
@@ -52,7 +56,7 @@
     </DetailList>
   </Panel>
 
-  <Panel title={m.history_title()} class="mt-8 p-5">
+  <Panel title={m.history_title()} class="mt-6 p-4 md:p-5">
     <AuditTimeline history={data.history} zone={data.viewer.timezone} />
   </Panel>
 </AdminPage>

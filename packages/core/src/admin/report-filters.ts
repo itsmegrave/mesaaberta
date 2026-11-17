@@ -38,6 +38,7 @@ export const AUDIT_KINDS = [
   'tables',
   'catalog',
   'announcements',
+  'access',
 ] as const;
 export type AuditKind = (typeof AUDIT_KINDS)[number];
 

@@ -206,7 +206,7 @@ it('reports the failing stage and hands unexpected errors to telemetry, but not 
   });
   expect(result.map((r) => r.status)).toEqual(['failed', 'failed']);
   expect(error).toHaveBeenCalledWith(
-    'crowdfunding source import failed',
+    'crowdfunding.source_import_failed',
     expect.objectContaining({
       provider: 'catarse',
       code: 'import_failed',

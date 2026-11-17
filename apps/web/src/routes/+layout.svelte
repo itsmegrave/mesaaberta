@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SeoHead from '#lib/seo/SeoHead.svelte';
   import MAButton from '#lib/components/ui/MAButton.svelte';
   import './layout.css';
   import { createQuery, QueryClientProvider } from '@tanstack/svelte-query';
@@ -13,33 +14,46 @@
   import { asset, resolve } from '$app/paths';
   import { refreshAll } from '$app/navigation';
   import { navigating, page, updated } from '$app/state';
-  import ChatDrawer from '#lib/components/chat/ChatDrawer.svelte';
   import ExtensionWidgets from '#lib/components/shell/ExtensionWidgets.svelte';
   import AccountMenu from '#lib/components/shell/AccountMenu.svelte';
   import BottomTabBar from '#lib/components/shell/BottomTabBar.svelte';
-  import ListSkeleton, { type SkeletonKind } from '#lib/components/ui/ListSkeleton.svelte';
+  import ListSkeleton from '#lib/components/ui/ListSkeleton.svelte';
   import NotificationBell from '#lib/components/shell/NotificationBell.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import SideNav from '#lib/components/shell/SideNav.svelte';
   import SiteFooter from '#lib/components/shell/SiteFooter.svelte';
   import TableLogo from '#lib/components/ui/TableLogo.svelte';
   import ThemeToggle from '#lib/components/shell/ThemeToggle.svelte';
+  import OverdrivePedal from '#lib/components/shell/OverdrivePedal.svelte';
+  import { initOverdrive } from '#lib/theme/overdrive.svelte.js';
+  import { reportTheme } from '#lib/theme/theme.js';
   import MAToaster from '#lib/components/shell/MAToaster.svelte';
   import UnsavedChangesDialog from '#lib/components/shell/UnsavedChangesDialog.svelte';
   import { Progress } from '@skeletonlabs/skeleton-svelte';
   import { m } from '#lib/paraglide/messages.js';
 
   import { isUnder } from '#lib/navigation/main-nav.js';
+  import { directoryNav } from '#lib/navigation/directory-nav.js';
   import { Slow } from '#lib/navigation/slow.svelte.js';
+  import { inFlight } from '#lib/forms/in-flight.svelte.js';
+  import { arrivingSkeleton } from '#lib/navigation/skeletons.js';
+  import { reloadPage } from '#lib/forms/leave-guard.svelte.js';
   import { syncBrowserTimezone } from '#lib/time/browser-timezone.js';
+  import { keepFullAccount } from '#lib/components/shell/last-account.js';
   import { onMount } from 'svelte';
 
   let { children, data: layoutData } = $props();
   const accountQuery = pageQuery(() => layoutData.accountRead ?? { summary: null }, client);
+  // While the api cannot read the profile, the server sends a bare account for the same person:
+  // the menu keeps the one it showed last (picture, admin link, counts) until the api answers.
+  const lastFullAccount = keepFullAccount<NonNullable<typeof layoutData.account>>();
+  const shown = $derived(lastFullAccount(layoutData.account, layoutData.cacheIdentity));
   const data = $derived({
     ...layoutData,
-    account: layoutData.account && { ...layoutData.account, ...(accountQuery.data?.summary ?? {}) },
+    account: shown && { ...shown, ...(accountQuery.data?.summary ?? {}) },
   });
+  // The directories whose flag is on, for the sidebar and the phone's Explorar.
+  const directories = $derived(directoryNav(data.directories));
   // The bell and the messages link count what is unread. The count is read again every 30 seconds
   // while the tab is visible and when it comes back into focus (a background tab does not poll).
   const badges = createQuery(
@@ -77,21 +91,22 @@
     if (syncBrowserTimezone(data.viewer)) refreshAll();
   });
 
+  // The Overdrive pedal follows its flag; a signed-in person's theme is counted once a day.
+  $effect(() => {
+    initOverdrive(layoutData.overdrive);
+  });
+  onMount(() => {
+    if (layoutData.account) reportTheme('in_use');
+  });
+
   // Loading shows only after 150 ms, so a quick navigation does not flash the bar or a skeleton.
   const loading = new Slow(() => navigating.to, 150);
-  const SKELETONS: Record<string, SkeletonKind> = {
-    '/t': 'cards',
-    '/u/tables': 'columns',
-    '/n': 'rows',
-    '/m': 'rows',
-  };
-  // A list page on its way from another page: its skeleton stands in for the page being left. Within
-  // the same page (a filter), the page draws its own skeleton under the filters.
-  const arriving = $derived.by(() => {
-    const to = loading.current;
-    if (!to?.route.id || to.route.id === page.route.id) return null;
-    return SKELETONS[to.route.id] ?? null;
-  });
+  // An action on its way shows the same bar, so one sent from a menu item is not silent either.
+  const acting = new Slow(() => (inFlight.count > 0 ? true : null), 150);
+  // A list or item page on its way gets its skeleton in place of the page being left.
+  const arriving = $derived(
+    arrivingSkeleton(page.url, loading.current, { signedIn: !!layoutData.account }),
+  );
 </script>
 
 <svelte:head>
@@ -104,11 +119,9 @@
   <link rel="icon" type="image/svg+xml" sizes="any" href={asset('favicon.svg')} />
 
   <link rel="manifest" href={asset('site.webmanifest')} />
-
-  {#if data.maintenance}
-    <meta name="robots" content="noindex" />
-  {/if}
 </svelte:head>
+
+<SeoHead />
 
 <QueryClientProvider {client}>
   <a
@@ -134,6 +147,8 @@
           latest={data.account?.notifications.latest ?? []}
           seenAt={data.account?.notifications.seenAt}
           messagesUnread={badges.data?.messages ?? data.account?.messagesUnread ?? 0}
+          {directories}
+          matches={data.directories.matches}
         />
       </div>
     {/if}
@@ -142,7 +157,7 @@
     <div class="min-w-0 flex-1 overflow-x-clip">
       <!-- On desktop the side rail carries the links and account; the header is the phone's. -->
       <header
-        class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 {data.maintenance
+        class="mx-auto flex h-14 w-full max-w-7xl items-center justify-between px-4 {data.maintenance
           ? 'md:h-20 md:px-8'
           : 'md:hidden'}"
       >
@@ -155,8 +170,6 @@
 
         {#if !data.maintenance}
           <div class="flex items-center gap-2">
-            <ThemeToggle />
-
             {#if data.account}
               <NotificationBell
                 unread={badges.data?.unread ?? data.account.notifications.unread}
@@ -168,11 +181,19 @@
                 username={data.account.username}
                 avatarUrl={data.account.avatarUrl}
                 messagesUnread={badges.data?.messages ?? data.account.messagesUnread}
+                isAdmin={data.account.isAdmin}
+                adminPending={data.account.pendingSuggestionsCount}
+                sheet
               />
-            {:else if data.authEnabled}
+            {:else}
+              <!-- Members pick the theme in the account menu; visitors have none. -->
+              <ThemeToggle />
+              <OverdrivePedal />
+            {/if}
+            {#if !data.account && data.authEnabled}
               <a
                 href={resolve('login')}
-                class="btn h-12 rounded-lg preset-outlined-primary-500 px-4 font-semibold"
+                class="btn h-11 rounded-lg preset-outlined-primary-500 px-4 font-semibold"
               >
                 <Icon name="game-icons:dungeon-gate" size={20} />
                 {m.nav_sign_in()}
@@ -185,57 +206,60 @@
       {#if updated.current}
         <aside
           role="status"
-          class="mx-auto mt-2 flex w-[calc(100%-2.5rem)] max-w-7xl flex-wrap items-center justify-between gap-3 rounded-lg border border-primary-500 bg-primary-50-950 px-4 py-3 text-sm font-semibold text-primary-950-50 md:w-[calc(100%-4rem)]"
+          class="mx-auto mt-2 flex w-[calc(100%-2rem)] max-w-7xl flex-wrap items-center justify-between gap-3 rounded-lg border border-primary-500 bg-primary-50-950 px-4 py-3 text-sm font-semibold text-primary-950-50 md:w-[calc(100%-4rem)]"
         >
           <p>{m.version_update_available()}</p>
           <MAButton
             size="custom"
             class="btn preset-filled-primary-500"
-            onclick={() => location.reload()}
+            onclick={() => void reloadPage()}
           >
             {m.version_update_refresh()}
           </MAButton>
         </aside>
       {/if}
 
-      <!-- Announced to screen readers and shown while a page's data loads, so a slow tap is not silent. -->
-      {#if loading.current}
+      <!-- Announced to screen readers and shown while a page's data loads, so a slow tap is not silent.
+           A 4px primary line along the top edge; with reduced motion it stands still, full width. -->
+      {#if loading.current || acting.current}
         <Progress value={null} class="fixed inset-x-0 top-0 z-50" aria-label={m.nav_loading()}>
-          <Progress.Track class="h-1">
-            <Progress.Range />
+          <Progress.Track data-nav-progress class="h-1 rounded-none bg-transparent">
+            <Progress.Range
+              class="rounded-none bg-primary-500 motion-reduce:animate-none motion-reduce:opacity-60"
+            />
           </Progress.Track>
         </Progress>
       {/if}
 
       <MAToaster />
       <UnsavedChangesDialog />
-      {#if data.account && !data.maintenance && !isUnder(page.url.pathname, '/m')}
-        {#key data.cacheIdentity}<ChatDrawer
-            viewerId={data.cacheIdentity ?? 'anonymous'}
-            unread={badges.data?.messages ?? data.account.messagesUnread}
-          />{/key}
+      {#if data.account && !data.maintenance && !isUnder(page.url.pathname, '/messages') && !isUnder(page.url.pathname, '/m')}
+        <!-- Its own chunk: the chat (thread, composer, emoji picker) loads only for the signed-in. -->
+        {#await import('#lib/components/chat/ChatDrawer.svelte') then { default: ChatDrawer }}
+          {#key data.cacheIdentity}<ChatDrawer
+              viewerId={data.cacheIdentity ?? 'anonymous'}
+              unread={badges.data?.messages ?? data.account.messagesUnread}
+            />{/key}
+        {/await}
       {/if}
       {#if data.account && !data.maintenance}
         {#key data.cacheIdentity}<ExtensionWidgets />{/key}
       {/if}
 
-      <main id="main" class="mx-auto w-full max-w-7xl px-5 pb-8 md:px-8 md:pb-10">
+      <main id="main" class="mx-auto w-full max-w-7xl px-4 pb-8 md:px-8 md:pb-10">
         {#if arriving}
-          <ListSkeleton kind={arriving} heading />
+          <ListSkeleton kind={arriving.kind} nav={arriving.nav} heading />
         {:else}
           {@render children()}
         {/if}
       </main>
 
       {#if !data.maintenance}
-        <BottomTabBar
-          isAdmin={data.account?.isAdmin ?? false}
-          pendingSuggestionsCount={data.account?.pendingSuggestionsCount ?? 0}
-        />
+        <BottomTabBar {directories} matches={data.directories.matches} />
       {/if}
 
       {#if !data.maintenance}
-        <SiteFooter site={data.site} />
+        <SiteFooter site={data.site} directories={data.directories} blogLive={data.blogLive} />
       {/if}
     </div>
   </div>

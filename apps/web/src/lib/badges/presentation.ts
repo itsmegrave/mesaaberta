@@ -1,22 +1,8 @@
 import { m } from '#lib/paraglide/messages.js';
-import type { IconName } from '#lib/icons/names.js';
+import type { BadgePresentation } from '#lib/extensions/badge-types.js';
+import { badges as extensionBadges } from '#lib/extensions/panels.js';
 
-export type BadgePresentation = {
-  icon: IconName;
-  /** 1 to 3 on a ladder (the higher the stronger the look); 0 for a badge with one level. */
-  tier: 0 | 1 | 2 | 3;
-  /** The ladder this badge is a rung of, so a visitor sees only the highest one held. */
-  ladder?: string;
-  /** Given by the team only: the owner sees it locked as "Concedida pela equipe". */
-  manual?: boolean;
-  name: () => string;
-  /** What it says once earned ("Jogou 5 sessões."). */
-  description: () => string;
-  /** What it asks while locked ("Jogar 5 sessões."). Missing: it cannot be worked toward. */
-  goal?: () => string;
-  /** "14 de 25 sessões" for the progress bar. */
-  progress?: (values: { current: number }) => string;
-};
+export type { BadgePresentation };
 
 /**
  * How each badge looks and reads. Keyed by the catalog's ids (`@mesaaberta/core/server/badges/catalog`)
@@ -126,8 +112,87 @@ export const BADGE_PRESENTATION: Record<string, BadgePresentation> = {
     goal: m.badge_partner_goal,
     progress: m.badge_partner_progress,
   },
+  'one-shot-adventurer': {
+    icon: 'game-icons:lantern-flame',
+    tier: 0,
+    name: m.badge_one_shot_adventurer_name,
+    description: m.badge_one_shot_adventurer_description,
+    goal: m.badge_one_shot_adventurer_goal,
+    progress: m.badge_one_shot_adventurer_progress,
+  },
+  'beloved-gm': {
+    icon: 'game-icons:hearts',
+    tier: 0,
+    name: m.badge_beloved_gm_name,
+    description: m.badge_beloved_gm_description,
+  },
+  'full-table': {
+    icon: 'game-icons:tabletop-players',
+    tier: 0,
+    name: m.badge_full_table_name,
+    description: m.badge_full_table_description,
+    goal: m.badge_full_table_goal,
+    progress: m.badge_full_table_progress,
+  },
+  'wandering-gm': {
+    icon: 'game-icons:walking-boot',
+    tier: 0,
+    name: m.badge_wandering_gm_name,
+    description: m.badge_wandering_gm_description,
+    goal: m.badge_wandering_gm_goal,
+    progress: m.badge_wandering_gm_progress,
+  },
+  'open-door': {
+    icon: 'game-icons:door',
+    tier: 0,
+    name: m.badge_open_door_name,
+    description: m.badge_open_door_description,
+    goal: m.badge_open_door_goal,
+    progress: m.badge_open_door_progress,
+  },
+  'word-kept': {
+    icon: 'game-icons:sands-of-time',
+    tier: 0,
+    name: m.badge_word_kept_name,
+    description: m.badge_word_kept_description,
+    goal: m.badge_word_kept_goal,
+    progress: m.badge_word_kept_progress,
+  },
+  'reliable-player': {
+    icon: 'game-icons:anchor',
+    tier: 0,
+    name: m.badge_reliable_player_name,
+    description: m.badge_reliable_player_description,
+    goal: m.badge_reliable_player_goal,
+    progress: m.badge_reliable_player_progress,
+  },
+  'table-guardian': {
+    icon: 'game-icons:checked-shield',
+    tier: 0,
+    name: m.badge_table_guardian_name,
+    description: m.badge_table_guardian_description,
+    goal: m.badge_table_guardian_goal,
+    progress: m.badge_table_guardian_progress,
+  },
+  promoter: {
+    icon: 'game-icons:megaphone',
+    tier: 0,
+    name: m.badge_promoter_name,
+    description: m.badge_promoter_description,
+    goal: m.badge_promoter_goal,
+    progress: m.badge_promoter_progress,
+  },
+  curator: {
+    icon: 'game-icons:book-pile',
+    tier: 0,
+    name: m.badge_curator_name,
+    description: m.badge_curator_description,
+    goal: m.badge_curator_goal,
+    progress: m.badge_curator_progress,
+  },
   'first-100': {
     icon: 'game-icons:podium',
+    mark: '100!',
     tier: 0,
     name: m.badge_first_100_name,
     description: m.badge_first_100_description,
@@ -149,5 +214,7 @@ export const BADGE_PRESENTATION: Record<string, BadgePresentation> = {
   },
 };
 
+/** The look of a badge, the public ones first, then an extension's (`panels.ts`). */
 export const presentationOf = (badgeId: string): BadgePresentation | null =>
-  BADGE_PRESENTATION[badgeId] ?? null;
+  (Object.hasOwn(BADGE_PRESENTATION, badgeId) ? BADGE_PRESENTATION[badgeId] : null) ??
+  (Object.hasOwn(extensionBadges, badgeId) ? extensionBadges[badgeId] : null);

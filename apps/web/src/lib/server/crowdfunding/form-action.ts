@@ -6,18 +6,13 @@ import { normalizeCampaignUrl } from '@mesaaberta/core/crowdfunding/url';
 import { validateFormData } from '#lib/forms/contract.js';
 import { formMessage, refuse, responseForm } from '#lib/forms/server.js';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 import { IMAGE_BUCKET } from '@mesaaberta/core/server/images';
-import { CROWDFUNDING_LIMIT, checkRateLimit } from '@mesaaberta/core/server/rate-limit';
+import { serverStorage } from '@mesaaberta/core/server/storage';
 import { campaignImagePath } from '@mesaaberta/core/server/crowdfunding/image';
 import { readLinkPreview } from '@mesaaberta/core/server/crowdfunding/link-preview';
-import {
-  addCrowdfunding,
-  findListedByUrl,
-  takeLinkRead,
-} from '@mesaaberta/core/server/crowdfunding/service';
+import { readFromApi } from '../api-read';
 import { writeViaApi } from '../api-write';
+import { checkLimitViaApi } from '../tables/api';
 
 export const NEW_CROWDFUNDING_VALUES = {
   url: '',
@@ -55,17 +50,24 @@ export async function handleCrowdfundingForm({ request, locals, url, setHeaders 
     files: ['image'],
   });
   if (!form.valid) return fail(400, { form: responseForm(form) });
-  if (!locals.db) return formMessage(form, { code: 'unavailable' }, { status: 503 });
-  const db = locals.db;
 
   try {
     const actor = await locals.getProfile();
     // A limited person is told before anything is fetched or stored. `addCrowdfunding` checks again, under a lock.
-    if (actor) await checkRateLimit(db, actor.id, CROWDFUNDING_LIMIT);
+    if (actor) await checkLimitViaApi(locals, actor.id, 'crowdfunding');
 
     const link = normalizeCampaignUrl(form.data.url);
-    const existing = link ? await findListedByUrl(db, link) : null;
-    if (existing) return refuse(form, 400, 'already_listed', 'url');
+    const listed =
+      link && actor
+        ? (
+            await readFromApi<{ listed: boolean }>(
+              locals,
+              actor.id,
+              `/v1/crowdfundings/listed?url=${encodeURIComponent(link)}`,
+            )
+          ).listed
+        : false;
+    if (listed) return refuse(form, 400, 'already_listed', 'url');
 
     const upload = form.data.image;
     // The page's own picture is only a convenience: a member past the link-read limit just gets none,
@@ -73,33 +75,27 @@ export async function handleCrowdfundingForm({ request, locals, url, setHeaders 
     let pageImageUrl: string | null = null;
     if (!upload && link && actor) {
       try {
-        await takeLinkRead(db, actor.id);
+        await writeViaApi(locals, actor, '/v1/crowdfundings/link-read', {});
         pageImageUrl = (await readLinkPreview(link)).imageUrl;
       } catch (error) {
         if (!(error instanceof RateLimited)) throw error;
       }
     }
-    const imagePath = await campaignImagePath(locals.supabase?.storage.from(IMAGE_BUCKET), {
-      upload,
-      pageImageUrl,
-      log: locals.log,
-    });
+    const imagePath = await campaignImagePath(
+      serverStorage(locals.env, IMAGE_BUCKET) ?? undefined,
+      {
+        upload,
+        pageImageUrl,
+        log: locals.log,
+      },
+    );
 
     const { image: _image, ...input } = form.data;
-    // Through the api Worker when `api_submissions` is on for this person; here otherwise.
-    const remote = actor
-      ? await writeViaApi(locals, 'api_submissions', actor, '/v1/submissions/crowdfundings', {
-          input,
-          imagePath,
-        })
-      : null;
-    const eventId = remote
-      ? remote.eventIds[0]
-      : (await addCrowdfunding(db, actor, input, { imagePath })).eventId;
-    // After the commit and the response, so the visitor never waits for a handler.
-    locals.afterResponse((db) =>
-      dispatchEvent(db, handlersFor(locals.env), eventId, new Date(), locals.log),
-    );
+    if (!actor) throw new Forbidden();
+    await writeViaApi(locals, actor, '/v1/submissions/crowdfundings', {
+      input,
+      imagePath,
+    });
   } catch (error) {
     if (error instanceof Invalid) return refuse(form, 400, error.message, error.field);
     if (error instanceof Forbidden)
@@ -116,5 +112,5 @@ export async function handleCrowdfundingForm({ request, locals, url, setHeaders 
     throw error;
   }
 
-  redirect(303, '/cf');
+  redirect(303, '/crowdfunding');
 }

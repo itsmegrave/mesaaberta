@@ -124,7 +124,9 @@
         ? m.admin_dialog_create_title_platform()
         : kind === 'tag'
           ? m.admin_dialog_create_title_tag()
-          : m.admin_dialog_create_title_system(),
+          : kind === 'placeTag'
+            ? m.admin_dialog_create_title_place_tag()
+            : m.admin_dialog_create_title_system(),
   }[mode]();
   // svelte-ignore state_referenced_locally
   const text = {
@@ -199,6 +201,7 @@
       <SearchSelect
         id={fieldId}
         name="into"
+        search
         label={m.admin_dialog_merge_into()}
         labelClass="label-text block font-semibold"
         class="grid gap-1"

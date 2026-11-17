@@ -16,7 +16,7 @@ export const GET: RequestHandler = async ({ params, url, locals }) => {
     origin: url.origin,
   });
   if (!target) {
-    locals.log.error('connect: Supabase gave no provider URL', { provider: params.provider });
+    locals.log.error('auth.connect_no_provider_url', { provider: params.provider });
     redirect(303, '/u/profile/edit/account?conta=falhou');
   }
 

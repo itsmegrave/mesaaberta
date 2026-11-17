@@ -1,59 +1,39 @@
-import { error, fail, type RequestEvent } from '@sveltejs/kit';
+import { fail, type RequestEvent } from '@sveltejs/kit';
 import type { z, ZodType } from 'zod';
 import { validateStringForm } from '#lib/forms/contract.js';
 import { requireAdmin } from '../admin-access';
 import { decideViaApi } from '../api-decide';
 import { requireUser } from '../auth/guard';
 import { writeViaApi } from '../api-write';
-import type { Actor } from '@mesaaberta/core/server/auth/policy';
-import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { Forbidden, Invalid, NotFound, RateLimited } from '@mesaaberta/core/server/errors';
-import { dispatchEvent } from '@mesaaberta/core/server/events/dispatcher';
-import { handlersFor } from '@mesaaberta/core/server/events/handlers';
 
-type Apply<Schema extends ZodType> = (
-  db: AnyDb,
-  actor: Actor | null,
-  data: z.output<Schema>,
-  event: RequestEvent,
-) => Promise<string | string[]>;
+/**
+ * The api route that makes the action, and the body its schema wants (the checked form by default).
+ * `allow` is a check the web Worker makes first (a flag): false answers `forbidden` like a refusal.
+ */
+type ViaApi<Schema extends ZodType> = {
+  path: string | ((event: RequestEvent, data: z.output<Schema>) => string);
+  body?: (data: z.output<Schema>, event: RequestEvent) => object;
+  allow?: (event: RequestEvent) => Promise<boolean>;
+};
 
 /**
  * One moderation form action, for the report dialog and the admin console alike: a signed-in user
  * (and, with `admin`, only an admin: everyone else gets the 404 the admin area answers), the form
- * checked by its schema over the named text fields, and the service deciding. What the service
- * refuses comes back as a code on the field it names, or on the form; the events it wrote are
- * dispatched after the response. Pairs with `actionForm` on the page.
+ * checked by its schema over the named text fields, and then either the api route that makes it
+ * (an admin decision, a member's report or withdrawal). What is refused comes back as a code on the field it names, or on the
+ * form; the api delivers the events it writes. Pairs with `actionForm` on the page.
  */
 export function moderationAction<Schema extends ZodType>(
   schema: Schema,
   fields: readonly string[],
-  apply: Apply<Schema>,
-  {
-    admin = false,
-    decision,
-    player,
-  }: {
-    admin?: boolean;
-    /**
-     * The admin decision's name in `moderationDecisions`. With `api_admin_moderation` on for the
-     * admin the api Worker makes it (`/v1/admin/moderation/<decision>`), and this Worker only
-     * decides when the api cannot be reached or fails.
-     */
-    decision?: string;
-    /**
-     * For a member's own action (a report, a withdrawal): the api route that makes it when
-     * `api_reports` is on for them. `body` is what the route's schema wants, from the checked form
-     * and the request. Falls back to `apply` when the api cannot be reached.
-     */
-    player?: { path: string; body?: (data: z.output<Schema>, event: RequestEvent) => object };
-  } = {},
+  how: ViaApi<Schema>,
+  { admin = false }: { admin?: boolean } = {},
 ) {
   return async (event: RequestEvent) => {
     const { locals, request, url } = event;
-    await requireUser(locals, new URL(url.pathname, url));
+    const user = await requireUser(locals, new URL(url.pathname, url));
     if (admin) await requireAdmin(locals);
-    if (!locals.db) error(503, 'Database not configured');
 
     const form = validateStringForm(await request.formData(), schema, fields);
     if (!form.valid) return fail(400, { form });
@@ -64,30 +44,15 @@ export function moderationAction<Schema extends ZodType>(
       return fail(status, { form });
     };
 
-    const profile = await locals.getProfile();
-    let eventIds: string[] | undefined;
-    if (admin && decision && profile) {
-      const viaApi = await decideViaApi(
-        locals,
-        'api_admin_moderation',
-        `/v1/admin/moderation/${decision}`,
-        profile.id,
-        form.data,
-      );
-      if (viaApi.kind === 'done') eventIds = viaApi.eventIds;
-      else if (viaApi.kind === 'refused') return refuse(viaApi.status, viaApi.field, viaApi.code);
-    }
-
     try {
-      if (!eventIds && player && profile) {
-        const remote = await writeViaApi(locals, 'api_reports', profile, player.path, {
-          ...(player.body ? player.body(form.data, event) : (form.data as object)),
-        });
-        if (remote) eventIds = remote.eventIds;
-      }
-      if (!eventIds) {
-        const written = await apply(locals.db, profile, form.data, event);
-        eventIds = Array.isArray(written) ? written : [written];
+      if (how.allow && !(await how.allow(event))) throw new Forbidden();
+      const body = how.body ? how.body(form.data, event) : (form.data as object);
+      const path = typeof how.path === 'function' ? how.path(event, form.data) : how.path;
+      if (admin) {
+        const decided = await decideViaApi(locals, path, user.id, body);
+        if (decided.kind === 'refused') return refuse(decided.status, decided.field, decided.code);
+      } else {
+        await writeViaApi(locals, user, path, { ...body });
       }
     } catch (cause) {
       if (cause instanceof Invalid) return refuse(400, cause.field, cause.message);
@@ -96,12 +61,6 @@ export function moderationAction<Schema extends ZodType>(
       if (cause instanceof NotFound) return refuse(404, '', 'not_found');
       throw cause;
     }
-
-    const handlers = handlersFor(event.locals.env);
-    const dispatched = eventIds;
-    locals.afterResponse(async (db) => {
-      for (const id of dispatched) await dispatchEvent(db, handlers, id, new Date(), locals.log);
-    });
     return { form };
   };
 }

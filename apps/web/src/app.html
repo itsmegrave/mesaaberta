@@ -18,13 +18,18 @@
     </script>
 
     <!-- Sets light or dark before the first paint, so a dark-mode reader never sees a light flash: the
-		     remembered choice, else the system preference. Without JavaScript the page stays light. -->
+		     remembered choice, else the system preference. Without JavaScript the page stays light.
+		     A pressed Overdrive pedal (`theme-style`) sets the look too; the layout takes it back off
+		     after hydration while `use_overdrive_theme` is off. -->
     <script nonce="%sveltekit.nonce%">
       (function () {
         var colours = { light: '#fcfcfc', dark: '#121212' };
+        var overdrive = { light: '#fff8ec', dark: '#140a24' };
         var choice = null;
+        var style = null;
         try {
           choice = localStorage.getItem('theme');
+          style = localStorage.getItem('theme-style');
         } catch (e) {}
         var chosen = choice === 'light' || choice === 'dark';
         var mode = chosen
@@ -34,10 +39,17 @@
             : 'light';
 
         document.documentElement.dataset.mode = mode;
-        if (!chosen) return;
+        if (style === 'overdrive') {
+          document.documentElement.dataset.theme = 'overdrive';
+          colours = overdrive;
+        }
+        if (!chosen && style !== 'overdrive') return;
 
         var metas = document.querySelectorAll('meta[name="theme-color"]');
-        for (var i = 0; i < metas.length; i++) metas[i].setAttribute('content', colours[mode]);
+        for (var i = 0; i < metas.length; i++) {
+          var scheme = metas[i].getAttribute('media').indexOf('dark') >= 0 ? 'dark' : 'light';
+          metas[i].setAttribute('content', colours[chosen ? mode : scheme]);
+        }
       })();
     </script>
     %sveltekit.head%

@@ -1,5 +1,7 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { describe, expect, it, vi } from 'vitest';
-import { callApi, callApiRaw } from './api-client';
+import { setRequestContextStore, withRequestId } from '@mesaaberta/contracts';
+import { answerShapeOf, callApi, callApiRaw, cloudflareErrorOf } from './api-client';
 
 const log = { warn: vi.fn() } as never;
 const envWith = (fetch: (request: Request) => Promise<Response>) =>
@@ -20,6 +22,20 @@ describe('callApi', () => {
     expect(request.method).toBe('POST');
     expect(request.headers.get('x-actor-id')).toBe('a');
     expect(new URL(request.url).pathname).toBe('/v1/admin/events/e1/force');
+  });
+
+  it('passes the request id on, so the api lines join the web request', async () => {
+    const fetch = vi.fn(async (_request: Request) => Response.json({}));
+    setRequestContextStore(new AsyncLocalStorage());
+    try {
+      await withRequestId('8a1b2c3d4e5f6789-GRU', () => callApi(envWith(fetch), '/v1/x', 'a', log));
+      await callApi(envWith(fetch), '/v1/x', 'a', log);
+    } finally {
+      setRequestContextStore(null);
+    }
+
+    expect(fetch.mock.calls[0][0].headers.get('x-request-id')).toBe('8a1b2c3d4e5f6789-GRU');
+    expect(fetch.mock.calls[1][0].headers.has('x-request-id')).toBe(false);
   });
 
   it('is null on a refusal or a network error, and never throws', async () => {
@@ -54,6 +70,121 @@ describe('callApi', () => {
 
     expect(await callApiRaw(undefined, '/v1/x', 'a', log)).toBeNull();
     expect(await callApiRaw(broken, '/v1/x', 'a', log)).toBeNull();
+  });
+});
+
+describe('callApiRaw when Cloudflare answers for the api', () => {
+  const errorPage = () =>
+    new Response('error code: 1102', { status: 500, headers: { 'content-type': 'text/plain' } });
+
+  it('tries a read once more, so one failed isolate is not a 503 page', async () => {
+    const fetch = vi
+      .fn<(request: Request) => Promise<Response>>()
+      .mockResolvedValueOnce(errorPage())
+      .mockResolvedValueOnce(Response.json({ name: 'Mausritter' }));
+    const warn = vi.fn();
+
+    const answer = await callApiRaw(
+      envWith(fetch),
+      '/v1/reads/systems/mausritter',
+      null,
+      {
+        warn,
+      } as never,
+      undefined,
+      {},
+      'GET',
+    );
+
+    expect(answer).toEqual({ ok: true, status: 200, body: { name: 'Mausritter' } });
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(warn).toHaveBeenCalledWith(
+      'api.call_failed',
+      expect.objectContaining({
+        code: 'api_answer_not_json',
+        apiRoute: '/v1/reads/systems/mausritter',
+        method: 'GET',
+        status: 500,
+        attempt: 1,
+        reason: 'cf_1102',
+        bodyKind: 'text',
+      }),
+    );
+  });
+
+  it('tries a read again when the body broke off after a 200', async () => {
+    const cut = new Response(
+      new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('{"id":'));
+          controller.error(new Error('Network connection lost.'));
+        },
+      }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    );
+    const fetch = vi
+      .fn<(request: Request) => Promise<Response>>()
+      .mockResolvedValueOnce(cut)
+      .mockResolvedValueOnce(Response.json({ id: 'me' }));
+    const warn = vi.fn();
+
+    const answer = await callApiRaw(
+      envWith(fetch),
+      '/v1/me',
+      'a',
+      { warn } as never,
+      undefined,
+      {},
+      'GET',
+    );
+
+    expect(answer).toEqual({ ok: true, status: 200, body: { id: 'me' } });
+    expect(warn).toHaveBeenCalledWith(
+      'api.call_failed',
+      expect.objectContaining({ status: 200, bodyKind: 'unread' }),
+    );
+  });
+
+  it('says what the failed answer looked like, never its text', () => {
+    const empty = new Response('', { status: 500, headers: { 'cf-placement': 'remote-GRU' } });
+    expect(answerShapeOf(empty, '')).toEqual({
+      bodyKind: 'empty',
+      bodyBytes: 0,
+      placement: 'remote-GRU',
+    });
+    const page = new Response('<html></html>', {
+      status: 500,
+      headers: { 'content-type': 'text/html' },
+    });
+    expect(answerShapeOf(page, '<html></html>')).toEqual({ bodyKind: 'html', bodyBytes: 13 });
+  });
+
+  it('is null when the second try fails too', async () => {
+    const fetch = vi.fn(async (_request: Request) => errorPage());
+    const answer = await callApiRaw(
+      envWith(fetch),
+      '/v1/reads/tables',
+      null,
+      log,
+      undefined,
+      {},
+      'GET',
+    );
+
+    expect(answer).toBeNull();
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('never sends a write twice', async () => {
+    const fetch = vi.fn(async (_request: Request) => errorPage());
+    expect(await callApiRaw(envWith(fetch), '/v1/tables/x/join', 'a', log, {})).toBeNull();
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads only the error code from the page', () => {
+    expect(cloudflareErrorOf('error code: 1101')).toBe('cf_1101');
+    expect(cloudflareErrorOf('<html>Worker threw exception</html>')).toBeUndefined();
+    expect(cloudflareErrorOf(undefined)).toBeUndefined();
   });
 });
 

@@ -277,6 +277,8 @@ describe('the report queue', () => {
       closeTable: false,
       removeCrowdfunding: false,
       removePartner: false,
+      removePlace: false,
+      restorePlace: false,
       ban: true,
     });
 
@@ -293,6 +295,8 @@ describe('the report queue', () => {
       closeTable: true,
       removeCrowdfunding: false,
       removePartner: false,
+      removePlace: false,
+      restorePlace: false,
       ban: false,
     });
   });
@@ -516,6 +520,20 @@ describe('auditLog', () => {
     await expect(auditLog(test.db, member(2), new URLSearchParams())).rejects.toBeInstanceOf(
       Forbidden,
     );
+  });
+
+  it("lists a GM's edits of a table under Mesas, with who made them", async () => {
+    const table = await makeTable();
+    const change = { tableId: table.id, slug: table.slug, title: table.title };
+    await test.db.insert(events).values([
+      { type: 'TableUpdated', actorId: gm.id, payload: { ...change, changes: {} } },
+      { type: 'TableEdited', actorId: gm.id, payload: change },
+    ]);
+
+    const tables = await auditLog(test.db, admin, new URLSearchParams('kind=tables'));
+    const edits = tables!.rows.filter((row) => row.title === table.title);
+    expect(edits.map((row) => row.type).sort()).toEqual(['TableEdited', 'TableUpdated']);
+    expect(edits.every((row) => row.by === 'm1')).toBe(true);
   });
 
   it('narrows the log to one kind of decision and to what the admin typed', async () => {

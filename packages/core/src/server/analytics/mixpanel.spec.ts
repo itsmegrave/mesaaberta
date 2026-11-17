@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { mixpanelProvider, mixpanelRecord } from './mixpanel';
+import { mixpanelProfileUpdate, mixpanelProvider, mixpanelRecord } from './mixpanel';
 import { analyticsHandler } from './index';
 import { toAnalyticsEvent } from './product-events';
 import type { StoredEvent } from '../events/types';
@@ -66,5 +66,30 @@ describe('Mixpanel event forwarding', () => {
   it('surfaces network failure for retry without succeeding the handler', async () => {
     const send = vi.fn<typeof fetch>().mockRejectedValue(new Error('network unavailable'));
     await expect(deliver(send)).rejects.toThrow('network unavailable');
+  });
+});
+
+describe('Mixpanel profile labels', () => {
+  it('sets fixed labels with $set, without geolocating, and fails on a rejection', async () => {
+    const send = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ status: 1, error: null })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ status: 0, error: 'bad' })));
+    const provider = mixpanelProvider({ MIXPANEL_TOKEN: 'test-token' }, send)!;
+    await provider.setProfile!('22222222-2222-4222-8222-222222222222', { theme: 'overdrive' });
+    const [url, init] = send.mock.calls[0];
+    expect(url).toBe('https://api.mixpanel.com/engage?verbose=1');
+    expect(JSON.parse(init?.body as string)).toEqual([
+      mixpanelProfileUpdate('test-token', '22222222-2222-4222-8222-222222222222', {
+        theme: 'overdrive',
+      }),
+    ]);
+    expect(mixpanelProfileUpdate('t', 'd', { a: 'b' })).toEqual({
+      $token: 't',
+      $distinct_id: 'd',
+      $ip: 0,
+      $set: { a: 'b' },
+    });
+    await expect(provider.setProfile!('d', {})).rejects.toThrow('rejected');
   });
 });

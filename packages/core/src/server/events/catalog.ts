@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
-import { notifications, platforms, systems, tags } from '../db/schema';
+import { notifications, placeFeatures, platforms, systems, tags } from '../db/schema';
 import { NOTIFICATION_KINDS, type NotificationType } from '../../notifications/kinds';
 import type { Handler, StoredEvent } from './types';
 
@@ -16,9 +16,9 @@ const TYPES: Record<CatalogEvent['type'], NotificationType> = {
 };
 
 /**
- * The bell for the catalog: the person who suggested a platform, a tag or a system hears when an admin
- * approves it, turns it down or folds it into one that already existed. One row per event, so a
- * retry adds nothing. An admin is never told about their own decision, and an entry of the catalog
+ * The bell for the catalog: the person who suggested a platform, a tag, a system or a place's tag
+ * hears when an admin approves it, turns it down or folds it into one that already existed. One row
+ * per event, so a retry adds nothing. An admin is never told about their own decision, and an entry of the catalog
  * itself (no one suggested it) tells nobody.
  */
 export const catalogHandler: Handler = {
@@ -27,7 +27,14 @@ export const catalogHandler: Handler = {
   async handle(event, db: AnyDb) {
     const decision = event as CatalogEvent;
     const { kind } = decision.payload;
-    const table = kind === 'platform' ? platforms : kind === 'tag' ? tags : systems;
+    const table =
+      kind === 'platform'
+        ? platforms
+        : kind === 'tag'
+          ? tags
+          : kind === 'placeTag'
+            ? placeFeatures
+            : systems;
     const [entry] = await db
       .select({ suggestedBy: table.suggestedBy })
       .from(table)

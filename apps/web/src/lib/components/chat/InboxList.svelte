@@ -2,6 +2,8 @@
   export type InboxItem = {
     id: string;
     kind: 'table' | 'direct';
+    /** An admin conversation, shown as "[Admin] @username". */
+    admin?: boolean;
     title: string;
     tableSlug: string | null;
     imageUrl: string | null;
@@ -45,7 +47,12 @@
   const locale = getLocale();
   const now = new Date();
   const zone = $derived(shownTimezone('America/Sao_Paulo'));
-  const name = (item: InboxItem) => (item.kind === 'direct' ? atHandle(item.title) : item.title);
+  const name = (item: InboxItem) =>
+    item.kind === 'table'
+      ? item.title
+      : item.admin
+        ? m.messages_admin_title({ name: atHandle(item.title) })
+        : atHandle(item.title);
   const preview = (item: InboxItem) => {
     if (!item.preview) return m.messages_no_messages();
     const body = item.preview.body.replace(/\s+/g, ' ');
@@ -54,7 +61,7 @@
       ? m.messages_preview_other({ sender: atHandle(item.preview.sender), body })
       : body;
   };
-  const pageHref = (target: number) => (target === 1 ? '/m' : `/m?page=${target}`);
+  const pageHref = (target: number) => (target === 1 ? '/messages' : `/messages?page=${target}`);
   const pageLink = `${buttonClass('secondary', 'md')} text-sm font-semibold`;
 </script>
 
@@ -96,9 +103,8 @@
         <span class="min-w-0 flex-1">
           <span class="flex items-baseline justify-between gap-2">
             <span class="truncate {item.unread > 0 ? 'font-bold' : 'font-semibold'}"
-              >{#if item.kind === 'direct'}<UserLink username={item.title} />{:else}{name(
-                  item,
-                )}{/if}</span
+              >{#if item.kind === 'direct'}{#if item.admin}{m.messages_admin_label()}
+                {/if}<UserLink username={item.title} />{:else}{name(item)}{/if}</span
             >
             <time datetime={item.lastMessageAt.toISOString()} class="shrink-0 text-xs text-muted">
               {shortTime(item.lastMessageAt, now, locale, zone)}

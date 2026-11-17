@@ -1,12 +1,5 @@
 import { createMiddleware } from 'hono/factory';
-
-/** Compares two strings in time that depends only on their length, not on where they differ. */
-function same(a: string, b: string) {
-  if (a.length !== b.length) return false;
-  let difference = 0;
-  for (let i = 0; i < a.length; i++) difference |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return difference === 0;
-}
+import { sameSecret } from '@mesaaberta/core/server/same-secret';
 
 /**
  * The gate for an api that listens on a network (the Bun/Docker entry). On Cloudflare the Service
@@ -17,6 +10,6 @@ function same(a: string, b: string) {
 export const internalToken = (secret: string) =>
   createMiddleware(async (c, next) => {
     const sent = c.req.header('x-internal-token') ?? '';
-    if (!secret || !same(sent, secret)) return c.json({ error: 'unauthorized' }, 401);
+    if (!sameSecret(sent, secret)) return c.json({ error: 'unauthorized' }, 401);
     await next();
   });

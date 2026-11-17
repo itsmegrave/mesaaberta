@@ -26,6 +26,6 @@ export async function recordConnection(
   try {
     await recordEvent(db, { type: 'UserSignedIn', actorId, payload: { ip } });
   } catch (error) {
-    log.warn('connection log: could not record the sign-in', { error });
+    log.warn('auth.connection_log_failed', { error });
   }
 }

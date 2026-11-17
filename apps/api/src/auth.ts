@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import {
   credentialsSchema,
   emailSchema,
@@ -13,6 +13,7 @@ import {
   attemptWait,
 } from '@mesaaberta/core/server/auth/attempt-limit';
 import { completeLogin } from '@mesaaberta/core/server/auth/login';
+import { ensureProfile } from '@mesaaberta/core/server/auth/profile';
 import {
   signInForSession,
   signUpForSession,
@@ -29,37 +30,39 @@ import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 type Open = typeof createDb;
-type MakeSupabase = (url: string, key: string) => SupabaseClient;
+/** Where a one-request client keeps what it stores (the PKCE code verifier), so the route can read it. */
+type FlowStore = Map<string, string>;
+type MakeSupabase = (url: string, key: string, flow?: FlowStore) => SupabaseClient;
 type Env = DatabaseEnv & { SUPABASE_URL?: string; SUPABASE_PUBLISHABLE_KEY?: string };
 
 /** The header the web Worker sends the visitor's address in; like `x-actor-id`, only a claim. */
 export const CLIENT_IP_HEADER = 'x-client-ip';
 
 /**
- * The anonymous auth forms of Trello #120, moved out of the web Worker one at a time, behind
- * `api_auth`. There is no actor here: the visitor has no account yet, so these routes are guarded by
- * the Service Binding (or the shared secret over HTTP) alone, and by the per-network limits the web
- * form already applied. Nothing here sets a session; the forms that do (sign in, sign up, choosing a
- * new password) stay in the web Worker until a session hand-off is designed.
+ * The auth forms of Trello #120: the web Worker has no fallback for them. There is no actor here:
+ * the visitor has no account yet, so these routes are guarded by the Service Binding (or the shared
+ * secret over HTTP) alone, and by the per-network limits applied here. Nothing here sets a cookie:
+ * the forms that sign someone in answer the JWT pair and the web Worker sets it as the session.
  *
- * `POST /sign-in` checks the e-mail and password with Supabase (behind `api_auth_sign_in`) and
+ * `POST /sign-in` checks the e-mail and password with Supabase and
  * answers `{ result, session }`. `session` is the JWT pair Supabase issued (`accessToken`,
  * `refreshToken`), present only when `result` is `ok`: the web Worker sets it as the person's
  * cookie session, the only place a session lives. It is never logged and only the Service Binding
  * (or the shared secret) can reach this route. Refusals are `invalid` and `unconfirmed` (400),
  * `suspended` (403), `rate_limited` (429, with `retryAfter`) and `failed` (500).
  *
- * `POST /sign-up` (behind `api_auth_sign_up`) creates the account from `{ email, password, origin,
+ * `POST /sign-up` creates the account from `{ email, password, origin,
  * next }` and answers `{ result, session }`: `signed_in` with the JWT pair when no confirmation is
- * needed, `check_email` (also for an address that already has an account) without one; refusals are
+ * needed, `check_email` (also for an address that already has an account, with `codeVerifier`)
+ * without one; refusals are
  * `weak_password` (400), `rate_limited` (429, with `retryAfter`) and `failed` (500).
  *
- * `POST /new-password` (behind `api_auth_new_password`) sets `{ password, passwordConfirm }` for the
+ * `POST /new-password` sets `{ password, passwordConfirm }` for the
  * person whose own access token comes in `Authorization: Bearer`, and signs their other sessions out.
  * The token alone says whose password changes; Supabase checks it. Answers `{ result }`: `ok`, or
  * `weak_password` / `same_password` (400), `no_session` (401), `rate_limited` (429), `failed` (500).
  *
- * `POST /finish-login` (behind `api_auth_finish_login`) is the database half of a provider sign-in:
+ * `POST /finish-login` is the database half of a provider sign-in:
  * the web Worker has traded the code for a session and forwards the new access token in
  * `Authorization`; Supabase vouches for it, then the api ensures the profile, refuses a banned
  * account, records the connection (the visitor's address in `x-client-ip`) and answers
@@ -67,15 +70,49 @@ export const CLIENT_IP_HEADER = 'x-client-ip';
  * person out on those). Body: `{ next }`.
  *
  * `POST /password-reset` e-mails a reset link. Answers `{ result }`: `sent` (whether or not the
- * address has an account), `rate_limited` (429, with `retryAfter` when it is our limit) or `failed`.
+ * address has an account, with `codeVerifier`), `rate_limited` (429, with `retryAfter` when it is
+ * our limit) or `failed`.
+ *
+ * The e-mailed links (sign-up confirmation, password reset) use the PKCE flow: they come back to
+ * /auth/callback with a code, and trading it needs the verifier made when the e-mail was asked for.
+ * The client here keeps it in memory for the request and the route answers it as `codeVerifier`;
+ * the web Worker stores it in the visitor's cookies, where the callback reads it.
  */
-const statelessClient: MakeSupabase = (url, key) =>
-  createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+const PKCE_STORAGE_KEY = 'mesaaberta-auth';
+const statelessClient: MakeSupabase = (url, key, flow) =>
+  flow
+    ? createClient(url, key, {
+        auth: {
+          flowType: 'pkce',
+          storageKey: PKCE_STORAGE_KEY,
+          storage: {
+            getItem: (name) => flow.get(name) ?? null,
+            setItem: (name, value) => void flow.set(name, value),
+            removeItem: (name) => void flow.delete(name),
+          },
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
+      })
+    : createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+
+/** The verifier the last PKCE flow stored (as auth-js stored it), or null when none was made. */
+const verifierOf = (flow: FlowStore) => flow.get(`${PKCE_STORAGE_KEY}-code-verifier`) ?? null;
+
+/**
+ * The Turnstile answer the form sent (`captchaToken`), handed on to Supabase, which checks it once
+ * CAPTCHA protection is on. Anything that is not a short string is no answer at all.
+ */
+const captchaTokenOf = (body: { captchaToken?: unknown } | null) =>
+  typeof body?.captchaToken === 'string' && body.captchaToken.length <= 4096
+    ? body.captchaToken
+    : null;
 
 /** The status the sign-in form shows for each refusal; the same as the web action's. */
 const SIGN_IN_STATUS = {
   invalid: 400,
   unconfirmed: 400,
+  captcha_failed: 400,
   suspended: 403,
   failed: 500,
   rate_limited: 429,
@@ -93,6 +130,7 @@ const NEW_PASSWORD_STATUS = {
 /** The status the sign-up form shows for each refusal; the same as the web action's. */
 const SIGN_UP_STATUS = {
   weak_password: 400,
+  captcha_failed: 400,
   failed: 500,
   rate_limited: 429,
 } as const satisfies Record<Exclude<SignUpResult, 'signed_in' | 'check_email'>, number>;
@@ -112,6 +150,7 @@ export function authRoutes(
     const body = (await c.req.json().catch(() => null)) as {
       email?: unknown;
       origin?: unknown;
+      captchaToken?: unknown;
     } | null;
     const parsed = emailSchema.safeParse({ email: body?.email });
     const origin = typeof body?.origin === 'string' ? body.origin : '';
@@ -128,12 +167,16 @@ export function authRoutes(
       );
       if (wait !== null) return c.json({ result: 'rate_limited', retryAfter: wait }, 429);
 
-      const supabase = makeSupabase(url, key);
+      const flow: FlowStore = new Map();
       const result = await requestPasswordReset(
-        { supabase, log: logger },
-        { email: parsed.data.email, origin },
+        { supabase: makeSupabase(url, key, flow), log: logger },
+        { email: parsed.data.email, origin, captchaToken: captchaTokenOf(body) },
       );
-      return c.json({ result }, result === 'sent' ? 200 : result === 'rate_limited' ? 429 : 502);
+      if (result === 'sent') return c.json({ result, codeVerifier: verifierOf(flow) });
+      return c.json(
+        { result },
+        result === 'rate_limited' ? 429 : result === 'captcha_failed' ? 400 : 502,
+      );
     } finally {
       await close();
     }
@@ -147,6 +190,7 @@ export function authRoutes(
     const body = (await c.req.json().catch(() => null)) as {
       email?: unknown;
       password?: unknown;
+      captchaToken?: unknown;
     } | null;
     const parsed = credentialsSchema.safeParse({ email: body?.email, password: body?.password });
     if (!parsed.success) return c.json({ error: 'invalid', message: 'invalid' }, 400);
@@ -160,7 +204,7 @@ export function authRoutes(
 
       const { result, session } = await signInForSession(
         { supabase: makeSupabase(url, key), db, log: logger, ip: ip || null },
-        parsed.data,
+        { ...parsed.data, captchaToken: captchaTokenOf(body) },
       );
       if (result !== 'ok') return c.json({ result }, SIGN_IN_STATUS[result]);
       return c.json({ result, session });
@@ -179,6 +223,7 @@ export function authRoutes(
       password?: unknown;
       origin?: unknown;
       next?: unknown;
+      captchaToken?: unknown;
     } | null;
     const parsed = credentialsSchema.safeParse({ email: body?.email, password: body?.password });
     const origin = typeof body?.origin === 'string' ? body.origin : '';
@@ -192,12 +237,19 @@ export function authRoutes(
       const wait = await attemptWait(db, SIGN_UP_LIMIT, ip);
       if (wait !== null) return c.json({ result: 'rate_limited', retryAfter: wait }, 429);
 
+      const flow: FlowStore = new Map();
       const { result, session } = await signUpForSession(
-        { supabase: makeSupabase(url, key), db, log: logger, ip: ip || null },
-        { email: parsed.data.email, password: parsed.data.password, origin, next },
+        { supabase: makeSupabase(url, key, flow), db, log: logger, ip: ip || null },
+        {
+          email: parsed.data.email,
+          password: parsed.data.password,
+          origin,
+          next,
+          captchaToken: captchaTokenOf(body),
+        },
       );
       if (result === 'signed_in') return c.json({ result, session });
-      if (result === 'check_email') return c.json({ result });
+      if (result === 'check_email') return c.json({ result, codeVerifier: verifierOf(flow) });
       return c.json({ result }, SIGN_UP_STATUS[result]);
     } finally {
       await close();
@@ -228,41 +280,68 @@ export function authRoutes(
     return c.json({ result }, NEW_PASSWORD_STATUS[result]);
   });
 
-  app.post('/finish-login', async (c) => {
-    const { SUPABASE_URL: url, SUPABASE_PUBLISHABLE_KEY: key } = c.env;
-    const connectionString = connectionStringFrom(c.env);
-    if (!url || !key || !connectionString) return c.json({ error: 'unavailable' }, 503);
-
+  /**
+   * Whose account the access token in `Authorization: Bearer` is, checked by Supabase: the user, or
+   * the answer to give (`no_session` for a missing or refused token, `failed` otherwise).
+   */
+  const verifiedUser = async (c: Context<{ Bindings: Env }>, url: string, key: string) => {
     const token = /^Bearer (.+)$/.exec(c.req.header('authorization') ?? '')?.[1];
-    if (!token) return c.json({ result: 'no_session' }, 401);
-    const body = (await c.req.json().catch(() => null)) as { next?: unknown } | null;
-    const next = typeof body?.next === 'string' ? body.next : null;
-
-    // Whoever the token belongs to, checked by Supabase: it says whose profile this is.
-    let user: { id?: string; user_metadata?: Record<string, unknown> } | null;
+    if (!token) return { refused: c.json({ result: 'no_session' }, 401) } as const;
     try {
       const response = await (deps.request ?? fetch)(`${url.replace(/\/$/, '')}/auth/v1/user`, {
         headers: { apikey: key, authorization: `Bearer ${token}` },
         signal: AbortSignal.timeout(10_000),
       });
       if (response.status === 401 || response.status === 403)
-        return c.json({ result: 'no_session' }, 401);
-      if (!response.ok) return c.json({ result: 'failed' }, 502);
-      user = await response.json();
+        return { refused: c.json({ result: 'no_session' }, 401) } as const;
+      if (!response.ok) return { refused: c.json({ result: 'failed' }, 502) } as const;
+      const user = (await response.json()) as {
+        id?: string;
+        user_metadata?: Record<string, unknown>;
+      } | null;
+      if (!user?.id) return { refused: c.json({ result: 'failed' }, 502) } as const;
+      return { user: { id: user.id, user_metadata: user.user_metadata } } as const;
     } catch {
-      return c.json({ result: 'failed' }, 502);
+      return { refused: c.json({ result: 'failed' }, 502) } as const;
     }
-    if (!user?.id) return c.json({ result: 'failed' }, 502);
+  };
+
+  app.post('/finish-login', async (c) => {
+    const { SUPABASE_URL: url, SUPABASE_PUBLISHABLE_KEY: key } = c.env;
+    const connectionString = connectionStringFrom(c.env);
+    if (!url || !key || !connectionString) return c.json({ error: 'unavailable' }, 503);
+
+    const body = (await c.req.json().catch(() => null)) as { next?: unknown } | null;
+    const next = typeof body?.next === 'string' ? body.next : null;
+
+    // Whoever the token belongs to, checked by Supabase: it says whose profile this is.
+    const verified = await verifiedUser(c, url, key);
+    if (verified.refused) return verified.refused;
 
     const ip = c.req.header(CLIENT_IP_HEADER) ?? '';
     const { db, close } = open(connectionString);
     try {
-      const done = await completeLogin(
-        { db, log: logger, ip: ip || null },
-        { id: user.id, user_metadata: user.user_metadata },
-        next,
-      );
+      const done = await completeLogin({ db, log: logger, ip: ip || null }, verified.user, next);
       return c.json(done, done.result === 'ok' ? 200 : done.result === 'suspended' ? 403 : 500);
+    } finally {
+      await close();
+    }
+  });
+
+  // The onboarding step's half of `finish-login`: makes sure the person whose access token comes in
+  // `Authorization` has a profile (made from their sign-in metadata on first use, never
+  // overwritten) and answers `{ result: 'ok', profile }`.
+  app.post('/ensure-profile', async (c) => {
+    const { SUPABASE_URL: url, SUPABASE_PUBLISHABLE_KEY: key } = c.env;
+    const connectionString = connectionStringFrom(c.env);
+    if (!url || !key || !connectionString) return c.json({ error: 'unavailable' }, 503);
+
+    const verified = await verifiedUser(c, url, key);
+    if (verified.refused) return verified.refused;
+
+    const { db, close } = open(connectionString);
+    try {
+      return c.json({ result: 'ok', profile: await ensureProfile(db, verified.user) });
     } finally {
       await close();
     }

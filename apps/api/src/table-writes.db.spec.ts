@@ -32,6 +32,7 @@ beforeAll(async () => {
     kind: 'one_shot',
     capacity: 4,
     minPlayers: null,
+    plannedSessions: null,
     startsAtLocal: '2099-01-01T20:00',
     timezone: 'America/Sao_Paulo',
     durationMinutes: 180,

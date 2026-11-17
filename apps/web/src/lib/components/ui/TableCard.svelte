@@ -2,13 +2,16 @@
   import UserLink from '#lib/components/ui/UserLink.svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import { modalityIcon } from '#lib/tables/modality-icon.js';
-  import { kindLabel, seatsLeftLabel } from '#lib/tables/format.js';
+  import { kindLabel, seatSummary as seatsInWords, seatsLeftLabel } from '#lib/tables/format.js';
   import { formatCardDate, formatSession } from '@mesaaberta/core/tables/format';
   import { shownTimezone } from '#lib/time/shown-timezone.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
   import GmRating from './GmRating.svelte';
+  import MAAvatar from './MAAvatar.svelte';
   import SeatRing from './SeatRing.svelte';
+  import ContentRatingSymbol from './ContentRatingSymbol.svelte';
+  import { isBeginnerTable } from '@mesaaberta/core/tables/beginners';
   import { linkedCardClass } from './MediaCard.svelte';
 
   type PlatformItem = string | { name: string; slug?: string };
@@ -17,9 +20,15 @@
   type Table = {
     slug: string;
     title: string;
-    kind: 'campaign' | 'one_shot' | 'adventure';
+    kind: 'campaign' | 'one_shot' | 'adventure' | 'open';
+    /** An adventure's planned sessions, shown with its kind. */
+    plannedSessions?: number | null;
     system: { name: string };
     gmName: string;
+    /** The GM's name, only when they chose to show it; the @handle stands in otherwise. */
+    gmShownName?: string | null;
+    /** The GM's picture; without one the avatar draws their initial. */
+    gmAvatar?: string | null;
     /** The GM's score. Absent where there is nothing to show yet, such as the form's preview. */
     gmRating?: { score: number | null; count: number; isNew: boolean };
     seatsLeft: number;
@@ -32,11 +41,28 @@
     imageUrl?: string | null;
     modality?: 'online' | 'in_person';
     locationArea?: string | null;
+    /** The "Onde jogar" place an in-person table happens at, named instead of the area. */
+    placeName?: string | null;
     platforms?: PlatformItem[];
     tags?: TagItem[];
+    /** The age rating, drawn as its ClassInd symbol in the header's top-right corner. The server
+     * leaves it out while `use_content_rating_symbol` is off. */
+    contentRating?: string | null;
   };
 
-  let { table }: { table: Table } = $props();
+  /**
+   * `level`: the title's heading level, one below the heading the card sits under.
+   * `markBeginners`: whether a table tagged "Iniciantes" shows the mark (`use_beginner_tables`).
+   * `priority`: the card's cover is likely the biggest thing on screen when the page opens (the
+   * first card of a list), so the browser fetches it first instead of lazily.
+   */
+  let {
+    table,
+    level = 'h3',
+    markBeginners = false,
+    priority = false,
+  }: { table: Table; level?: 'h2' | 'h3'; markBeginners?: boolean; priority?: boolean } = $props();
+  const beginner = $derived(markBeginners && isBeginnerTable(table.tags));
 
   const locale = getLocale();
   const seats = $derived(seatsLeftLabel(table.seatsLeft));
@@ -45,16 +71,15 @@
   // ring's label and the line under the footer's count.
   const seatSummary = $derived(
     table.reserved
-      ? m.invitation_seats({
-          confirmed:
-            table.taken ?? Math.max(0, (table.capacity ?? 5) - table.seatsLeft - table.reserved),
-          reserved: table.reserved,
-          available: table.seatsLeft,
-        })
+      ? seatsInWords(
+          table.taken ?? Math.max(0, (table.capacity ?? 5) - table.seatsLeft - table.reserved),
+          table.reserved,
+          table.seatsLeft,
+        )
       : undefined,
   );
 
-  const kind = $derived(kindLabel(table.kind));
+  const kind = $derived(kindLabel(table.kind, table.plannedSessions));
 
   const cardDate = $derived(
     table.startsAt ? formatCardDate(table.startsAt, shownTimezone(table.timezone), locale) : null,
@@ -73,18 +98,24 @@
   const moreTagsCount = $derived(Math.max(0, tagNames.length - 1));
 </script>
 
-<article class="{linkedCardClass} min-h-96">
+<article class={linkedCardClass}>
   <!-- Top header tile: With cover image vs solid petrol tile without cover -->
   {#if table.imageUrl}
     <div class="relative h-36 shrink-0 overflow-hidden bg-primary-500">
       <img
         src={table.imageUrl}
         alt=""
-        loading="lazy"
+        loading={priority ? 'eager' : 'lazy'}
+        fetchpriority={priority ? 'high' : 'auto'}
         decoding="async"
         referrerpolicy="no-referrer"
         class="absolute inset-0 size-full object-cover"
       />
+      {#if table.contentRating}
+        <div class="absolute top-3 right-3">
+          <ContentRatingSymbol rating={table.contentRating} size={32} />
+        </div>
+      {/if}
       <!-- Kind pill -->
       <div class="absolute top-3 left-3">
         <span class="chip h-6 gap-1 preset-filled-primary-500 px-3 text-xs font-semibold shadow-sm">
@@ -99,7 +130,7 @@
           <div class="font-sans text-xl leading-none font-bold tracking-tight">
             {cardDate.dayMonth}
           </div>
-          <div class="mt-1 font-sans text-xs leading-tight font-medium opacity-90">
+          <div class="mt-1 font-sans text-xs leading-tight font-medium">
             {cardDate.weekdayTime}
           </div>
         </div>
@@ -116,33 +147,46 @@
     </div>
   {:else}
     <div
-      class="flex h-36 shrink-0 items-stretch justify-between gap-3 preset-filled-primary-500 px-5 py-4"
+      class="flex h-28 shrink-0 items-stretch justify-between gap-3 preset-filled-primary-500 px-4 py-3"
     >
       <div class="flex min-w-0 flex-col items-start justify-between">
         <span
-          class="chip h-6 gap-1 border border-primary-contrast-500/15 bg-primary-contrast-500/15 px-3 text-xs font-semibold"
+          class="chip h-6 gap-1 border border-primary-contrast-500/15 bg-surface-950/25 px-3 text-xs font-semibold"
         >
           {kind}
         </span>
         {#if table.startsAt && cardDate}
           <div>
-            <div class="font-sans text-4xl leading-none font-bold tracking-tight">
+            <div class="font-sans text-3xl leading-none font-bold tracking-tight">
               {cardDate.dayMonth}
             </div>
-            <div class="mt-1 font-sans text-sm leading-snug font-medium opacity-90">
+            <div class="mt-1 font-sans text-sm leading-snug font-medium">
               {cardDate.weekdayTime}
             </div>
           </div>
         {/if}
       </div>
-      <div class="flex items-center">
-        <SeatRing
-          capacity={table.capacity ?? 5}
-          seatsLeft={table.seatsLeft}
-          size={112}
-          label={seatSummary}
-        />
-      </div>
+      {#if table.contentRating}
+        <!-- With a rating its symbol takes the top-right corner and the ring moves down. -->
+        <div class="flex flex-col items-end justify-between">
+          <ContentRatingSymbol rating={table.contentRating} size={32} />
+          <SeatRing
+            capacity={table.capacity ?? 5}
+            seatsLeft={table.seatsLeft}
+            size={56}
+            label={seatSummary}
+          />
+        </div>
+      {:else}
+        <div class="flex items-center">
+          <SeatRing
+            capacity={table.capacity ?? 5}
+            seatsLeft={table.seatsLeft}
+            size={88}
+            label={seatSummary}
+          />
+        </div>
+      {/if}
     </div>
   {/if}
 
@@ -154,33 +198,52 @@
   {/if}
 
   <!-- Card body -->
-  <div class="flex grow flex-col px-5 pt-5 pb-4">
-    <div class="text-sm leading-snug font-semibold text-muted">
-      {table.system.name}
+  <div class="flex grow flex-col px-4 pt-4 pb-3">
+    <div class="flex items-start justify-between gap-2">
+      <div class="min-w-0 text-sm leading-snug font-semibold text-muted">
+        {table.system.name}
+      </div>
+      {#if beginner}
+        <span
+          data-beginners-mark
+          class="chip h-6 shrink-0 gap-1 rounded-full preset-tonal-primary px-2.5 text-xs font-semibold"
+        >
+          <Icon name="game-icons:sprout" size={14} />
+          {m.beginners_mark()}
+        </span>
+      {/if}
     </div>
 
-    <h3 class="mt-1 text-2xl leading-tight font-semibold tracking-tight">
+    <svelte:element this={level} class="mt-1 text-xl leading-tight font-semibold tracking-tight">
       <a
         href={`/t/${table.slug}`}
         class="after:absolute after:inset-0 after:content-[''] hover:underline"
       >
         {table.title}
       </a>
-    </h3>
+    </svelte:element>
 
-    <!-- Who runs it and the rating, with no "Mestre:" prefix; the label is for screen readers. -->
-    <div class="mt-2 flex flex-wrap items-center gap-x-2 text-sm leading-normal">
-      <span class="font-semibold"
-        ><span class="sr-only">{m.table_gm()}: </span><UserLink username={table.gmName} /></span
-      >
+    <!-- Who runs it, with their picture and the rating, as on the layout: no "Mestre:" prefix;
+         the label is for screen readers. -->
+    <div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-normal">
+      <span class="flex min-w-0 items-center gap-2 font-semibold">
+        <MAAvatar src={table.gmAvatar ?? null} name={table.gmShownName ?? table.gmName} size={24} />
+        <span class="min-w-0 truncate"
+          ><span class="sr-only">{m.table_gm()}: </span><UserLink
+            username={table.gmName}
+            label={table.gmShownName ?? undefined}
+            class="underline underline-offset-2"
+          /></span
+        >
+      </span>
       {#if table.gmRating}<GmRating rating={table.gmRating} variant="short" />{/if}
     </div>
 
     {#if table.modality}
-      <div class="mt-1 flex items-center gap-1.5 text-sm leading-normal text-muted">
+      <div class="mt-1 flex items-center gap-2 text-sm leading-normal text-muted">
         <Icon name={modalityIcon(table.modality)} size={16} />
         {table.modality === 'in_person'
-          ? `${m.table_modality_in_person()} · ${table.locationArea ?? ''}`
+          ? `${m.table_modality_in_person()} · ${table.placeName ?? table.locationArea ?? ''}`
           : m.table_modality_online()}
       </div>
     {/if}

@@ -21,6 +21,7 @@ const newProfile = async () => {
 const form = (username: string): ProfileInput => ({
   username,
   name: '',
+  showName: false,
   ageRange: '',
   gender: '',
   genderOther: '',

@@ -1,6 +1,20 @@
-import { and, asc, count, desc, eq, ilike, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
+import {
+  and,
+  arrayContains,
+  asc,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNotNull,
+  isNull,
+  or,
+  sql,
+} from 'drizzle-orm';
 import { PARTNER_PAGE_SIZE, type PartnerFilters } from '../../partners/filters';
 import { partnerLinks, type PartnerInput } from '../../partners/schema';
+import { orderedTypes, type PartnerType } from '../../partners/types';
 import type { PartnerReportInput } from '../../moderation/reports';
 import { parseSocialUrl, type Network } from '../../profile/social-links';
 import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
@@ -15,10 +29,13 @@ import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import type { Changes } from '@mesaaberta/core/server/events/types';
 import { enforceRateLimit, REPORT_LIMIT } from '@mesaaberta/core/server/rate-limit';
 import { resolveOpenPartnerReports } from './admin';
+import { addSubmitterAsOwner, ownerIdsOf, ownersOf } from './owners';
+import { partnerReachOf } from '../places/partner-links';
 
 // The member side of the partners (link exchange) page. A partner is sent by a member, waits for an
-// admin (`approvedAt`), and is then public. Editing it clears the approval again. The submitter is
-// never part of what the public list returns to a page: only whether the viewer is them.
+// admin (`approvedAt`), and is then public. Editing it clears the approval again. Who looks after it
+// (`./owners`) is never part of what the public list returns to a page: only whether the viewer
+// is one of them.
 
 const escapeLike = (text: string) => text.replace(/[\\%_]/g, '\\$&');
 
@@ -31,6 +48,7 @@ function columnsOf(input: PartnerInput) {
   return {
     name: input.name,
     description: textOrNull(input.description),
+    types: orderedTypes(input.types),
     contactEmail: textOrNull(input.contactEmail),
     siteUrl: addressOrNull(input.siteUrl),
     backlinkUrl: addressOrNull(input.backlinkUrl),
@@ -66,6 +84,7 @@ export async function addPartner(
       .values({ submitterId: actor!.id, logoPath, ...columnsOf(input), createdAt: now })
       .returning({ id: partners.id });
     await writeLinks(t, row.id, input);
+    await addSubmitterAsOwner(t, row.id, actor!.id, now);
     const eventId = await recordEvent(
       t,
       {
@@ -79,14 +98,14 @@ export async function addPartner(
   });
 }
 
-/** A partner as the edit form needs it. Only its submitter may open it; a removed one is gone. */
+/** A partner as the edit form needs it. Only its owners may open it; a removed one is gone. */
 export async function findOwnPartner(db: AnyDb, actor: Actor | null, id: string) {
   const [row] = await db
     .select()
     .from(partners)
     .where(and(eq(partners.id, id), isNull(partners.removedAt)));
   if (!row) throw new NotFound(`no partner "${id}"`);
-  authorize(actor, 'partner:edit', { submitterId: row.submitterId });
+  authorize(actor, 'partner:edit', { ownerIds: await ownersOf(db, row) });
   const links = await db
     .select({ network: partnerLinksTable.network, url: partnerLinksTable.url })
     .from(partnerLinksTable)
@@ -96,7 +115,7 @@ export async function findOwnPartner(db: AnyDb, actor: Actor | null, id: string)
 }
 
 /**
- * The submitter edits their partner. Any edit sends it back to review: it leaves the public list
+ * An owner edits the partner. Any edit sends it back to review: it leaves the public list
  * until an admin approves it again, so a link cannot be swapped after approval. A new logo replaces
  * the old one; the replaced path is returned so the caller can delete that file. Returns the
  * `PartnerUpdated` event to dispatch.
@@ -116,7 +135,7 @@ export async function updatePartner(
       .where(and(eq(partners.id, id), isNull(partners.removedAt)))
       .for('update');
     if (!current) throw new NotFound(`no partner "${id}"`);
-    authorize(actor, 'partner:edit', { submitterId: current.submitterId });
+    authorize(actor, 'partner:edit', { ownerIds: await ownersOf(t, current) });
 
     const next = columnsOf(input);
     const oldLinks = await t
@@ -127,6 +146,12 @@ export async function updatePartner(
 
     const changes: Changes = {};
     for (const key of Object.keys(next) as (keyof typeof next)[]) {
+      if (key === 'types') {
+        if (next.types.join(',') !== current.types.join(',')) {
+          changes.types = { from: current.types.join(','), to: next.types.join(',') };
+        }
+        continue;
+      }
       if (next[key] === current[key]) continue;
       // An address is personal data: the audit event says it changed, never what it was.
       changes[key] =
@@ -164,8 +189,8 @@ export async function updatePartner(
 }
 
 /**
- * The submitter takes their partner off. Open reports about it are accepted (each reporter hears
- * it was looked at). Returns the events to dispatch. Nobody is told: they did it themselves.
+ * An owner takes the partner off. Open reports about it are accepted (each reporter hears it was
+ * looked at). Returns the events to dispatch. The other owners are told; the actor did it.
  */
 export async function withdrawPartner(
   db: AnyDb,
@@ -181,7 +206,7 @@ export async function withdrawPartner(
       .where(and(eq(partners.id, id), isNull(partners.removedAt)))
       .for('update');
     if (!partner) throw new NotFound(`no partner "${id}"`);
-    authorize(actor, 'partner:edit', { submitterId: partner.submitterId });
+    authorize(actor, 'partner:edit', { ownerIds: await ownersOf(t, partner) });
 
     await t
       .update(partners)
@@ -213,61 +238,38 @@ export type PartnerCard = {
   id: string;
   name: string;
   description: string | null;
+  /** In PARTNER_TYPES order; empty for a partner sent before there were types. */
+  types: PartnerType[];
   logoPath: string;
   siteUrl: string | null;
   couponCode: string | null;
   couponDescription: string | null;
-  /** Waiting for an admin: only its submitter sees it, with an "Em análise" badge. */
+  /** Waiting for an admin: only its owners see it, with an "Em análise" badge. */
   pending: boolean;
   /** Server only: the page turns it into `canEdit` and never sends it. */
-  submitterId: string;
+  ownerIds: string[];
   links: { network: Exclude<Network, 'website'>; url: string }[];
 };
 
-/**
- * The public list: approved partners that were not removed, plus the viewer's own that wait for
- * review. A `page` past the last is `null`, so the route answers 404 (the first page always
- * exists, even empty).
- */
-export async function listPartners(
+/** What a card (and a partner's page) shows, read in one select. */
+const cardColumns = () => ({
+  id: partners.id,
+  name: partners.name,
+  description: partners.description,
+  types: partners.types,
+  logoPath: partners.logoPath,
+  siteUrl: partners.siteUrl,
+  couponCode: partners.couponCode,
+  couponDescription: partners.couponDescription,
+  pending: sql<boolean>`${partners.approvedAt} IS NULL`,
+  ownerIds: ownerIdsOf(partners.id, partners.submitterId),
+});
+
+/** The cards of these rows, each with its links in their order. */
+async function withLinks(
   db: AnyDb,
-  filters: PartnerFilters,
-  { viewerId = null }: { viewerId?: string | null } = {},
-) {
-  const needle = filters.query ? `%${escapeLike(filters.query)}%` : null;
-  const where = and(
-    isNull(partners.removedAt),
-    viewerId
-      ? or(isNotNull(partners.approvedAt), eq(partners.submitterId, viewerId))
-      : isNotNull(partners.approvedAt),
-    needle ? or(ilike(partners.name, needle), ilike(partners.description, needle)) : undefined,
-  );
-
-  const [{ total }] = await db.select({ total: count() }).from(partners).where(where);
-  const pages = Math.max(1, Math.ceil(total / PARTNER_PAGE_SIZE));
-  if (filters.page > pages) return null;
-
-  const rows = await db
-    .select({
-      id: partners.id,
-      name: partners.name,
-      description: partners.description,
-      logoPath: partners.logoPath,
-      siteUrl: partners.siteUrl,
-      couponCode: partners.couponCode,
-      couponDescription: partners.couponDescription,
-      pending: sql<boolean>`${partners.approvedAt} IS NULL`,
-      submitterId: partners.submitterId,
-    })
-    .from(partners)
-    .where(where)
-    .orderBy(
-      filters.sort === 'name' ? asc(sql`lower(${partners.name})`) : desc(partners.createdAt),
-      desc(partners.id),
-    )
-    .limit(PARTNER_PAGE_SIZE)
-    .offset((filters.page - 1) * PARTNER_PAGE_SIZE);
-
+  rows: (Omit<PartnerCard, 'types' | 'links'> & { types: readonly string[] })[],
+): Promise<PartnerCard[]> {
   const links = rows.length
     ? await db
         .select({
@@ -284,29 +286,117 @@ export async function listPartners(
         )
         .orderBy(asc(partnerLinksTable.position))
     : [];
-
-  const cards: PartnerCard[] = rows.map((row) => ({
+  return rows.map((row) => ({
     ...row,
+    types: orderedTypes(row.types),
     links: links
       .filter((link) => link.partnerId === row.id)
       .map(({ network, url }) => ({ network: network as Exclude<Network, 'website'>, url })),
   }));
-  return { cards, total, pages };
+}
+
+/**
+ * The public list: approved partners that were not removed, plus those the viewer looks after
+ * that wait for review. A `page` past the last is `null`, so the route answers 404 (the first page always
+ * exists, even empty).
+ */
+export async function listPartners(
+  db: AnyDb,
+  filters: PartnerFilters,
+  { viewerId = null }: { viewerId?: string | null } = {},
+) {
+  const needle = filters.query ? `%${escapeLike(filters.query)}%` : null;
+  const where = and(
+    isNull(partners.removedAt),
+    viewerId
+      ? or(
+          isNotNull(partners.approvedAt),
+          sql`${viewerId}::uuid = any(${ownerIdsOf(partners.id, partners.submitterId)})`,
+        )
+      : isNotNull(partners.approvedAt),
+    needle ? or(ilike(partners.name, needle), ilike(partners.description, needle)) : undefined,
+    // A partner shows under every kind it picked.
+    filters.type ? arrayContains(partners.types, [filters.type]) : undefined,
+  );
+
+  const [{ total }] = await db.select({ total: count() }).from(partners).where(where);
+  const pages = Math.max(1, Math.ceil(total / PARTNER_PAGE_SIZE));
+  if (filters.page > pages) return null;
+
+  const rows = await db
+    .select(cardColumns())
+    .from(partners)
+    .where(where)
+    .orderBy(
+      filters.sort === 'name' ? asc(sql`lower(${partners.name})`) : desc(partners.createdAt),
+      desc(partners.id),
+    )
+    .limit(PARTNER_PAGE_SIZE)
+    .offset((filters.page - 1) * PARTNER_PAGE_SIZE);
+
+  const [cards, reach] = await Promise.all([
+    withLinks(db, rows),
+    partnerReachOf(
+      db,
+      rows.map((row) => row.id),
+    ),
+  ]);
+  // What its links reach ("2 lugares · Mestra: @ana"); null when it has none.
+  return {
+    cards: cards.map((card) => ({ ...card, reach: reach.get(card.id) ?? null })),
+    total,
+    pages,
+  };
 }
 
 export type PartnerList = NonNullable<Awaited<ReturnType<typeof listPartners>>>;
 
-/** Whether the partner is on the page (approved and not removed), and who sent it. */
+/**
+ * A partner's own page (`/p/<id>`): what its card shows, when it is on the list (approved and not
+ * removed). One waiting for review opens only for those who look after it, as on the list; anything
+ * else, a malformed id included, is null and the page answers 404.
+ */
+export async function readPartnerPage(
+  db: AnyDb,
+  id: string,
+  { viewerId = null }: { viewerId?: string | null } = {},
+): Promise<PartnerCard | null> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return null;
+  const [row] = await db
+    .select(cardColumns())
+    .from(partners)
+    .where(
+      and(
+        eq(partners.id, id),
+        isNull(partners.removedAt),
+        viewerId
+          ? or(
+              isNotNull(partners.approvedAt),
+              sql`${viewerId}::uuid = any(${ownerIdsOf(partners.id, partners.submitterId)})`,
+            )
+          : isNotNull(partners.approvedAt),
+      ),
+    );
+  if (!row) return null;
+  const [card] = await withLinks(db, [row]);
+  return card;
+}
+
+/** Whether the partner is on the page (approved and not removed), and who looks after it. */
 export async function findListed(db: AnyDb, id: string) {
   const [row] = await db
-    .select({ id: partners.id, submitterId: partners.submitterId, name: partners.name })
+    .select({
+      id: partners.id,
+      ownerIds: ownerIdsOf(partners.id, partners.submitterId),
+      name: partners.name,
+    })
     .from(partners)
     .where(and(eq(partners.id, id), isNotNull(partners.approvedAt), isNull(partners.removedAt)));
   return row ?? null;
 }
 
 /**
- * A member reports a partner that is on the page. Refused for one's own, while the same report
+ * A member reports a partner that is on the page. Refused for one they look after, while the same report
  * still waits on an admin (`already_reported`) and past REPORT_LIMIT. The reporter stays anonymous.
  * Returns the `ReportFiled` event to dispatch.
  */
@@ -319,7 +409,7 @@ export async function filePartnerReport(
 ): Promise<{ eventId: string }> {
   const partner = await findListed(db, id);
   if (!partner) throw new NotFound(`no partner "${id}"`);
-  authorize(actor, 'partner:report', { submitterId: partner.submitterId });
+  authorize(actor, 'partner:report', { ownerIds: partner.ownerIds });
 
   const eventId = await db.transaction(async (tx) => {
     const t = tx as unknown as AnyDb;

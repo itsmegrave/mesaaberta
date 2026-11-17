@@ -1,0 +1,2 @@
+ALTER TABLE "game_tables" ADD COLUMN "planned_sessions" integer;--> statement-breakpoint
+ALTER TABLE "game_tables" ADD CONSTRAINT "game_tables_planned_sessions_range" CHECK ("game_tables"."planned_sessions" IS NULL OR ("game_tables"."kind"::text = 'adventure' AND "game_tables"."planned_sessions" BETWEEN 2 AND 20));

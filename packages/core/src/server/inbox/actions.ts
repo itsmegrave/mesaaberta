@@ -3,7 +3,7 @@ import '../../forms/zod-codes';
 import { messageSchema, muteSchema } from '../../messages/schema';
 import type { Actor } from '../auth/policy';
 import type { AnyDb } from '../db/client';
-import { openDirect, sendMessage, setMuted } from '../messages/service';
+import { openAdminConversation, openDirect, sendMessage, setMuted } from '../messages/service';
 import { markAllRead, markRead } from '../notifications/service';
 
 const conversation = { conversationId: z.guid() };
@@ -40,11 +40,19 @@ export const inboxActions = {
     },
   },
   // The direct conversation with someone, made when there is none (a profile, a table, the GM's
-  // player rows, the admin's user page). `directBlocker` decides who may start one.
+  // player rows). `directBlocker` decides who may start one.
   direct: {
     schema: z.object({ recipientId: z.guid() }),
     apply: async (db: AnyDb, actor: Actor | null, data: { recipientId: string }) => ({
       conversationId: (await openDirect(db, actor, data.recipientId)).id,
+    }),
+  },
+  // "Mandar mensagem" in admin: the admin conversation with someone ("[Admin] @username"), apart
+  // from the everyday direct one, made when there is none. Admins only.
+  admin: {
+    schema: z.object({ recipientId: z.guid() }),
+    apply: async (db: AnyDb, actor: Actor | null, data: { recipientId: string }) => ({
+      conversationId: (await openAdminConversation(db, actor, data.recipientId)).id,
     }),
   },
   // Marks a notification read and says where it leads (null when it has no link or is not theirs).

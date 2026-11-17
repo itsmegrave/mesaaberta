@@ -2,7 +2,14 @@
 @import '@skeletonlabs/skeleton';
 @import '@skeletonlabs/skeleton-svelte';
 @import '@skeletonlabs/skeleton/themes/cerberus';
+/* Overdrive, behind `use_overdrive_theme`: its colours, then its comic look. */
+@import '../lib/theme/overdrive-theme.css';
+@import '../lib/theme/overdrive.css';
 @import '@fontsource-variable/cinzel';
+@import '@fontsource/bangers/latin-400.css';
+/* The private package (packages/privy, installed at build) draws its own components; Tailwind
+   does not scan workspace packages on its own. Nothing is there in the open-source build. */
+@source '../../../../packages/privy/src';
 
 /* Dark mode is a `data-mode` on <html>: set before the first paint (src/app.html) and by the theme toggle. */
 @custom-variant dark (&:where([data-mode='dark'], [data-mode='dark'] *));
@@ -25,6 +32,15 @@ body {
   background-color: light-dark(var(--color-root-bg-light), var(--color-root-bg-dark));
 }
 
+/* The theme change grows from the toggle as a circle (src/lib/theme/theme-transition.ts animates it);
+   the browser's default cross-fade would fight it. Only set during that change, so other view
+   transitions keep their defaults. */
+:root[data-theme-reveal]::view-transition-old(root),
+:root[data-theme-reveal]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
 /* Full-bleed bands paint past the content column; clipping keeps them from scrolling sideways. */
 body {
   overflow-x: clip;
@@ -35,11 +51,46 @@ body {
   --font-brand: 'Cinzel Variable', Georgia, serif;
   /* Discord brand colour; no native equivalent */
   --color-discord: #5865f2;
+  /* ClassInd age-rating symbols (Guia Prático de Classificação Indicativa, 5ª ed., 2025, item H.1):
+     official colours, the same in both themes, never tinted. ContentRatingSymbol only. */
+  --color-classind-l: #00a651;
+  --color-classind-6: #e43493;
+  --color-classind-10: #0095da;
+  --color-classind-12: #fbc115;
+  --color-classind-14: #f58220;
+  --color-classind-16: #ec1d25;
+  --color-classind-18: #000000;
+  /* Combinar's punk card (Sunset Overdrive-inspired, shared with the Overdrive themes): fixed
+     colours, the same in both themes, since the card is a paper sticker on any page. Bright fills
+     always carry punk-ink text and a punk-ink outline (ink on pink is 5.3:1). Combinar only. */
+  --font-comic: 'Bangers', 'Impact', system-ui, sans-serif;
+  --color-punk-ink: #1a0b2e;
+  --color-punk-paper: #fff8ec;
+  --color-punk-pink: #ff2e88;
+  --color-punk-yellow: #ffd23f;
+  --color-punk-orange: #ff6b1a;
+  /* Display sizes on the 4px grid (Tailwind's 30, 36, 60 and 72px are off it, and too big for the
+     density we want). Line heights land on the grid too. */
+  --text-3xl: 1.75rem;
+  --text-3xl--line-height: calc(2.25 / 1.75);
+  --text-4xl: 2rem;
+  --text-4xl--line-height: calc(2.5 / 2);
+  --text-5xl: 2.5rem;
+  --text-5xl--line-height: 1;
+  --text-6xl: 3rem;
+  --text-6xl--line-height: 1;
+  --text-7xl: 3.5rem;
+  --text-7xl--line-height: 1;
 }
 
 /* Cerberus pairs primary-500 with primary-50 (about 3.6:1); white keeps text on the brand tiles readable. Other themes set their own. */
 [data-theme='cerberus'] {
   --color-primary-contrast-500: oklch(1 0 0);
+  /* Danger fills use error-700: white on it is 5.4:1, where Cerberus' error-500 pair is 2.7:1. */
+  --color-error-contrast-700: oklch(1 0 0);
+  /* Skeleton's `anchor` links: primary-500 and primary-400 sit at 4.47:1 on the page, just under AA. Same steps as `text-link`. */
+  --typo-anchor--color-light: var(--color-primary-600);
+  --typo-anchor--color-dark: var(--color-primary-300);
 }
 
 /* Tokens from the layout reference whose light and dark steps have no Skeleton pairing. */
@@ -61,6 +112,12 @@ body {
 
 @utility text-error-alert {
   color: light-dark(var(--color-error-800), var(--color-error-300));
+}
+
+/* Skeleton has no single-step `preset-filled-error-700`: the danger fill (`danger-fill` token). */
+@utility preset-filled-error-700 {
+  background-color: var(--color-error-700);
+  color: var(--color-error-contrast-700);
 }
 
 @utility border-error-alert {
@@ -102,7 +159,7 @@ body {
 }
 
 @utility text-link {
-  color: light-dark(var(--color-primary-600), var(--color-primary-400));
+  color: light-dark(var(--color-primary-600), var(--color-primary-300));
 }
 
 /* Underlined link from the reference: body-coloured text over a thick primary underline. */
@@ -119,9 +176,9 @@ body {
   grid-template-columns: calc(var(--spacing) * 20) minmax(0, var(--container-md));
 }
 
-/* Field and secondary-button outlines are 1.5px in the design system, between Tailwind's 1px and 2px steps. */
+/* Field and secondary-button outlines: 1px of muted ink, which keeps 3:1 against the page. */
 @utility border-control {
-  border-width: 1.5px;
+  border-width: 1px;
 }
 
 /* Input borders use the muted ink, which keeps 3:1 against the page in both modes. */
@@ -131,7 +188,7 @@ body {
 
 /* Secondary button: transparent with a primary outline and body-coloured text; hover is the wash. */
 @utility btn-secondary {
-  border-width: 1.5px;
+  border-width: 1px;
   border-style: solid;
   border-color: var(--color-primary-500);
   background-color: transparent;
@@ -147,4 +204,20 @@ body {
     outline: 4px solid var(--color-primary-500);
     outline-offset: 2px;
   }
+}
+
+/* Anything that can be pressed shows the pointer (Tailwind 4 no longer sets it on buttons). */
+@layer base {
+  :where(button, [role='button'], summary, select, label[for]):not(
+    :disabled,
+    [aria-disabled='true']
+  ) {
+    cursor: pointer;
+  }
+}
+
+/* Filled buttons lighten on hover in both themes. Skeleton's `btn` darkens them in the dark theme,
+ * which read as pressed on the red and blue fills. Unlayered so it wins over the utility. */
+.btn:not(:disabled):hover {
+  filter: brightness(115%);
 }

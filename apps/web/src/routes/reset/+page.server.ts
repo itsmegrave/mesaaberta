@@ -5,7 +5,7 @@ import { formMessage } from '#lib/forms/server.js';
 import { newPasswordSchema } from '#lib/auth/credentials.js';
 import { withoutSecrets } from '#lib/forms/server.js';
 import { callApiRaw } from '#lib/server/api-client.js';
-import { changePassword, type ChangePasswordResult } from '@mesaaberta/core/server/auth/password';
+import type { ChangePasswordResult } from '@mesaaberta/core/server/auth/password';
 import type { Actions, PageServerLoad } from './$types';
 
 // This page is only for someone the recovery link just signed in. Without a session (an expired or
@@ -27,18 +27,15 @@ const STATUS = {
 } as const satisfies Record<Exclude<ChangePasswordResult, 'ok' | 'no_session'>, number>;
 
 /**
- * Sets the password through the api Worker (behind `api_auth_new_password`) with the person's own
- * access token. Resolves to the result, or to null when the flag is off or the call cannot be used,
- * so the caller changes it in this Worker.
+ * Sets the password through the api Worker with the person's own access token. No session is
+ * `no_session`; a call that cannot be used is `failed`.
  */
 async function changeViaApi(
   locals: App.Locals,
-  userId: string,
   passwords: { password: string; passwordConfirm: string },
-): Promise<ChangePasswordResult | null> {
-  if (!(await locals.flags.isEnabled('api_auth_new_password', { id: userId }))) return null;
+): Promise<ChangePasswordResult> {
   const token = (await locals.supabase?.auth.getSession())?.data.session?.access_token;
-  if (!token) return null;
+  if (!token) return 'no_session';
 
   const answer = await callApiRaw(
     locals.env,
@@ -53,7 +50,7 @@ async function changeViaApi(
   const result = (answer?.body as { result?: string } | undefined)?.result;
   return result === 'ok' || (result && result in STATUS) || result === 'no_session'
     ? (result as ChangePasswordResult)
-    : null;
+    : 'failed';
 }
 
 export const actions: Actions = {
@@ -70,9 +67,7 @@ export const actions: Actions = {
     withoutSecrets(form, ['password', 'passwordConfirm']);
     if (!form.valid) return fail(400, { form });
 
-    const result =
-      (await changeViaApi(locals, user.id, { password, passwordConfirm })) ??
-      (await changePassword({ supabase: locals.supabase, log: locals.log }, { password }));
+    const result = await changeViaApi(locals, { password, passwordConfirm });
 
     if (result === 'ok') redirect(303, '/reset?done=1');
     if (result === 'no_session') redirect(303, '/forgot?error=link');

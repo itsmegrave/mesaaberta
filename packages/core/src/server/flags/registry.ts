@@ -29,159 +29,172 @@ export const flagDefaults = {
   // send for 24 hours only, so watch retries before widening this. The consumer must name the
   // handlers in QUEUE_LIVE_HANDLERS and have the mail settings. Target admins first.
   api_events_queue_mail: false,
-  // Off: the admin event actions ("Rodar agora", "Rodar todos os que falharam") run in the web
-  // Worker. On: they call the api Worker over the Service Binding and fall back to the web path when
-  // the api cannot be reached. Needs the API binding; without it this flag does nothing.
-  api_admin_events: false,
-  // Off: the catalog console's decisions (approve, reject, disable, rename, merge, create) run in
-  // the web Worker. On: the api Worker makes them over the Service Binding, and the web Worker
-  // dispatches the event as before; a call that cannot be made falls back to the web path. Needs
-  // the API binding. Target admins first.
-  api_admin_catalog: false,
-  // Off: the admin moderation decisions (review, accept or dismiss a report, close a table, take a
-  // campaign or partner down, ban or revoke a ban, approve a partner) run in the web Worker. On:
-  // the api Worker makes them over the Service Binding, from the same decision registry, and the
-  // web Worker dispatches the events it returns; a call that cannot be made falls back to the web
-  // path. Needs the API binding. Target admins first.
-  api_admin_moderation: false,
-  // Off: joining, leaving and the GM's approve, decline and remove run in the web Worker. On: the
-  // api Worker makes them over the Service Binding, from the same action registry, answering the
-  // events the web Worker dispatches; the refusals (full table, rate limit...) come back as the
-  // codes the form already shows, and a call that cannot be made falls back to the web path. Needs
-  // the API binding. The first player-facing flag: target a few ids before everyone.
-  api_registrations: false,
-  // Off: the GM's manage-page answers (publish a draft, the session happened or did not, postpone)
-  // run in the web Worker. On: the api Worker makes them over the Service Binding, from the same
-  // action registry; refusals come back as the codes the form shows and a call that cannot be made
-  // falls back to the web path. Needs the API binding. Target a few ids first.
-  api_table_lifecycle: false,
-  // Off: saving the profile form and the direct-messages switch run in the web Worker. On: the api
-  // Worker makes them over the Service Binding, from the same action registry, as the signed-in
-  // person; refusals (a taken username) come back as the codes the form shows and a call that
-  // cannot be made falls back to the web path. Needs the API binding. Admins first.
-  api_account: false,
-  // Off: creating, editing and disabling a table run in the web Worker. On: the web Worker still
-  // validates the form, stores the image and resolves the CEP, then the api Worker writes the table
-  // over the Service Binding from the same services; refusals come back as the codes the form shows
-  // and a call that cannot be made falls back to the web path. Needs the API binding. Admins first.
-  api_table_write: false,
-  // Off: sending and muting in a conversation, and opening and reading notifications, run in the
-  // web Worker. On: the api Worker makes them over the Service Binding from the same action
-  // registry; refusals (rate limit, direct messages off) come back as the codes the form shows and a
-  // call that cannot be made falls back to the web path. Needs the API binding. Admins first.
-  api_inbox: false,
-  // Off: the new-table and edit forms read the catalog of systems, platforms and tags in the web
-  // Worker. On: the api Worker answers it over the Service Binding from the same reader, as the
-  // signed-in person (their own pending suggestions included); a call that cannot be made falls
-  // back to the web path. Needs the API binding. Admins first.
-  api_reads_catalog: false,
-  // Off: a table's edit form reads its systems, platforms and tags in the web Worker. On: the api
-  // Worker answers it over the Service Binding from the same reader, as the signed-in person; a
-  // refusal or a call that cannot be made falls back to the web path, which raises the page's error.
-  api_reads_edit_catalog: false,
-  // Off: the home page's preview of the next tables is read in the web Worker. On: for a signed-in
-  // person the api Worker answers it over the Service Binding from the same reader (the picture
-  // path becomes a URL in web, which owns the Supabase setting); visitors always read here, and a
-  // call that cannot be made falls back to the web path. Needs the API binding. Admins first.
-  api_reads_preview: false,
-  // Off: the /tables list and its filters are read in the web Worker. On: for a signed-in person
-  // the api Worker answers it over the Service Binding from the same reader, given the validated
-  // filters; visitors always read here, and a call that cannot be made falls back to the web
-  // path. Needs the API binding. Admins first.
-  api_reads_tables: false,
-  // Off: the table page (/tables/:slug) is read in the web Worker. On: for a signed-in person the api
-  // Worker answers it over the Service Binding from the same reader; visitors always read here, and
-  // a call that cannot be made, or a refusal, falls back to the web path. Needs the API binding.
-  // Admins first.
-  api_reads_detail: false,
-  // Off: Minhas mesas (/account/tables) is read in the web Worker. On: for the signed-in person the
-  // api Worker answers it over the Service Binding from the same reader, given the page number; a
-  // call that cannot be made, or a refusal, falls back to the web path. Needs the API binding.
-  // Admins first.
-  api_reads_dashboard: false,
-  // Off: the GM's table page (/tables/:slug/manage) is read in the web Worker. On: for the signed-in
-  // person the api Worker answers it over the Service Binding from the same reader; a refusal or a
-  // call that cannot be made falls back to the web path, which answers the page's own 403/404.
-  // Needs the API binding. Admins first.
-  api_reads_manage: false,
-  // Off: the /admin overview is read in the web Worker. On: for an admin the api Worker answers it
-  // over the Service Binding from the same query; a refusal or a call that cannot be made falls
-  // back to the web path. Needs the API binding. Admins only.
-  api_reads_admin: false,
-  // Off: the /admin/users list is read in the web Worker. On: for an admin the api Worker answers
-  // it from the same query, given the list filters; same fallback. Needs the API binding.
-  api_reads_admin_users: false,
-  // Off: the /admin/tables list is read in the web Worker. On: for an admin the api Worker answers
-  // it from the same query, given the list filters; same fallback. Needs the API binding.
-  api_reads_admin_tables: false,
-  // Off: sending or editing a partner and adding a crowdfunding campaign run in the web Worker. On:
-  // the web Worker still validates the form and stores the picture, then the api Worker saves it
-  // over the Service Binding from the same services; refusals come back as the codes the form
-  // shows and a call that cannot be made falls back to the web path. Needs the API binding.
-  api_submissions: false,
-  // Off: the profile page does not offer a password to an account that signed in with a provider.
-  // On: it does, and the api Worker does the work over the Service Binding (an e-mailed code, then
-  // the password, set with the person's own access token). Unlike the other api flags there is no
-  // web path to fall back to: the web Worker sends no mail, so a call that cannot be made shows the
-  // form's "try again" message. Needs the API binding and, on the api Worker, the Supabase and mail
-  // settings. Target admins first.
-  api_password: false,
-  // Off: reporting a table, a partner or a campaign and withdrawing one's own partner run in the
-  // web Worker. On: the api Worker does them over the Service Binding, from the same action
-  // registry; the web Worker still dispatches the events it returns, refusals come back as the codes
-  // the dialog shows and a call that cannot be made falls back to the web path. Needs the API
-  // binding. Admins first.
-  api_reports: false,
-  // Off: rating a table's GM after the first session runs in the web Worker. On: the api Worker does
-  // it over the Service Binding, from the same action registry as the registrations; the web Worker
-  // still dispatches the event it returns, refusals (`too_early`, `already_rated`, `forbidden`) come
-  // back as the codes the form shows and a call that cannot be made falls back to the web path.
-  // Needs the API binding. Admins first.
-  api_ratings: false,
   // The one switch for the badge system, off for everyone until it is released (no percentage ramp:
   // it is a new feature). Off hides everything members can see: the "Conquistas" strip and the
   // owner's progress and hide toggle on the profile, the bell notice and the feed filter, and the
   // unread count of those notices. Badges are still earned and stored quietly, so turning it on
   // starts with the history already in place. Targeted by the person's id (profile and bell agree).
   use_badges: false,
-  // Off: the anonymous auth forms (today the "forgot my password" e-mail) run in the web Worker. On:
-  // the api Worker does them over the Service Binding, with the same per-network limit; a call that
-  // cannot be made falls back to the web path. Nobody is signed in, so there is no one to target:
-  // the flag is all or nothing. Needs the API binding and, on the api Worker, the Supabase settings.
-  api_auth: false,
-  // Off: signing in with e-mail and password (/login) runs in the web Worker. On: the api Worker
-  // does it over the Service Binding (limit, Supabase, profile) and answers the JWT pair Supabase
-  // issued, which the web Worker sets as the cookie session; refusals come back as the codes the form
-  // shows and a call that cannot be made falls back to the web path. Visitors are targeted by a hash
-  // of their network, so a rollout is a share of networks. Needs the API binding and, on the api
-  // Worker, the Supabase settings.
-  api_auth_sign_in: false,
-  // Off: creating an account with e-mail and password (/signup) runs in the web Worker. On: the api
-  // Worker does it over the Service Binding (limit, Supabase, profile) and, when no confirmation
-  // e-mail is needed, answers the JWT pair for the web Worker to set as the cookie session; the form
-  // shows the same codes as before and a call that cannot be made falls back to the web path. A
-  // session that the web Worker cannot set sends the person to /login, since the account exists.
-  // Visitors are targeted by a hash of their network. Needs the API binding and, on the api Worker,
-  // the Supabase and mail settings.
-  api_auth_sign_up: false,
-  // Off: choosing a new password after the e-mailed link (/reset) runs in the web Worker. On: the api
-  // Worker sets it over the Service Binding with the person's own access token (Supabase checks it)
-  // and signs their other sessions out; refusals come back as the codes the form shows and a call
-  // that cannot be made falls back to the web path. Targeted by user id like the other signed-in
-  // flags. Needs the API binding and, on the api Worker, the Supabase settings.
-  api_auth_new_password: false,
-  // Off: the database half of a provider sign-in (the OAuth callback: profile, ban check, connection
-  // log) runs in the web Worker. On: the api Worker does it over the Service Binding with the new
-  // access token, which Supabase vouches for; the web Worker still trades the code for the session
-  // and signs the person out on a refusal. A call that cannot be made falls back to the web path.
-  // Visitors are targeted by a hash of their network. Needs the API binding and, on the api Worker,
-  // the Supabase settings.
-  api_auth_finish_login: false,
-  // Off: the admin announcements console (count the audience, then send) runs in the web Worker. On:
-  // the api Worker does it over the Service Binding and the web Worker dispatches the event it
-  // returns; a call that cannot be made falls back to the web path. Needs the API binding. Every
-  // admin may have it: the flag is a kill switch.
-  api_admin_announcements: false,
+  // Off: a new changelog day reaches nobody's bell. On: the first request after a release that
+  // carries a changelog day dated within the last three days records one announcement for every
+  // active account, linking to that day on /changelog (once per day: the date is the key). Not a
+  // ramp: it is one notice. Turning it off stops new days; bells already written stay.
+  use_changelog_notices: false,
+  // The one switch for quem mestra rating the players they marked present, off for everyone until
+  // it is released (a new feature, no percentage ramp). Off hides all of it: the "Avalie quem
+  // jogou" card on the manage page (and its action refuses), the score "como participante" on join
+  // requests and in the profile's "Mesas jogadas" tile. Targeted by the person's id: the GM on the
+  // manage page, the profile's owner on a profile.
+  use_player_ratings: false,
+  // The one switch for more than one account looking after a partner, off for everyone until it is
+  // released (a new feature, no percentage ramp). Off hides "Quem cuida do parceiro" on the edit
+  // page and its invite refuses; invites already sent can still be answered. The rest works the
+  // same either way: with nobody invited, a partner's one owner is its submitter. Targeted by the
+  // person's id.
+  use_partner_owners: false,
+  // The one switch for the signed-in Início and what feeds it, off for everyone until it is
+  // released (admins + 30% first, then everyone). Off hides "Sistemas favoritos" in Editar perfil
+  // (the page answers 404) and the favorite systems on public profiles. Targeted by the person's id:
+  // the signed-in person in Editar perfil, the profile's owner on a profile.
+  use_signed_in_home: false,
+  // The one switch for following people, off for everyone until it is released (admins + 30%
+  // first). Off hides the Seguir button on profiles and on a table's GM row (the action refuses),
+  // "Seguindo" in Editar perfil (its page answers 404) and the owner's follower count. Targeted by
+  // the signed-in person's id.
+  use_follows: false,
+  // The one switch for reminding quem mestra to close a session (on for everyone in GrowthBook). On,
+  // a GM whose table still awaits confirmation is e-mailed an hour after the session ended and a
+  // week after, and ten days after it (at least three after the last e-mail) the session is settled
+  // for them: a one-shot is concluded, a campaign or adventure counts it as held and moves to its
+  // next weekly date. Either way the players are asked to rate it, in the bell and by e-mail. Off,
+  // the table waits as before. Read by the sweeper, targeted by the GM's id (`isAdmin` too).
+  use_session_close_reminders: false,
+  // The one switch for blocking and reporting in Mensagens, off for everyone until it is released
+  // (then on for everyone). Off hides Bloquear and Denunciar in a conversation and "Pessoas
+  // bloqueadas" in Editar perfil, and their actions refuse. Blocks already made keep working either
+  // way (the inbox, direct messages, invitations and follows read them). Targeted by the signed-in
+  // person's id.
+  use_message_safety: false,
+  // The game systems directory, off until it is released (a new feature: on for everyone at once,
+  // visitors included). Off: /systems and /s/:slug answer 404, the menus and the footer leave
+  // Sistemas out and system names stay plain text. Targeted by the person's id.
+  api_directory_systems: false,
+  // Quem mestra, the directory of people who run games, off until it is released (then on for
+  // everyone at once). Off: the "Na mesa, você…" field in Editar perfil, the role tag on the public
+  // profile and the note to people the backfill listed are hidden, and a save keeps what is stored.
+  // Targeted by the person's id.
+  api_directory_gms: false,
+  // Onde jogar, the directory of places to play in person, off until it is released (then on for
+  // everyone at once). Off: /places and /pp/:slug answer 404, the menus, the footer and the table
+  // form leave places out and a table page hides its place. The admin screens stay open to admins,
+  // so places can be sent and approved before the release. Targeted by the person's id.
+  api_directory_places: false,
+  // The place tags catalog (Trello "Diretórios conectados" 1), a new feature (created on for
+  // everyone). Off: the place form offers only the six old Comodidades with no suggestions, Onde
+  // jogar filters by those six and a place page shows them as "Comodidades". On: the form picks from
+  // the whole catalog and suggests new tags (shown once an admin approves them), the page shows one
+  // "Tags" section and the list filters by any tag. Either way the tags are stored the same.
+  // Targeted by the person's id.
+  use_place_tags: false,
+  // Linking the directories (Trello "Diretórios conectados" 2 and 3), a new feature (created on for
+  // everyone). Off: a partner has no page of its own (/p/:id answers 404) and its card on
+  // /partners links nowhere. Targeted by the person's id.
+  use_directory_links: false,
+  // The lista de espera on full tables, a new feature (created on for everyone). Off: a full table
+  // offers nothing, its page shows no line and the GM's page no list, and the actions refuse. Lines
+  // already joined still move up when a seat frees. Targeted by the person's id.
+  use_waitlist: false,
+  // Safety tools and the content rating on tables, a new feature (created on for everyone). Off:
+  // the table form leaves both out (a save keeps what is stored), a table page does not show them
+  // and the list shows 18+ tables like any other. Targeted by the person's id.
+  use_table_safety: false,
+  // The content rating drawn as the ClassInd self-classification symbol (AL, A6…A18) on table
+  // cards and the table page, a new feature (created on for everyone). Only where
+  // `use_table_safety` is on too. Off: the page shows the rating as a "14+" chip, as before, and
+  // cards show none. Targeted by the person's id.
+  use_content_rating_symbol: false,
+  // "Começa já" on /tables, a new feature (created on for everyone): the tables of the list that
+  // start within six hours and still have a seat, in a row of their own. Off: no row. Targeted by
+  // the person's id.
+  use_starting_soon: false,
+  // Procuro mesa (`/players`), a new feature (created on for everyone): people say they are looking
+  // for a table and GMs find them. Off: the page is a 404, the menus leave it out and the switch
+  // refuses. Signed-in people only. Targeted by the person's id.
+  use_players_directory: false,
+  // Combinar (`/matches`), the "RPG tinder", a new feature (created on for everyone): an opt-in
+  // card, a deck of people whose cards fit, yes or no, and a match when both said yes. Adults only.
+  // Off: its pages are a 404, the menus leave it out and nothing is answered. Signed-in people
+  // only. Targeted by the person's id.
+  use_matchmaking: false,
+  // Combinar's graph, a new feature (created on for everyone): people who played a table together
+  // (old tables too) stay out of each other's deck for MATCH_PLAYED_DAYS, Quem já jogou comigo
+  // lists them, people in common come first in the deck, and two who matched and have not played
+  // get a bell reminder (the sweep). Off: none of it. Targeted by the person's id; the sweep asks
+  // anonymously.
+  use_play_graph: false,
+  // The westmarch (open table) kind, a new feature (created on for everyone): a roster larger than
+  // any one session. Off: the form does not offer it and refuses it; tables that are one stay as
+  // they are. Targeted by the person's id.
+  use_open_tables: false,
+  // Iniciantes, a new feature (created on for everyone): tables tagged "Iniciantes" get a mark on
+  // their card and page, and the "Primeira mesa" guide (`/beginners`) explains how to start. Off:
+  // the guide is a 404 and nothing is marked (the tag and its filter stay). Targeted by the
+  // viewer's id, or anonymously.
+  use_beginner_tables: false,
+  // The subscribed calendar feed (`/calendar/<secret>.ics`), a new feature (created on for
+  // everyone). Off: Minhas mesas does not offer it and a feed address answers 404. Targeted by the
+  // feed owner's id.
+  use_calendar_feed: false,
+  // "Quando posso jogar" on profiles, a new feature (created on for everyone): the days and parts
+  // of the day a person can play, on their profile, on Procuro mesa and as its filter. Off: the
+  // profile section is a 404 and nothing shows it. Targeted by the viewer (a profile: the person).
+  use_profile_availability: false,
+  // "Adicionar à agenda" on a table's page, a new feature (created on for everyone): the table in
+  // Google Agenda or as an `.ics`, for its GM and confirmed players. Off: no button, and
+  // /t/:slug/calendar is a 404. Targeted by the person's id.
+  use_table_calendar: false,
+  // Sessões, a new feature (created on for everyone): quem mestra schedules, moves, notes and
+  // cancels a campaign's or adventure's sessions in Gerenciar mesa, and the table page lists them.
+  // Off: neither shows and the four session actions are a 404. Visitors are evaluated too.
+  use_table_sessions: false,
+  // Campanha aberta, a new feature (created on for everyone): players on the roster sign up for
+  // each session up to its size, then wait for it; quem mestra puts people in or takes them out.
+  // Needs use_table_sessions. Off: no places on the sessions and the four actions are a 404.
+  use_session_signup: false,
+  // The MCP server (apps/mcp, mcp.mesaaberta.app): Claude and other MCP clients read the site as
+  // the admin who approved them. Admins only is enforced in code; this is only the kill switch.
+  // Off: the consent page is a 404 and every MCP request is refused, even with a valid token.
+  use_mcp: false,
+  // Admin conversations, a new feature (created on for everyone): "Mandar mensagem" on every admin
+  // review queue (partners, places, claims, partner links, crowdfunding, catalog suggestions), the
+  // tables and the people list opens an "[Admin] @username" conversation with the owner of the row
+  // or the person, apart from their everyday direct one; it reaches people with direct messages off
+  // and they can always answer. Admins only; this is the kill switch. Off: the rows don't offer it
+  // and a person's admin page opens the everyday direct conversation, as before. Targeted by the
+  // admin's id.
+  use_admin_messages: false,
+  // Retrospectiva (`/u/<username>/review/<year>`), a new feature (created on for everyone): a
+  // person's year at the tables, private unless they make it public. Off: the pages are a 404 and
+  // the profile has no link. Targeted by the person whose year it is.
+  use_year_review: false,
+  // The Overdrive theme, a new feature (created on for everyone): a pedal beside the light/dark
+  // switch turns the comic look on (Gibi in light, Neon in dark), remembered in the browser. Off:
+  // no pedal, and a pedal already pressed is ignored, so everyone sees the classic theme. Targeted
+  // by the viewer's id, or anonymously.
+  use_overdrive_theme: false,
+  // Passkeys, a new feature (created on for everyone): "Entrar com passkey" on /login and a
+  // Passkeys list in Conta e acesso to add and remove them, through Supabase Auth's passkeys (its
+  // Authentication > Passkeys setting must be on). Off: no button, no list, and the passkey
+  // actions refuse. Visitors are evaluated anonymously; the settings by the person's id.
+  use_passkeys: false,
+  // Combinar on the signed-in Início, a new feature (created on for everyone): an invitation for
+  // someone who never made a card, or their new matches and the cards waiting today. Needs
+  // `use_matchmaking` too. Off: Início has no Combinar section. Targeted by the person's id.
+  use_home_matches: false,
+  // The street from the CEP on "Cadastrar lugar" and "Editar lugar", a new feature (created on for
+  // everyone): once the CEP is found, an empty "Rua e número" is filled with the street it is on.
+  // Off: only the neighbourhood, city and state come from the CEP. Targeted by the person's id.
+  use_cep_street: false,
 } as const satisfies Record<string, boolean>;
 
 export type FlagName = keyof typeof flagDefaults;

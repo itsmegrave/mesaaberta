@@ -6,6 +6,7 @@ import {
   attemptKey,
   attemptWait,
   isLoopback,
+  pruneAuthAttempts,
   recordAttempt,
 } from '@mesaaberta/core/server/auth/attempt-limit';
 
@@ -20,6 +21,7 @@ afterAll(() => test.close());
 
 const limit = { action: 'sign_in', max: 3, windowSeconds: 600 } as const;
 const at = (minutes: number) => new Date(Date.UTC(2026, 9, 1, 12, minutes));
+const dayLater = (date: Date) => new Date(date.getTime() + 24 * 3600_000 + 60_000);
 
 describe('recordAttempt', () => {
   it('lets an address through up to the limit, then refuses it and says how long to wait', async () => {
@@ -48,19 +50,36 @@ describe('recordAttempt', () => {
     ).resolves.toBeUndefined();
   });
 
-  it('stores a hash, never the address, and forgets attempts after a day', async () => {
+  it('stores a hash, never the address', async () => {
     await recordAttempt(test.db, SIGN_IN_LIMIT, '203.0.113.7', at(0));
     const rows = await test.db.select().from(authAttempts);
     expect(JSON.stringify(rows)).not.toContain('203.0.113.7');
     expect(rows[0].key).toBe(await attemptKey('sign_in', '203.0.113.7'));
+  });
 
-    await recordAttempt(
-      test.db,
-      SIGN_IN_LIMIT,
-      '198.51.100.2',
-      new Date(at(0).getTime() + 25 * 3600_000),
+  it("deletes only its own address's day-old attempts, never another's", async () => {
+    await recordAttempt(test.db, SIGN_IN_LIMIT, '203.0.113.7', at(0));
+    await recordAttempt(test.db, SIGN_IN_LIMIT, '198.51.100.2', at(0));
+
+    await recordAttempt(test.db, SIGN_IN_LIMIT, '203.0.113.7', dayLater(at(1)));
+    const keys = (await test.db.select().from(authAttempts)).map((row) => row.key).sort();
+    expect(keys).toEqual(
+      [
+        await attemptKey('sign_in', '198.51.100.2'),
+        await attemptKey('sign_in', '203.0.113.7'),
+      ].sort(),
     );
-    expect(await test.db.select().from(authAttempts)).toHaveLength(1);
+  });
+});
+
+describe('pruneAuthAttempts', () => {
+  it('forgets every attempt after a day, and keeps the recent ones', async () => {
+    await recordAttempt(test.db, SIGN_IN_LIMIT, '203.0.113.7', at(0));
+    await recordAttempt(test.db, SIGN_IN_LIMIT, '198.51.100.2', at(30));
+
+    expect(await pruneAuthAttempts(test.db, dayLater(at(10)))).toBe(1);
+    const rows = await test.db.select().from(authAttempts);
+    expect(rows.map((row) => row.key)).toEqual([await attemptKey('sign_in', '198.51.100.2')]);
   });
 });
 

@@ -6,7 +6,7 @@ import { MAX_ATTEMPTS } from '@mesaaberta/core/server/events/dispatcher';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import type { Handler } from '@mesaaberta/core/server/events/types';
 import type { Actor } from '@mesaaberta/core/server/auth/policy';
-import { eventQueue, failedEventCount } from './event-queue';
+import { eventQueue, failedEventCount, reviewEvent } from './event-queue';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
 const now = new Date('2026-10-01T12:00:00Z');
@@ -135,5 +135,32 @@ describe('eventQueue', () => {
 describe('failedEventCount', () => {
   it('counts the events given up on, for the badge in the navigation', async () => {
     expect(await failedEventCount(test.db)).toBe(1);
+  });
+});
+
+describe('reviewEvent', () => {
+  it('records who looked at a given-up event, and drops it from the badge', async () => {
+    const later = new Date(now.getTime() + 60_000);
+    expect(await reviewEvent(test.db, admin, ids.failed, 'seen', later)).toBe('reviewed');
+
+    const queue = await read();
+    expect(queue!.rows[0]).toMatchObject({
+      reviewStatus: 'seen',
+      reviewedBy: 'admin',
+      reviewedAt: later,
+    });
+    expect(queue!.counts.failed).toBe(1);
+    expect(await failedEventCount(test.db)).toBe(0);
+  });
+
+  it('turns down an event that has not failed', async () => {
+    expect(await reviewEvent(test.db, admin, ids.retrying, 'fixed', now)).toBe('not_failed');
+    expect(await reviewEvent(test.db, admin, ids.processed, 'fixed', now)).toBe('not_failed');
+  });
+
+  it('is for admins only', async () => {
+    await expect(reviewEvent(test.db, member, ids.failed, 'ignored', now)).rejects.toMatchObject({
+      name: 'Forbidden',
+    });
   });
 });

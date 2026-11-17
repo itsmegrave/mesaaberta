@@ -3,6 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { eq } from 'drizzle-orm';
 import { profileSocialLinks, profiles } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '#lib/server/db/test-db.js';
+import { apiOver, testAccessToken } from '#lib/server/db/test-api.js';
 import { actions, load } from './+page.server';
 
 let test: Awaited<ReturnType<typeof createTestDb>>;
@@ -27,11 +28,24 @@ const event = (
   return {
     locals: {
       db: test.db,
-      env: {},
+      // The api Worker saves the profile, over the same test database.
+      env: apiOver(test.db),
       flags: { isEnabled: async () => false },
       log: { warn: () => undefined },
       track: tracked,
       getUser: async () => (n === null ? null : { id: id(n), user_metadata: metadata }),
+      supabase: {
+        auth: {
+          getSession: async () => ({
+            data: {
+              session:
+                n === null
+                  ? null
+                  : { access_token: testAccessToken({ id: id(n), user_metadata: metadata }) },
+            },
+          }),
+        },
+      },
     },
     url,
     request: new Request(url, { method: 'POST', body }),
@@ -53,9 +67,11 @@ describe('the onboarding page', () => {
     beforeEach(() => tracked.mockClear());
 
     it('sends an anonymous visitor to log in, and back here', async () => {
-      expect(await redirected(run(load, event(null, { search: '?next=/t/new' })))).toMatchObject({
+      expect(
+        await redirected(run(load, event(null, { search: '?next=/tables/new' }))),
+      ).toMatchObject({
         status: 303,
-        location: '/login?next=%2Fu%2Fprofile%2Fsetup%3Fnext%3D%2Ft%2Fnew',
+        location: '/login?next=%2Fu%2Fprofile%2Fsetup%3Fnext%3D%2Ftables%2Fnew',
       });
       expect(tracked).not.toHaveBeenCalled();
     });
@@ -63,12 +79,12 @@ describe('the onboarding page', () => {
     it('creates the missing profile, fills in the name from the provider and suggests a username from it', async () => {
       const { form, next } = await run(
         load,
-        event(1, { metadata: { full_name: 'Ana Souza' }, search: '?next=/t/new' }),
+        event(1, { metadata: { full_name: 'Ana Souza' }, search: '?next=/tables/new' }),
       );
 
       expect(form.data).toMatchObject({ username: 'ana-souza', name: 'Ana Souza' });
       expect(form.errors).toEqual({});
-      expect(next).toBe('/t/new');
+      expect(next).toBe('/tables/new');
       expect(tracked).toHaveBeenCalledWith('gm_onboarding_started', id(1), {
         gm_user_id: id(1),
         onboarding_step: 'profile_setup',
@@ -119,7 +135,7 @@ describe('the onboarding page', () => {
       const thrown = await redirected(
         submit(
           event(10, {
-            search: '?next=/t/new',
+            search: '?next=/tables/new',
             fields: [
               ...fields({
                 username: 'Eva-Lima',
@@ -136,7 +152,7 @@ describe('the onboarding page', () => {
         ),
       );
 
-      expect(thrown).toMatchObject({ status: 303, location: '/t/new' });
+      expect(thrown).toMatchObject({ status: 303, location: '/tables/new' });
       const [row] = await test.db
         .select()
         .from(profiles)

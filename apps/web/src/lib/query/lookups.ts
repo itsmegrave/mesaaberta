@@ -14,7 +14,13 @@ export async function usernameAvailability(username: string, signal: AbortSignal
 export const cepSchema = z.discriminatedUnion('status', [
   z.object({
     status: z.literal('found'),
-    place: z.object({ neighbourhood: z.string().nullable(), city: z.string(), state: z.string() }),
+    place: z.object({
+      // An api from before streets were answers without one.
+      street: z.string().nullable().default(null),
+      neighbourhood: z.string().nullable(),
+      city: z.string(),
+      state: z.string(),
+    }),
   }),
   z.object({ status: z.literal('not_found') }),
 ]);

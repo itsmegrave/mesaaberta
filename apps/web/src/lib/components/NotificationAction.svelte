@@ -17,6 +17,8 @@
     buttonClass?: string;
     /** The button's content. */
     children: Snippet;
+    /** Runs once the action went through, before the page moves on. */
+    onSuccess?: () => void;
   };
 
   let {
@@ -27,12 +29,13 @@
     class: className = 'm-0',
     buttonClass = '',
     children,
+    onSuccess,
   }: Props = $props();
 </script>
 
 <!-- Each button owns its pending state; the feed and bell reload through the action redirect. -->
 <PostButton
-  action="/n?/{action}"
+  action="/notifications?/{action}"
   fields={{ id, next, until }}
   schema={notificationActionSchema}
   errorMessage={m.error_generic_text}
@@ -40,4 +43,5 @@
   class={className}
   {buttonClass}
   {children}
+  {onSuccess}
 />
