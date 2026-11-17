@@ -346,3 +346,95 @@
 [data-theme='overdrive'] [data-status-badge]:has(> .bg-error-500) {
   background-color: var(--color-error-300);
 }
+
+/* The profile's favourite systems: stickers slapped on the page in the button's comic letters, each
+   a sunset colour with ink text (dark on every fill, AA), an ink edge, a hard shadow and its own
+   lean. Hover straightens and lifts one; a press flattens it, as the buttons do. */
+[data-theme='overdrive'] ul:has(> li > [data-system-pill]) {
+  gap: 0.75rem 1rem;
+  padding-block: 0.25rem;
+}
+[data-theme='overdrive'] [data-system-pill] {
+  height: auto;
+  min-height: 2.5rem;
+  padding: 0.25rem 0.875rem 0.125rem;
+  border: 3px solid var(--color-surface-950);
+  border-radius: var(--radius-base);
+  background-color: var(--color-warning-400);
+  color: var(--color-surface-950);
+  font-family: var(--font-comic);
+  font-size: 1.125rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  box-shadow: 4px 4px 0 var(--comic-button-shadow);
+  transform: rotate(-2deg) skewX(-4deg);
+}
+[data-theme='overdrive'] li:nth-child(5n + 2) > [data-system-pill] {
+  background-color: var(--color-tertiary-400);
+  transform: rotate(1.5deg) skewX(4deg);
+}
+[data-theme='overdrive'] li:nth-child(5n + 3) > [data-system-pill] {
+  background-color: var(--color-success-500);
+  transform: rotate(-1deg) skewX(-3deg);
+}
+[data-theme='overdrive'] li:nth-child(5n + 4) > [data-system-pill] {
+  background-color: var(--color-secondary-300);
+  transform: rotate(2.5deg) skewX(5deg);
+}
+[data-theme='overdrive'] li:nth-child(5n) > [data-system-pill] {
+  background-color: var(--color-primary-500);
+  transform: rotate(-3deg) skewX(-5deg);
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme='overdrive'] [data-system-pill] {
+    transition:
+      transform 150ms ease-out,
+      box-shadow 150ms ease-out,
+      translate 150ms ease-out;
+  }
+}
+[data-theme='overdrive'] li > [data-system-pill]:hover {
+  transform: rotate(0deg) skewX(0deg);
+  translate: -2px -2px;
+  box-shadow: 6px 6px 0 var(--comic-button-shadow);
+}
+[data-theme='overdrive'] li > [data-system-pill]:active {
+  translate: 3px 3px;
+  box-shadow: 1px 1px 0 var(--comic-button-shadow);
+}
+
+/* The medals under the handle: tossed on the page at their own angles, with an ink edge and a hard
+   shadow like the sticker icons. The button around each stays upright, so its focus ring does too;
+   hover or focus sets the medal straight and a little bigger. */
+[data-theme='overdrive'] #conquistas {
+  gap: 0.75rem;
+}
+[data-theme='overdrive'] #conquistas [data-badge-medal] {
+  rotate: -16deg;
+}
+[data-theme='overdrive'] #conquistas [data-badge-medal] > svg {
+  overflow: visible;
+  filter: drop-shadow(1px 0 0 var(--color-surface-950))
+    drop-shadow(-1px 0 0 var(--color-surface-950)) drop-shadow(0 1px 0 var(--color-surface-950))
+    drop-shadow(0 -1px 0 var(--color-surface-950)) drop-shadow(2px 2px 0 var(--comic-button-shadow));
+}
+[data-theme='overdrive'] #conquistas > li:nth-child(4n + 2) [data-badge-medal] {
+  rotate: 12deg;
+}
+[data-theme='overdrive'] #conquistas > li:nth-child(4n + 3) [data-badge-medal] {
+  rotate: -7deg;
+}
+[data-theme='overdrive'] #conquistas > li:nth-child(4n) [data-badge-medal] {
+  rotate: 18deg;
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme='overdrive'] #conquistas [data-badge-medal] {
+    transition:
+      rotate 150ms ease-out,
+      scale 150ms ease-out;
+  }
+}
+[data-theme='overdrive'] #conquistas li :is(:hover, :focus-visible) > [data-badge-medal] {
+  rotate: 0deg;
+  scale: 1.12;
+}

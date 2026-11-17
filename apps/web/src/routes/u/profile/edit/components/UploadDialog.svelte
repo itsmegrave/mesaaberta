@@ -128,6 +128,7 @@
           aspectRatio={avatar ? 1 : 4}
           width={avatar ? 512 : 1600}
           round={avatar}
+          fill={!avatar}
           onconfirm={(cropped) => finish([cropped])}
           onreplace={() => finish([])}
           oncancel={() => (open = false)}

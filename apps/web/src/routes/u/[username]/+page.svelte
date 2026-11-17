@@ -221,6 +221,7 @@
               <li>
                 <a
                   href="/tables?system={encodeURIComponent(system.slug)}"
+                  data-system-pill
                   class="inline-flex h-9 items-center rounded-full bg-surface-wash px-4 text-sm font-semibold text-surface-950-50 no-underline hover:preset-tonal focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary-500"
                   >{system.name}</a
                 >

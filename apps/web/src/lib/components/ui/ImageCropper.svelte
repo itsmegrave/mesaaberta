@@ -13,6 +13,7 @@
   import { onDestroy, onMount } from 'svelte';
   import Icon from '#lib/components/ui/Icon.svelte';
   import { encodeImage } from '#lib/forms/encode-image.js';
+  import { fillFrame } from '#lib/forms/fill-frame.js';
   import { m } from '#lib/paraglide/messages.js';
 
   let {
@@ -20,6 +21,7 @@
     aspectRatio = 1,
     width = 512,
     round = false,
+    fill = false,
     bare = false,
     onconfirm,
     oncancel,
@@ -34,6 +36,11 @@
     width?: number;
     /** Shows the preview as a circle, for pictures that are drawn round. */
     round?: boolean;
+    /**
+     * The cut must cover the frame edge to edge (a banner): transparent bands at its sides are
+     * dropped and the picture scaled up over them. Off for logos, whose clear margins are wanted.
+     */
+    fill?: boolean;
     /**
      * Drawn in place, without a dialog of its own: for a dialog that already holds the drop zone
      * (UploadDialog), which gives the title.
@@ -192,7 +199,8 @@
     failed = false;
     try {
       await fitted;
-      const canvas = await selection.$toCanvas({ width });
+      const cut = await selection.$toCanvas({ width });
+      const canvas = fill ? fillFrame(cut) : cut;
       const blob = await encodeImage(canvas);
       if (!blob) throw new Error('too big');
       const base = file.name.replace(/\.[^.]+$/, '') || 'imagem';
