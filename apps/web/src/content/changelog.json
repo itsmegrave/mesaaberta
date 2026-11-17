@@ -1,5 +1,23 @@
 [
   {
+    "date": "2026-11-17",
+    "title": "Perfil mais punk no Overdrive",
+    "summary": "Com o pedal Overdrive ligado, os sistemas e as conquistas do perfil viraram adesivos. E a capa do perfil agora ocupa a faixa inteira.",
+    "changes": [
+      {
+        "kind": "improved",
+        "title": "Sistemas e conquistas em adesivos",
+        "description": "No tema Overdrive, os sistemas favoritos aparecem como adesivos coloridos, cada um torto para um lado, e as medalhas de conquista ficam jogadas na página com contorno de tinta."
+      },
+      {
+        "kind": "fixed",
+        "title": "Capa do perfil sem faixa vazia",
+        "description": "Algumas capas ficavam com uma faixa vazia na lateral. Agora o recorte sempre preenche a capa inteira. Se a sua tem essa faixa, envie a imagem de novo em Editar perfil.",
+        "href": "/u/profile/edit"
+      }
+    ]
+  },
+  {
     "date": "2026-11-15",
     "title": "Endereço do lugar pelo CEP",
     "summary": "Ao cadastrar ou editar um lugar em Onde jogar, a rua agora vem preenchida pelo CEP.",
