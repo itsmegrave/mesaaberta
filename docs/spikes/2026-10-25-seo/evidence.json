@@ -1,0 +1,2161 @@
+{
+  "capturedAt": "2026-10-25T21:19:10.065351+00:00",
+  "origin": "https://mesaaberta.app",
+  "scope": "Public HTML and robots; no authenticated analytics or verified crawler access",
+  "responses": [
+    {
+      "requested": "https://mesaaberta.app/",
+      "finalUrl": "https://mesaaberta.app/",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Mesa Aberta: mesas de RPG com vagas abertas",
+      "description": [
+        "Mestres abrem mesas de RPG, quem joga pega a vaga e o convite chega no calendário."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Tem uma cadeira vazia na mesa."
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 455,
+      "visibleTextSha256": "9017c2f076f6ce09be262061ebfb9e4f525f1db4feb67a65b76d56ac12d8a4a3",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/t/o-vale-da-ferrugem-uma-campanha-dieselpunk-e-sobrevivencia",
+        "/u/gustavo-felix",
+        "/t/mtg-a-guerra-dos-irmaos",
+        "/u/diego-cunha",
+        "/t/rompe-cofres-fuga-da-fortuna",
+        "/u/itsmegrave",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/t",
+      "finalUrl": "https://mesaaberta.app/t",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/t",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Mesas abertas",
+      "description": [
+        "Mesas de RPG com vagas abertas: veja o sistema, o horário e quantas vagas restam."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Mesas abertas"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 216,
+      "visibleTextSha256": "d2a7c00758bfe439fd5acc0039beeacf28757ece6ca54f2d539b318543c0c87f",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/t/o-vale-da-ferrugem-uma-campanha-dieselpunk-e-sobrevivencia",
+        "/u/gustavo-felix",
+        "/t/mtg-a-guerra-dos-irmaos",
+        "/u/diego-cunha",
+        "/t/rompe-cofres-fuga-da-fortuna",
+        "/u/itsmegrave",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/p",
+      "finalUrl": "https://mesaaberta.app/p",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/p",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Parceiros",
+      "description": [
+        "Comunidades, lojas, podcasts e eventos que divulgam a Mesa Aberta, e que a gente divulga de volta."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Parceiros"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 211,
+      "visibleTextSha256": "56ab708f62589e2e72f006beebb14059f9955cc81b614ce7b0bde2fac70d02d1",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/p/new",
+        "https://rpg.charlescorrea.com.br/",
+        "https://instagram.com/mestrecharlescorrea",
+        "https://youtube.com/@mestrecharlescorrea",
+        "https://twitch.tv/mestrecharlescorrea",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/cf",
+      "finalUrl": "https://mesaaberta.app/cf",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/cf",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Financiamentos coletivos",
+      "description": [
+        "Campanhas de RPG e jogos de mesa que a comunidade compartilhou: Catarse, Kickstarter, Benfeitoria, Gamefound e mais."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Financiamentos coletivos"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 454,
+      "visibleTextSha256": "6f0ff9b7ee9b6aacc737a803ee77aa3352ed1fa07f1c2d2221ff3bb19650e810",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/cf/new",
+        "https://catarse.com.br/ultimaprimavera?ref=mesaaberta&utm_source=mesaaberta&utm_medium=referral&utm_campaign=crowdfunding",
+        "https://catarse.com.br/paws?ref=mesaaberta&utm_source=mesaaberta&utm_medium=referral&utm_campaign=crowdfunding",
+        "https://meeplestarter.com.br/rpg-specters?utm_source=mesaaberta&utm_medium=referral&utm_campaign=crowdfunding",
+        "https://catarse.com.br/casosocultosrpg?ref=mesaaberta&utm_source=mesaaberta&utm_medium=referral&utm_campaign=crowdfunding",
+        "https://catarse.com.br/a-sombra-dos-gigantes?ref=mesaaberta&utm_source=mesaaberta&utm_medium=referral&utm_campaign=crowdfunding",
+        "https://catarse.com.br/fragged-kingdom?ref=mesaaberta&utm_source=mesaaberta&utm_medium=referral&utm_campaign=crowdfunding",
+        "https://catarse.com.br/hdcrpg2e?ref=mesaaberta&utm_source=mesaaberta&utm_medium=referral&utm_campaign=crowdfunding",
+        "https://catarse.com.br/mochiladoaventureiro?ref=mesaaberta&utm_source=mesaaberta&utm_medium=referral&utm_campaign=crowdfunding",
+        "https://catarse.com.br/symba_exp?ref=mesaaberta&utm_source=mesaaberta&utm_medium=referral&utm_campaign=crowdfunding",
+        "https://catarse.com.br/perigos?ref=mesaaberta&utm_source=mesaaberta&utm_medium=referral&utm_campaign=crowdfunding",
+        "https://catarse.com.br/stalkerlatepledge?ref=mesaaberta&utm_source=mesaaberta&utm_medium=referral&utm_campaign=crowdfunding",
+        "/cf?status=ended",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/changelog",
+      "finalUrl": "https://mesaaberta.app/changelog",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/changelog",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Novidades · Mesa Aberta",
+      "description": [
+        "Acompanhe os recursos novos, as melhorias e as correções da Mesa Aberta."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Novidades"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 999,
+      "visibleTextSha256": "0ad1f38f6239c889243f9bf3f18f78fe62c5aaa62c366609e01677328c31502d",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/changelog#2026-10-25",
+        "/changelog",
+        "/changelog?tipo=new",
+        "/changelog?tipo=improved",
+        "/changelog?tipo=fixed",
+        "/u/profile/edit",
+        "/u/tables",
+        "/changelog#2026-10-23",
+        "/m",
+        "https://github.com/itsmegrave/mesaaberta#self-hosting-with-docker",
+        "/changelog#2026-10-15",
+        "/changelog#2026-10-02",
+        "/changelog#2026-10-01",
+        "/t/new",
+        "/changelog?page=2",
+        "https://github.com/itsmegrave/mesaaberta/issues/new/choose",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/robots.txt",
+      "finalUrl": "https://mesaaberta.app/robots.txt",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/robots.txt",
+          "status": 200,
+          "headers": {
+            "content-type": "text/plain",
+            "cache-control": "public, max-age=0, must-revalidate"
+          }
+        }
+      ],
+      "title": "",
+      "description": [],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [],
+      "jsonLdCount": 0,
+      "wordCount": 0,
+      "visibleTextSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "links": [],
+      "robotsTxt": "# allow crawling everything by default\nUser-agent: *\nDisallow:\n"
+    },
+    {
+      "requested": "https://mesaaberta.app/sitemap.xml",
+      "finalUrl": "https://mesaaberta.app/sitemap.xml",
+      "status": 404,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/sitemap.xml",
+          "status": 404,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Página não encontrada",
+      "description": [],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Página não encontrada"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 86,
+      "visibleTextSha256": "0099b88d1219552dd21ae000bf8cd155dc599d565aa1feb36c61789cd9fc7b7c",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/sitemap-index.xml",
+      "finalUrl": "https://mesaaberta.app/sitemap-index.xml",
+      "status": 404,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/sitemap-index.xml",
+          "status": 404,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Página não encontrada",
+      "description": [],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Página não encontrada"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 86,
+      "visibleTextSha256": "0099b88d1219552dd21ae000bf8cd155dc599d565aa1feb36c61789cd9fc7b7c",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/login",
+      "finalUrl": "https://mesaaberta.app/login",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/login",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Entrar",
+      "description": [],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Entrar"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 134,
+      "visibleTextSha256": "ddc19a0831f5989b8ed61a3817e3facf387dafa2236035ded00d664d0e502205",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/forgot",
+        "./login/google?next=%2F",
+        "./login/discord?next=%2F",
+        "/terms",
+        "/privacy",
+        "./signup?next=%2F",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/signup",
+      "finalUrl": "https://mesaaberta.app/signup",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/signup",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Criar conta",
+      "description": [],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Criar conta"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 143,
+      "visibleTextSha256": "93331492c89df91f68259f60111bc30662af56fe1286dab91e5f6d1568f31661",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "./login/google?next=%2F",
+        "./login/discord?next=%2F",
+        "/terms",
+        "/privacy",
+        "./login?next=%2F",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/forgot",
+      "finalUrl": "https://mesaaberta.app/forgot",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/forgot",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Esqueci minha senha",
+      "description": [],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Esqueci minha senha"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 107,
+      "visibleTextSha256": "9e9dd82cefc3a426ada217f092cd2c12a6e71d12cae4e275c2fec11fb1c96856",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/login",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/privacy",
+      "finalUrl": "https://mesaaberta.app/privacy",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/privacy",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Política de privacidade · Mesa Aberta",
+      "description": [
+        "Quais dados pessoais a Mesa Aberta trata, para quê, com quem compartilha e como exercer seus direitos pela LGPD."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Política de privacidade"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 1505,
+      "visibleTextSha256": "c54b1d531324911876b5b99cf15c71b64282bf555db957bbba2f2adcdc7a4a58",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "mailto:privacidade@mesaaberta.app",
+        "/u/profile/edit",
+        "/terms",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/terms",
+      "finalUrl": "https://mesaaberta.app/terms",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/terms",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Termos de uso · Mesa Aberta",
+      "description": [
+        "As regras para usar a Mesa Aberta: conta, convivência, mesas e conteúdo."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Termos de uso"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 554,
+      "visibleTextSha256": "a7890722363498c239bc7d136d75121b923bafd07c6d2cc8140713a04df4f1aa",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/privacy",
+        "mailto:privacidade@mesaaberta.app",
+        "/u/profile/edit",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/t?page=1",
+      "finalUrl": "https://mesaaberta.app/t?page=1",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/t?page=1",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Mesas abertas",
+      "description": [
+        "Mesas de RPG com vagas abertas: veja o sistema, o horário e quantas vagas restam."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Mesas abertas"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 216,
+      "visibleTextSha256": "d2a7c00758bfe439fd5acc0039beeacf28757ece6ca54f2d539b318543c0c87f",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/t/o-vale-da-ferrugem-uma-campanha-dieselpunk-e-sobrevivencia",
+        "/u/gustavo-felix",
+        "/t/mtg-a-guerra-dos-irmaos",
+        "/u/diego-cunha",
+        "/t/rompe-cofres-fuga-da-fortuna",
+        "/u/itsmegrave",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/t?page=2",
+      "finalUrl": "https://mesaaberta.app/t?page=2",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/t?page=2",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Mesas abertas",
+      "description": [
+        "Mesas de RPG com vagas abertas: veja o sistema, o horário e quantas vagas restam."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Mesas abertas"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 216,
+      "visibleTextSha256": "d2a7c00758bfe439fd5acc0039beeacf28757ece6ca54f2d539b318543c0c87f",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/t/o-vale-da-ferrugem-uma-campanha-dieselpunk-e-sobrevivencia",
+        "/u/gustavo-felix",
+        "/t/mtg-a-guerra-dos-irmaos",
+        "/u/diego-cunha",
+        "/t/rompe-cofres-fuga-da-fortuna",
+        "/u/itsmegrave",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/t?page=999",
+      "finalUrl": "https://mesaaberta.app/t?page=999",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/t?page=999",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Mesas abertas",
+      "description": [
+        "Mesas de RPG com vagas abertas: veja o sistema, o horário e quantas vagas restam."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Mesas abertas"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 216,
+      "visibleTextSha256": "d2a7c00758bfe439fd5acc0039beeacf28757ece6ca54f2d539b318543c0c87f",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/t/o-vale-da-ferrugem-uma-campanha-dieselpunk-e-sobrevivencia",
+        "/u/gustavo-felix",
+        "/t/mtg-a-guerra-dos-irmaos",
+        "/u/diego-cunha",
+        "/t/rompe-cofres-fuga-da-fortuna",
+        "/u/itsmegrave",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/t?utm_source=seo-spike",
+      "finalUrl": "https://mesaaberta.app/t?utm_source=seo-spike",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/t?utm_source=seo-spike",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Mesas abertas",
+      "description": [
+        "Mesas de RPG com vagas abertas: veja o sistema, o horário e quantas vagas restam."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Mesas abertas"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 216,
+      "visibleTextSha256": "d2a7c00758bfe439fd5acc0039beeacf28757ece6ca54f2d539b318543c0c87f",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/t/o-vale-da-ferrugem-uma-campanha-dieselpunk-e-sobrevivencia",
+        "/u/gustavo-felix",
+        "/t/mtg-a-guerra-dos-irmaos",
+        "/u/diego-cunha",
+        "/t/rompe-cofres-fuga-da-fortuna",
+        "/u/itsmegrave",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/t?modality=online",
+      "finalUrl": "https://mesaaberta.app/t?modality=online",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/t?modality=online",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Mesas abertas",
+      "description": [
+        "Mesas de RPG com vagas abertas: veja o sistema, o horário e quantas vagas restam."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Mesas abertas"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 216,
+      "visibleTextSha256": "d2a7c00758bfe439fd5acc0039beeacf28757ece6ca54f2d539b318543c0c87f",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/t/o-vale-da-ferrugem-uma-campanha-dieselpunk-e-sobrevivencia",
+        "/u/gustavo-felix",
+        "/t/mtg-a-guerra-dos-irmaos",
+        "/u/diego-cunha",
+        "/t/rompe-cofres-fuga-da-fortuna",
+        "/u/itsmegrave",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/t?modality=in_person",
+      "finalUrl": "https://mesaaberta.app/t?modality=in_person",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/t?modality=in_person",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Mesas abertas",
+      "description": [
+        "Mesas de RPG com vagas abertas: veja o sistema, o horário e quantas vagas restam."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Mesas abertas"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 110,
+      "visibleTextSha256": "3ee8e3e7c3c61fc45e1e55b75a57b7a01b75fa4569cf38be865bebcd03e3c889",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/t?modality=online&modality=online",
+      "finalUrl": "https://mesaaberta.app/t?modality=online&modality=online",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/t?modality=online&modality=online",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Mesas abertas",
+      "description": [
+        "Mesas de RPG com vagas abertas: veja o sistema, o horário e quantas vagas restam."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Mesas abertas"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 216,
+      "visibleTextSha256": "d2a7c00758bfe439fd5acc0039beeacf28757ece6ca54f2d539b318543c0c87f",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/t/o-vale-da-ferrugem-uma-campanha-dieselpunk-e-sobrevivencia",
+        "/u/gustavo-felix",
+        "/t/mtg-a-guerra-dos-irmaos",
+        "/u/diego-cunha",
+        "/t/rompe-cofres-fuga-da-fortuna",
+        "/u/itsmegrave",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/t?system=seo-spike-no-such-system",
+      "finalUrl": "https://mesaaberta.app/t?system=seo-spike-no-such-system",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/t?system=seo-spike-no-such-system",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Mesas abertas",
+      "description": [
+        "Mesas de RPG com vagas abertas: veja o sistema, o horário e quantas vagas restam."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Mesas abertas"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 114,
+      "visibleTextSha256": "781e761d6321dbdbb95d4c59b40dbdbd34225c449922c79bc42ccf8d465ce481",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/t?tag=seo-spike-no-such-tag",
+      "finalUrl": "https://mesaaberta.app/t?tag=seo-spike-no-such-tag",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/t?tag=seo-spike-no-such-tag",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Mesas abertas",
+      "description": [
+        "Mesas de RPG com vagas abertas: veja o sistema, o horário e quantas vagas restam."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Mesas abertas"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 114,
+      "visibleTextSha256": "0c0cbe2c0cad1183ba9f04f78cf296be738498cc9541249bd0504cb6a332522b",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/cf?status=ended",
+      "finalUrl": "https://mesaaberta.app/cf?status=ended",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/cf?status=ended",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Financiamentos coletivos",
+      "description": [
+        "Campanhas de RPG e jogos de mesa que a comunidade compartilhou: Catarse, Kickstarter, Benfeitoria, Gamefound e mais."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Financiamentos coletivos"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 216,
+      "visibleTextSha256": "a97dec60eefdc63b8ccb9ea590b4f96f4e0eaa5737e2cf1a6c1a25ceed4327a5",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/cf/new",
+        "https://catarse.com.br/beyonders-and-mysteries?ref=mesaaberta&utm_source=mesaaberta&utm_medium=referral&utm_campaign=crowdfunding",
+        "https://catarse.com.br/stalkerrpg?ref=mesaaberta&utm_source=mesaaberta&utm_medium=referral&utm_campaign=crowdfunding",
+        "https://meeplestarter.com.br/boxfazdecontarpg?utm_source=mesaaberta&utm_medium=referral&utm_campaign=crowdfunding",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/cf?status=ended&page=999",
+      "finalUrl": "https://mesaaberta.app/cf?status=ended&page=999",
+      "status": 404,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/cf?status=ended&page=999",
+          "status": 404,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Página não encontrada",
+      "description": [],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Página não encontrada"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 86,
+      "visibleTextSha256": "0099b88d1219552dd21ae000bf8cd155dc599d565aa1feb36c61789cd9fc7b7c",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/cf?q=seo-spike-no-such-campaign",
+      "finalUrl": "https://mesaaberta.app/cf?q=seo-spike-no-such-campaign",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/cf?q=seo-spike-no-such-campaign",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Financiamentos coletivos",
+      "description": [
+        "Campanhas de RPG e jogos de mesa que a comunidade compartilhou: Catarse, Kickstarter, Benfeitoria, Gamefound e mais."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Financiamentos coletivos"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 108,
+      "visibleTextSha256": "410e6121997a644547037a60cb1b54d1122a003b2eeda616c9a3426892f902da",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/cf/new",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/p?q=seo-spike-no-such-partner",
+      "finalUrl": "https://mesaaberta.app/p?q=seo-spike-no-such-partner",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/p?q=seo-spike-no-such-partner",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Parceiros",
+      "description": [
+        "Comunidades, lojas, podcasts e eventos que divulgam a Mesa Aberta, e que a gente divulga de volta."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Parceiros"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 198,
+      "visibleTextSha256": "088ca43075082c799307dbdce154ede3d491ad3869dcb9ed4006437215675593",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/p/new",
+        "/p",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/login?next=%2Fm",
+      "finalUrl": "https://mesaaberta.app/login?next=%2Fm",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/login?next=%2Fm",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Entrar",
+      "description": [],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Entrar"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 134,
+      "visibleTextSha256": "ddc19a0831f5989b8ed61a3817e3facf387dafa2236035ded00d664d0e502205",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/forgot",
+        "./login/google?next=%2Fm",
+        "./login/discord?next=%2Fm",
+        "/terms",
+        "/privacy",
+        "./signup?next=%2Fm",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/m",
+      "finalUrl": "https://mesaaberta.app/login?next=%2Fm",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/m",
+          "status": 303,
+          "headers": {
+            "location": "/login?next=%2Fm"
+          }
+        },
+        {
+          "url": "https://mesaaberta.app/login?next=%2Fm",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Entrar",
+      "description": [],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Entrar"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 134,
+      "visibleTextSha256": "ddc19a0831f5989b8ed61a3817e3facf387dafa2236035ded00d664d0e502205",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/forgot",
+        "./login/google?next=%2Fm",
+        "./login/discord?next=%2Fm",
+        "/terms",
+        "/privacy",
+        "./signup?next=%2Fm",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/u/tables",
+      "finalUrl": "https://mesaaberta.app/login?next=%2Fu%2Ftables",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/u/tables",
+          "status": 303,
+          "headers": {
+            "location": "/login?next=%2Fu%2Ftables"
+          }
+        },
+        {
+          "url": "https://mesaaberta.app/login?next=%2Fu%2Ftables",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Entrar",
+      "description": [],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Entrar"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 134,
+      "visibleTextSha256": "ddc19a0831f5989b8ed61a3817e3facf387dafa2236035ded00d664d0e502205",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/forgot",
+        "./login/google?next=%2Fu%2Ftables",
+        "./login/discord?next=%2Fu%2Ftables",
+        "/terms",
+        "/privacy",
+        "./signup?next=%2Fu%2Ftables",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/t/new",
+      "finalUrl": "https://mesaaberta.app/login?next=%2Ft%2Fnew",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/t/new",
+          "status": 303,
+          "headers": {
+            "location": "/login?next=%2Ft%2Fnew"
+          }
+        },
+        {
+          "url": "https://mesaaberta.app/login?next=%2Ft%2Fnew",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Entrar",
+      "description": [],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Entrar"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 134,
+      "visibleTextSha256": "ddc19a0831f5989b8ed61a3817e3facf387dafa2236035ded00d664d0e502205",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/forgot",
+        "./login/google?next=%2Ft%2Fnew",
+        "./login/discord?next=%2Ft%2Fnew",
+        "/terms",
+        "/privacy",
+        "./signup?next=%2Ft%2Fnew",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/t/seo-spike-no-such-table",
+      "finalUrl": "https://mesaaberta.app/t/seo-spike-no-such-table",
+      "status": 404,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/t/seo-spike-no-such-table",
+          "status": 404,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Página não encontrada",
+      "description": [],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Página não encontrada"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 86,
+      "visibleTextSha256": "0099b88d1219552dd21ae000bf8cd155dc599d565aa1feb36c61789cd9fc7b7c",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "../login",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "../t",
+        "../p",
+        "../cf",
+        "../changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/not-a-real-page-seo-spike",
+      "finalUrl": "https://mesaaberta.app/not-a-real-page-seo-spike",
+      "status": 404,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/not-a-real-page-seo-spike",
+          "status": 404,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Página não encontrada",
+      "description": [],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Página não encontrada"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 86,
+      "visibleTextSha256": "0099b88d1219552dd21ae000bf8cd155dc599d565aa1feb36c61789cd9fc7b7c",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/tables",
+      "finalUrl": "https://mesaaberta.app/t",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/tables",
+          "status": 308,
+          "headers": {
+            "location": "/t"
+          }
+        },
+        {
+          "url": "https://mesaaberta.app/t",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Mesas abertas",
+      "description": [
+        "Mesas de RPG com vagas abertas: veja o sistema, o horário e quantas vagas restam."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Mesas abertas"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 216,
+      "visibleTextSha256": "d2a7c00758bfe439fd5acc0039beeacf28757ece6ca54f2d539b318543c0c87f",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/t/o-vale-da-ferrugem-uma-campanha-dieselpunk-e-sobrevivencia",
+        "/u/gustavo-felix",
+        "/t/mtg-a-guerra-dos-irmaos",
+        "/u/diego-cunha",
+        "/t/rompe-cofres-fuga-da-fortuna",
+        "/u/itsmegrave",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/t/",
+      "finalUrl": "https://mesaaberta.app/t",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/t/",
+          "status": 308,
+          "headers": {
+            "location": "../t"
+          }
+        },
+        {
+          "url": "https://mesaaberta.app/t",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Mesas abertas",
+      "description": [
+        "Mesas de RPG com vagas abertas: veja o sistema, o horário e quantas vagas restam."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Mesas abertas"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 216,
+      "visibleTextSha256": "d2a7c00758bfe439fd5acc0039beeacf28757ece6ca54f2d539b318543c0c87f",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/t/o-vale-da-ferrugem-uma-campanha-dieselpunk-e-sobrevivencia",
+        "/u/gustavo-felix",
+        "/t/mtg-a-guerra-dos-irmaos",
+        "/u/diego-cunha",
+        "/t/rompe-cofres-fuga-da-fortuna",
+        "/u/itsmegrave",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/pt-BR/t",
+      "finalUrl": "https://mesaaberta.app/t",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/pt-BR/t",
+          "status": 308,
+          "headers": {
+            "location": "/t"
+          }
+        },
+        {
+          "url": "https://mesaaberta.app/t",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Mesas abertas",
+      "description": [
+        "Mesas de RPG com vagas abertas: veja o sistema, o horário e quantas vagas restam."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Mesas abertas"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 216,
+      "visibleTextSha256": "d2a7c00758bfe439fd5acc0039beeacf28757ece6ca54f2d539b318543c0c87f",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/t/o-vale-da-ferrugem-uma-campanha-dieselpunk-e-sobrevivencia",
+        "/u/gustavo-felix",
+        "/t/mtg-a-guerra-dos-irmaos",
+        "/u/diego-cunha",
+        "/t/rompe-cofres-fuga-da-fortuna",
+        "/u/itsmegrave",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/en/t",
+      "finalUrl": "https://mesaaberta.app/t",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/en/t",
+          "status": 308,
+          "headers": {
+            "location": "/t"
+          }
+        },
+        {
+          "url": "https://mesaaberta.app/t",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Mesas abertas",
+      "description": [
+        "Mesas de RPG com vagas abertas: veja o sistema, o horário e quantas vagas restam."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Mesas abertas"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 216,
+      "visibleTextSha256": "d2a7c00758bfe439fd5acc0039beeacf28757ece6ca54f2d539b318543c0c87f",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "./login",
+        "/t/new",
+        "/t/o-vale-da-ferrugem-uma-campanha-dieselpunk-e-sobrevivencia",
+        "/u/gustavo-felix",
+        "/t/mtg-a-guerra-dos-irmaos",
+        "/u/diego-cunha",
+        "/t/rompe-cofres-fuga-da-fortuna",
+        "/u/itsmegrave",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "./t",
+        "./p",
+        "./cf",
+        "./changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/t/o-vale-da-ferrugem-uma-campanha-dieselpunk-e-sobrevivencia",
+      "finalUrl": "https://mesaaberta.app/t/o-vale-da-ferrugem-uma-campanha-dieselpunk-e-sobrevivencia",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/t/o-vale-da-ferrugem-uma-campanha-dieselpunk-e-sobrevivencia",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "O VALE DA FERRUGEM — Uma Campanha Dieselpunk & Sobrevivência",
+      "description": [
+        "Dungeons & Dragons 5.5e (2024). 4 vagas restantes."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "O VALE DA FERRUGEM — Uma Campanha Dieselpunk & Sobrevivência"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 467,
+      "visibleTextSha256": "5ee2591f0903a43cd81380b6adc9885e8d6a736bc47c68be788490fa1c458d8a",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "../login",
+        "/t?system=dungeons-e-dragons-5-5e-2024",
+        "/t?tag=iniciantes",
+        "/t?tag=roleplay",
+        "/t?tag=combate-tatico",
+        "/t?tag=exploracao",
+        "/t?tag=investigacao",
+        "/t?tag=misterio",
+        "/t?tag=pos-apocaliptico",
+        "/t?tag=sobrevivencia",
+        "/t?tag=sandbox",
+        "/t?tag=intriga-politica",
+        "/t?tag=humor",
+        "/u/gustavo-felix",
+        "../login?next=%2Ft%2Fo-vale-da-ferrugem-uma-campanha-dieselpunk-e-sobrevivencia",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "../t",
+        "../p",
+        "../cf",
+        "../changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/u/gustavo-felix",
+      "finalUrl": "https://mesaaberta.app/u/gustavo-felix",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/u/gustavo-felix",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html",
+            "cache-control": "private, no-store"
+          }
+        }
+      ],
+      "title": "@gustavo-felix · Mesa Aberta",
+      "description": [
+        "Conheça @gustavo-felix, sua avaliação como mestre e suas próximas mesas de RPG no Mesa Aberta."
+      ],
+      "robots": [],
+      "canonical": [
+        "https://mesaaberta.app/u/gustavo-felix"
+      ],
+      "openGraphProperties": [
+        "og:description",
+        "og:image",
+        "og:title",
+        "og:type",
+        "og:url"
+      ],
+      "h1": [
+        "@gustavo-felix"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 149,
+      "visibleTextSha256": "67a5831767d9a81a4db2b855231dac9164dea86a5c460b159769013004941886",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "../login",
+        "/u/gustavo-felix",
+        "/t/o-vale-da-ferrugem-uma-campanha-dieselpunk-e-sobrevivencia",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "../t",
+        "../p",
+        "../cf",
+        "../changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/t/mtg-a-guerra-dos-irmaos",
+      "finalUrl": "https://mesaaberta.app/t/mtg-a-guerra-dos-irmaos",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/t/mtg-a-guerra-dos-irmaos",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "MTG: A Guerra dos Irmãos",
+      "description": [
+        "FATE. 4 vagas restantes."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "MTG: A Guerra dos Irmãos"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 267,
+      "visibleTextSha256": "171d67c2cbcfde2223c6f56f04f58e53e90a62f7f4474dc4c57501b0570b83de",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "../login",
+        "/t?system=fate",
+        "/t?tag=alta-fantasia",
+        "/t?tag=intriga-politica",
+        "/t?tag=roleplay",
+        "/u/diego-cunha",
+        "../login?next=%2Ft%2Fmtg-a-guerra-dos-irmaos",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "../t",
+        "../p",
+        "../cf",
+        "../changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/u/diego-cunha",
+      "finalUrl": "https://mesaaberta.app/u/diego-cunha",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/u/diego-cunha",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html",
+            "cache-control": "private, no-store"
+          }
+        }
+      ],
+      "title": "@diego-cunha · Mesa Aberta",
+      "description": [
+        "Conheça @diego-cunha, sua avaliação como mestre e suas próximas mesas de RPG no Mesa Aberta."
+      ],
+      "robots": [],
+      "canonical": [
+        "https://mesaaberta.app/u/diego-cunha"
+      ],
+      "openGraphProperties": [
+        "og:description",
+        "og:title",
+        "og:type",
+        "og:url"
+      ],
+      "h1": [
+        "@diego-cunha"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 141,
+      "visibleTextSha256": "207e1c88b20d2188cdc0e1781d7f4f046f3fb56420a8f8370da56d55a4b86456",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "../login",
+        "/u/diego-cunha",
+        "/t/mtg-a-guerra-dos-irmaos",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "../t",
+        "../p",
+        "../cf",
+        "../changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/t/rompe-cofres-fuga-da-fortuna",
+      "finalUrl": "https://mesaaberta.app/t/rompe-cofres-fuga-da-fortuna",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/t/rompe-cofres-fuga-da-fortuna",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html"
+          }
+        }
+      ],
+      "title": "Rompe-Cofres: Fuga da Fortuna",
+      "description": [
+        "Daggerheart. Mesa cheia."
+      ],
+      "robots": [],
+      "canonical": [],
+      "openGraphProperties": [],
+      "h1": [
+        "Rompe-Cofres: Fuga da Fortuna"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 286,
+      "visibleTextSha256": "8cbc67976d890f0b7274fe057110d2146f81dfeadfcfe21449f641c9eaba2731",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "../login",
+        "/t?system=daggerheart",
+        "/t?tag=iniciantes",
+        "/t?tag=roleplay",
+        "/t?tag=investigacao",
+        "/t?tag=misterio",
+        "/t?tag=alta-fantasia",
+        "/t?tag=intriga-politica",
+        "/t?tag=mesa-segura",
+        "/t?tag=lgbtqia-friendly",
+        "/u/itsmegrave",
+        "../login?next=%2Ft%2Frompe-cofres-fuga-da-fortuna",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "../t",
+        "../p",
+        "../cf",
+        "../changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    },
+    {
+      "requested": "https://mesaaberta.app/u/itsmegrave",
+      "finalUrl": "https://mesaaberta.app/u/itsmegrave",
+      "status": 200,
+      "chain": [
+        {
+          "url": "https://mesaaberta.app/u/itsmegrave",
+          "status": 200,
+          "headers": {
+            "content-type": "text/html",
+            "cache-control": "private, no-store"
+          }
+        }
+      ],
+      "title": "@itsmegrave · Mesa Aberta",
+      "description": [
+        "Conheça @itsmegrave, sua avaliação como mestre e suas próximas mesas de RPG no Mesa Aberta."
+      ],
+      "robots": [],
+      "canonical": [
+        "https://mesaaberta.app/u/itsmegrave"
+      ],
+      "openGraphProperties": [
+        "og:description",
+        "og:image",
+        "og:title",
+        "og:type",
+        "og:url"
+      ],
+      "h1": [
+        "@itsmegrave"
+      ],
+      "jsonLdCount": 0,
+      "wordCount": 139,
+      "visibleTextSha256": "c5070676d75e913a2535f104acb0039345f7027245378ed5c9b93e3cc666a159",
+      "links": [
+        "#main",
+        "/",
+        "/t",
+        "/cf",
+        "../login",
+        "/u/itsmegrave",
+        "https://instagram.com/itsmegrave",
+        "/t/rompe-cofres-fuga-da-fortuna",
+        "/t/new",
+        "/u/tables",
+        "https://linktr.ee/lenindragonsrpg",
+        "https://www.instagram.com/mesaaberta.app/",
+        "../t",
+        "../p",
+        "../cf",
+        "../changelog",
+        "mailto:contato@mesaaberta.app",
+        "https://github.com/itsmegrave/mesaaberta",
+        "https://github.com/itsmegrave"
+      ],
+      "robotsTxt": null
+    }
+  ]
+}
