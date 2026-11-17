@@ -1,5 +1,28 @@
 # Mesa Aberta SEO spike — 25 October 2026
 
+## Status on 17 November 2026
+
+Most of this spike has shipped. [#397](https://github.com/itsmegrave/mesaaberta/pull/397) added the shared canonical/indexing policy, public sitemaps and sharing metadata, and the URL scheme moved to words for lists ([#451](https://github.com/itsmegrave/mesaaberta/pull/451)). The collector now probes the current routes; its new capture is [`evidence-2026-11-17.json`](evidence-2026-11-17.json). The original 25 October capture stays in [`evidence.json`](evidence.json), and the findings below describe the site as it was then.
+
+| ID | Status on 17 Nov | Evidence from the new capture |
+| --- | --- | --- |
+| SEO-01 sitemap | **Done** | `robots.txt` advertises `https://mesaaberta.app/sitemap.xml`, a sitemap index of pages (12), tables (18), profiles (82) and systems (two pages). |
+| SEO-02 canonical | **Done** | Every public page sampled has exactly one absolute self-canonical. `/tables?page=2`, `?page=999` and `?utm_source=` point to `/tables`; repeated filter values are deduplicated. |
+| SEO-03 auth and search states | **Done** | `/login`, `/signup`, `/forgot` and `q`/filter states carry `noindex, follow`; robots allows everything, so the directive is readable. |
+| SEO-04 short-lived inventory | Open (product decision) | The tables sitemap lists the eligible tables; whether ended tables stay indexed through an archive is still undecided. |
+| SEO-05 profile pagination | Not re-checked | No sampled profile has a second page. |
+| SEO-06 structured data | Open, P3 | No `application/ld+json` on any sampled page. |
+| SEO-07 titles | **Done** | e.g. `Mesas de RPG com vagas abertas · Mesa Aberta`, `{title} — {system} · Mesa Aberta`. |
+| SEO-08 table descriptions | **Done** | `Mesa de {system}. {excerpt of the public description}`; tables without a description fall back to the system alone. |
+| SEO-09 sharing metadata | **Done** | 7 Open Graph properties on every public page sampled. |
+| SEO-10 durable landing pages | **Partly done** | `/systems` and `/s/[slug]`, `/gamemasters`, `/places`, `/tools` and `/blog` now exist. |
+
+New small gap: `/tools` is public and indexable (`indexingPolicy` lists it) but is missing from `sitemap-pages.xml`, whose static list in `apps/web/src/lib/seo/sitemap.ts` predates it.
+
+Transient 503s: four requests in the parallel capture (`/crowdfunding?status=ended`, `/t/new`, `/pt-BR/tables`, `/u/mestrelely`) answered 503; each answered 200 or its usual 308 when retried alone a moment later. Legacy `/t`, `/p`, `/cf`, `/en/tables` and `/pt-BR/tables` redirect permanently to the current routes, and real missing pages still answer 404.
+
+Still not measured: Search Console coverage, Google-selected canonicals and field Core Web Vitals.
+
 ## Findings in brief
 
 - Public pages return useful server-rendered HTML. The sampled pages are not blocked by a site-wide `noindex` or `robots.txt` rule. There is no demonstrated blanket indexing blocker.
@@ -25,6 +48,8 @@ To reproduce without overwriting the original evidence:
 ```sh
 python3 docs/spikes/2026-10-25-seo/collect.py > /tmp/mesaaberta-seo-new.json
 ```
+
+Since 17 November the collector probes the current routes (`/tables`, `/partners`, `/crowdfunding` and the directories) plus the legacy short ones, so its output is not directly comparable path-for-path with `evidence.json`.
 
 Visible-text hashes exclude scripts/styles, normalize whitespace and include ordinary page text, including navigation. They establish equivalence in this capture; they do not establish what Google has indexed.
 

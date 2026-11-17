@@ -7,6 +7,7 @@ Requests public documents only; it does not log in, submit forms or crawl APIs.
 import concurrent.futures
 import datetime
 import hashlib
+import http.client
 import json
 import urllib.error
 import urllib.parse
@@ -15,16 +16,19 @@ from html.parser import HTMLParser
 
 ORIGIN = "https://mesaaberta.app"
 PATHS = [
-    "/", "/t", "/p", "/cf", "/changelog", "/robots.txt", "/sitemap.xml",
+    "/", "/tables", "/partners", "/crowdfunding", "/systems", "/gamemasters",
+    "/places", "/tools", "/blog", "/changelog", "/robots.txt", "/sitemap.xml",
     "/sitemap-index.xml", "/login", "/signup", "/forgot", "/privacy", "/terms",
-    "/t?page=1", "/t?page=2", "/t?page=999", "/t?utm_source=seo-spike",
-    "/t?modality=online", "/t?modality=in_person",
-    "/t?modality=online&modality=online", "/t?system=seo-spike-no-such-system",
-    "/t?tag=seo-spike-no-such-tag", "/cf?status=ended",
-    "/cf?status=ended&page=999", "/cf?q=seo-spike-no-such-campaign",
-    "/p?q=seo-spike-no-such-partner", "/login?next=%2Fm", "/m", "/u/tables",
-    "/t/new", "/t/seo-spike-no-such-table", "/not-a-real-page-seo-spike",
-    "/tables", "/t/", "/pt-BR/t", "/en/t",
+    "/tables?page=1", "/tables?page=2", "/tables?page=999",
+    "/tables?utm_source=seo-spike", "/tables?modality=online",
+    "/tables?modality=in_person", "/tables?modality=online&modality=online",
+    "/tables?system=seo-spike-no-such-system", "/tables?tag=seo-spike-no-such-tag",
+    "/crowdfunding?status=ended", "/crowdfunding?status=ended&page=999",
+    "/crowdfunding?q=seo-spike-no-such-campaign", "/partners?q=seo-spike-no-such-partner",
+    "/login?next=%2Fmessages", "/messages", "/u/tables", "/t/new",
+    "/t/seo-spike-no-such-table", "/not-a-real-page-seo-spike",
+    # Legacy URLs that must redirect permanently.
+    "/t", "/p", "/cf", "/t/", "/pt-BR/tables", "/en/tables",
 ]
 HEADERS = ["content-type", "location", "x-robots-tag", "cache-control", "link"]
 
@@ -134,7 +138,7 @@ def fetch(path):
             "links": list(dict.fromkeys(document.links)),
             "robotsTxt": body.decode("utf-8", "replace") if path == "/robots.txt" else None,
         }
-    except (OSError, urllib.error.URLError) as error:
+    except (OSError, urllib.error.URLError, http.client.HTTPException) as error:
         return {"requested": requested, "chain": chain, "error": str(error)}
 
 
@@ -143,7 +147,7 @@ def main():
         responses = list(pool.map(fetch, PATHS))
     details = []
     for response in responses:
-        if response["requested"] not in (ORIGIN + "/", ORIGIN + "/t"):
+        if response["requested"] not in (ORIGIN + "/", ORIGIN + "/tables"):
             continue
         for href in response.get("links", []):
             target = urllib.parse.urljoin(ORIGIN, href)
