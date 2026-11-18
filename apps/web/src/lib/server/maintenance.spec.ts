@@ -120,6 +120,7 @@ describe('handleMaintenance', () => {
 describe('isExempt', () => {
   it.each([
     '/robots.txt',
+    '/.well-known/security.txt',
     '/favicon.ico',
     '/favicon.svg',
     '/favicon-32x32.png',
