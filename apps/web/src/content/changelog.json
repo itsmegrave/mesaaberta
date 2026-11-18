@@ -7,13 +7,18 @@
       {
         "kind": "improved",
         "title": "Sistemas e conquistas em adesivos",
-        "description": "No tema Overdrive, os sistemas favoritos aparecem como adesivos coloridos, cada um torto para um lado, e as medalhas de conquista ficam jogadas na página com contorno de tinta."
+        "description": "No tema Overdrive, os sistemas favoritos aparecem como adesivos coloridos, cada um torto para um lado, e as medalhas de conquista ficam jogadas na página com contorno de tinta. A etiqueta Mestra, Mestra e joga ou Joga também virou adesivo."
       },
       {
         "kind": "fixed",
         "title": "Capa do perfil sem faixa vazia",
         "description": "Algumas capas ficavam com uma faixa vazia na lateral. Agora o recorte sempre preenche a capa inteira. Se a sua tem essa faixa, envie a imagem de novo em Editar perfil.",
         "href": "/u/profile/edit"
+      },
+      {
+        "kind": "improved",
+        "title": "Pedal Overdrive em um lugar só",
+        "description": "Para quem entrou na conta, o pedal Overdrive agora fica só no menu da conta, junto de Claro e Escuro, e não mais repetido na barra lateral."
       }
     ]
   },

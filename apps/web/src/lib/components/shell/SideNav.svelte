@@ -241,8 +241,11 @@
           {#if !account}
             <ThemeToggle labelled={expanded} rail={!expanded} />
           {/if}
-          <!-- The Overdrive pedal sits right under the theme switch, for members too. -->
-          <OverdrivePedal variant={expanded ? 'labelled' : 'rail'} />
+          <!-- The Overdrive pedal sits right under the theme switch, so like it only for visitors:
+               members find both together in the account menu. -->
+          {#if !account}
+            <OverdrivePedal variant={expanded ? 'labelled' : 'rail'} />
+          {/if}
           {#if account}
             <!-- The bell sits right above the account block, with no group label of its own. -->
             <RailTip label={m.notifications_title()} enabled={!expanded}>

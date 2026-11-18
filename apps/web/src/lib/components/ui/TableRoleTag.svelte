@@ -24,8 +24,10 @@
   } ${className}`}
   {#if href}
     <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the caller passes a canonical href -->
-    <a {href} class="{chip} no-underline hover:underline">{LABELS[tableRole]()}</a>
+    <a {href} data-role-tag={tableRole} class="{chip} no-underline hover:underline"
+      >{LABELS[tableRole]()}</a
+    >
   {:else}
-    <span class={chip}>{LABELS[tableRole]()}</span>
+    <span data-role-tag={tableRole} class={chip}>{LABELS[tableRole]()}</span>
   {/if}
 {/if}

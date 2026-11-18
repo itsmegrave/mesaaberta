@@ -438,3 +438,29 @@
   rotate: 0deg;
   scale: 1.12;
 }
+
+/* The role tag ("Mestra", "Mestra e joga", "Joga"): a small stamped sticker in the comic letters,
+   pink for whoever runs games and cyan for players, ink text and edge, a hard shadow and a lean. */
+[data-theme='overdrive'] [data-role-tag] {
+  height: auto;
+  min-height: 1.75rem;
+  padding: 0.125rem 0.625rem 0;
+  border: 2px solid var(--color-surface-950);
+  border-radius: var(--radius-base);
+  background-color: var(--color-primary-500);
+  color: var(--color-surface-950);
+  font-family: var(--font-comic);
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 3px 3px 0 var(--comic-button-shadow);
+  transform: rotate(-3deg) skewX(-6deg);
+}
+[data-theme='overdrive'] [data-role-tag='player'] {
+  background-color: var(--color-tertiary-400);
+}
+[data-theme='overdrive'] a[data-role-tag]:hover {
+  text-decoration: none;
+  transform: rotate(0deg) skewX(0deg);
+}
