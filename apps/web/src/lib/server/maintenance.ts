@@ -16,6 +16,7 @@ const exactExempt = new Set([
   '/auth/callback',
   '/logout',
   '/robots.txt',
+  '/.well-known/security.txt',
   '/favicon.ico',
   '/favicon.svg',
   '/site.webmanifest',
