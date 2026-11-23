@@ -10,7 +10,8 @@ import {
 } from '../db/schema';
 import { Invalid } from '../errors';
 import { recordEvent } from '../events/outbox';
-import { nextStatus } from '../../tables/lifecycle-machine';
+import { applyTransition } from '../state/transition';
+import { tableLifecycle } from '../../tables/lifecycle-machine';
 import { cancelPendingInvitations } from '../invitations/service';
 import { sessionEndedBy } from './lifecycle';
 import { closeSession, nextScheduledAfter, syncTableSessions } from './sessions';
@@ -183,18 +184,16 @@ async function remind(
 async function autoClose(db: AnyDb, table: DueTable, now: Date): Promise<string | null> {
   return db.transaction(async (tx) => {
     await lockTableRows(tx as unknown as AnyDb, [table.id]);
-    const [updated] = await tx
-      .update(gameTables)
-      .set({ status: nextStatus('awaiting_confirmation', 'HAPPENED')! })
-      .where(
-        and(
-          eq(gameTables.id, table.id),
-          eq(gameTables.status, 'awaiting_confirmation'),
-          eq(gameTables.startsAt, table.startsAt),
-        ),
-      )
-      .returning({ id: gameTables.id, durationMinutes: gameTables.durationMinutes });
-    if (!updated) return null;
+    const moved = await applyTransition(tx as unknown as AnyDb, {
+      table: gameTables,
+      status: gameTables.status,
+      where: and(eq(gameTables.id, table.id), eq(gameTables.startsAt, table.startsAt)),
+      machine: tableLifecycle,
+      from: 'awaiting_confirmation',
+      event: 'HAPPENED',
+    });
+    if (!moved) return null;
+    const updated = moved.rows[0] as { durationMinutes: number };
     // Held, with nobody said absent: the session's attendance is left unrecorded.
     await closeSession(
       tx as unknown as AnyDb,
@@ -259,15 +258,15 @@ async function autoHold(db: AnyDb, table: DueTable, now: Date): Promise<string[]
     }
     if (!startsAt) return [];
 
-    const [updated] = await tx
-      .update(gameTables)
-      .set({
-        status: nextStatus('awaiting_confirmation', 'SESSION_HELD')!,
-        startsAt,
-        icalSequence: current.icalSequence + 1,
-      })
-      .where(and(eq(gameTables.id, table.id), eq(gameTables.status, 'awaiting_confirmation')))
-      .returning({ id: gameTables.id });
+    const updated = await applyTransition(executor, {
+      table: gameTables,
+      status: gameTables.status,
+      where: eq(gameTables.id, table.id),
+      machine: tableLifecycle,
+      from: 'awaiting_confirmation',
+      event: 'SESSION_HELD',
+      set: { startsAt, icalSequence: current.icalSequence + 1 },
+    });
     if (!updated) return [];
     await closeSession(executor, current, 'held');
     await syncTableSessions(executor, [table.id]);
