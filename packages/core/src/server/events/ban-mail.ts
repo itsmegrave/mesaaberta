@@ -88,7 +88,8 @@ export function createBanMailHandler(
         })
         .from(profiles)
         .where(eq(profiles.id, profileId));
-      if (!profile || profile.status !== 'suspended' || !profile.banReason) return;
+      const banned = profile?.status === 'suspended' || profile?.status === 'banned';
+      if (!profile || !banned || !profile.banReason) return;
 
       const mail = banMail({
         name: profile.name || profile.username || NAMELESS,

@@ -638,6 +638,13 @@
       "when": 1794704262348,
       "tag": "0090_postal_code_street",
       "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1795454006234,
+      "tag": "0091_profile_banned_closed",
+      "breakpoints": true
     }
   ]
 }

@@ -15,13 +15,16 @@ describe('standingOf', () => {
     ).toBe('suspended');
   });
 
-  it('is banned when the ban never ends', () => {
+  it('is banned when an old suspended row has a ban that never ends', () => {
     expect(standingOf({ status: 'suspended', bannedAt: at, bannedUntil: null })).toBe('banned');
   });
 
-  it('is suspended for a closed account, which has no ban on it', () => {
-    expect(standingOf({ status: 'suspended', bannedAt: null, bannedUntil: null })).toBe(
-      'suspended',
-    );
+  it('reads the banned and closed statuses as they are', () => {
+    expect(standingOf({ status: 'banned', bannedAt: at, bannedUntil: null })).toBe('banned');
+    expect(standingOf({ status: 'closed', bannedAt: null, bannedUntil: null })).toBe('closed');
+  });
+
+  it('reads an old closed account (suspended, no ban on it) as closed', () => {
+    expect(standingOf({ status: 'suspended', bannedAt: null, bannedUntil: null })).toBe('closed');
   });
 });
