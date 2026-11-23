@@ -215,7 +215,10 @@ export function authRoutes(
       const wait =
         (await attemptWait(db, SIGN_IN_LIMIT, ip)) ??
         (await accountWait(counted, SIGN_IN_ACCOUNT_LIMIT, parsed.data.email));
-      if (wait !== null) return c.json({ result: 'rate_limited', retryAfter: wait }, 429);
+      if (wait !== null) {
+        logger.info('auth.sign_in_refused', { reason: 'rate_limited' });
+        return c.json({ result: 'rate_limited', retryAfter: wait }, 429);
+      }
 
       const { result, session } = await signInForSession(
         { supabase: makeSupabase(url, key), db, log: logger, ip: ip || null },
@@ -223,7 +226,12 @@ export function authRoutes(
       );
       if (result === 'invalid')
         await recordSignInFailure(counted, SIGN_IN_ACCOUNT_LIMIT, parsed.data.email);
-      if (result !== 'ok') return c.json({ result }, SIGN_IN_STATUS[result]);
+      if (result !== 'ok') {
+        // One line per refused sign-in, without who or from where: the Sentry alert
+        // "Sign-in refusals burst" counts them to spot password guessing.
+        logger.info('auth.sign_in_refused', { reason: result });
+        return c.json({ result }, SIGN_IN_STATUS[result]);
+      }
       return c.json({ result, session });
     } finally {
       await close();
