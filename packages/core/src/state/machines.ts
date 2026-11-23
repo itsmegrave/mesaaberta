@@ -1,9 +1,10 @@
 // Relative imports only: the Cron Trigger's Worker entry bundles this file without `#lib`.
 import type { AnyStateMachine } from 'xstate';
-import { TABLE_STATUSES } from '../tables/status-values';
+import { TABLE_SESSION_STATUSES, TABLE_STATUSES } from '../tables/status-values';
 import { REPORT_STATUSES } from '../moderation/reports';
 import { reportMachine } from '../moderation/report-machine';
 import { tableLifecycle } from '../tables/lifecycle-machine';
+import { tableSessionMachine } from '../tables/session-machine';
 import { INVITATION_STATUSES } from '@mesaaberta/db/invitation-status';
 import { invitationMachine } from './invitation-machine';
 import { REGISTRATION_STATUSES, SESSION_SIGNUP_STATUSES } from '@mesaaberta/db/seat-status';
@@ -24,6 +25,12 @@ export const STATUS_MACHINES: {
     column: 'game_tables.status',
     machine: tableLifecycle,
     values: TABLE_STATUSES,
+  },
+  {
+    title: 'Table session (sessão)',
+    column: 'table_sessions.status',
+    machine: tableSessionMachine,
+    values: TABLE_SESSION_STATUSES,
   },
   {
     title: 'Report (denúncia)',

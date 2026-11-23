@@ -29,6 +29,20 @@ stateDiagram-v2
   disabled --> [*]
 ```
 
+## Table session (sessão)
+
+`table_sessions.status`
+
+```mermaid
+stateDiagram-v2
+  scheduled --> held: HELD
+  scheduled --> not_held: NOT_HELD
+  scheduled --> cancelled: CANCEL
+  held --> [*]
+  not_held --> [*]
+  cancelled --> [*]
+```
+
 ## Report (denúncia)
 
 `reports.status`

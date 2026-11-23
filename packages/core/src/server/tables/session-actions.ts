@@ -6,6 +6,8 @@ import { gameTables, playerInvitations, tableSessions } from '../db/schema';
 import { authorize, type Actor } from '../auth/policy';
 import { Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
+import { tableSessionMachine } from '../../tables/session-machine';
+import { applyTransition } from '../state/transition';
 import { diffFields } from '../events/changes';
 import { cancelPendingInvitations } from '../invitations/service';
 import { TABLE_LIMITS } from '../../tables/schema';
@@ -319,10 +321,16 @@ export async function cancelSession(
         ),
       );
     if (count <= 1) throw new Invalid('sessionId', 'only_session');
-    await tx
-      .update(tableSessions)
-      .set({ status: 'cancelled', pinned: true, ...(message ? { note: message } : {}) })
-      .where(eq(tableSessions.id, session.id));
+    const cancelled = await applyTransition(tx, {
+      table: tableSessions,
+      status: tableSessions.status,
+      where: eq(tableSessions.id, session.id),
+      machine: tableSessionMachine,
+      from: 'scheduled',
+      event: 'CANCEL',
+      set: { pinned: true, ...(message ? { note: message } : {}) },
+    });
+    if (!cancelled) throw new NotFound('session');
     const moved = await followFirst(tx, family, actor!);
     // A weekly table gets its dates topped up again, past the cancelled one.
     await syncTableSessions(tx, [table.id]);

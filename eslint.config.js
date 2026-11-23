@@ -51,8 +51,6 @@ const STATUS_WRITES_NOT_MIGRATED = [
   'packages/core/src/server/places/claims.ts',
   'packages/core/src/server/places/partner-links.ts',
   'packages/core/src/server/systems/logos/service.ts',
-  'packages/core/src/server/tables/session-actions.ts',
-  'packages/core/src/server/tables/sessions.ts',
 ];
 
 // A status changes only through its machine (`applyTransition`, packages/core/src/server/state), so
