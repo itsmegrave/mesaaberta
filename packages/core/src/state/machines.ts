@@ -21,6 +21,8 @@ import {
 import { logoMachine, partnerLinkMachine, placeClaimMachine } from './review-machines';
 import { REGISTRATION_STATUSES, SESSION_SIGNUP_STATUSES } from '@mesaaberta/db/seat-status';
 import { registrationMachine, sessionSignupMachine } from './seat-machines';
+import { CROWDFUNDING_STATUSES, LISTING_STATUSES } from '@mesaaberta/db/listing-status';
+import { crowdfundingMachine, listingMachine } from './listing-machines';
 
 /**
  * Every status machine, with the values its column can hold. A spec checks each machine has one
@@ -103,5 +105,17 @@ export const STATUS_MACHINES: {
     column: 'widgets.status',
     machine: widgetMachine,
     values: WIDGET_STATUSES,
+  },
+  {
+    title: 'Directory listing (parceiro, ferramenta, lugar)',
+    column: 'partners / tools / places.status',
+    machine: listingMachine,
+    values: LISTING_STATUSES,
+  },
+  {
+    title: 'Crowdfunding campaign (financiamento coletivo)',
+    column: 'crowdfundings.status',
+    machine: crowdfundingMachine,
+    values: CROWDFUNDING_STATUSES,
   },
 ];

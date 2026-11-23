@@ -36,6 +36,9 @@ import { enforceRateLimit, PLACE_LIMIT, REPORT_LIMIT } from '@mesaaberta/core/se
 import { nextFreeSlug, slugify } from '@mesaaberta/core/slug';
 import { featuresOf, setPlaceFeatures } from './features';
 import { clearPlaceTags, rebuildPlaceTags } from './tags';
+import { applyTransition } from '../state/transition';
+import { listingMachine } from '../../state/listing-machines';
+import type { ListingStatus } from '@mesaaberta/db/listing-status';
 
 // The member side of "Onde jogar": sending a place, editing it and taking it off. A place waits for
 // an admin (`approvedAt`, see `./admin`) before it is public. Its submitter's edit sends it back to
@@ -310,10 +313,19 @@ export async function updatePlace(
       .set({
         ...next,
         ...(imagePath ? { imagePath } : dropImage ? { imagePath: null } : {}),
-        ...(reviewAgain ? { approvedAt: null, approvedBy: null } : {}),
         updatedAt: now,
       })
       .where(eq(places.id, id));
+    if (reviewAgain)
+      await applyTransition<ListingStatus>(t, {
+        table: places,
+        status: places.status,
+        where: eq(places.id, id),
+        machine: listingMachine,
+        from: current.status,
+        event: 'REVIEW_AGAIN',
+        set: { approvedAt: null, approvedBy: null },
+      });
     await writeLinks(t, id, input);
     if (pending) await clearPlaceTags(t, id);
     else await rebuildPlaceTags(t, id, next);
@@ -356,10 +368,15 @@ export async function withdrawPlace(
     if (!place) throw new NotFound(`no place "${id}"`);
     authorize(actor, 'place:withdraw', place);
 
-    await t
-      .update(places)
-      .set({ removedAt: now, removedBy: actor!.id, removalReason: null, removalNote: null })
-      .where(eq(places.id, id));
+    await applyTransition<ListingStatus>(t, {
+      table: places,
+      status: places.status,
+      where: eq(places.id, id),
+      machine: listingMachine,
+      from: place.status,
+      event: 'REMOVE',
+      set: { removedAt: now, removedBy: actor!.id, removalReason: null, removalNote: null },
+    });
     await clearPlaceTags(t, id);
     return [
       await recordEvent(

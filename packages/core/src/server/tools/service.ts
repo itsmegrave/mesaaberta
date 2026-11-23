@@ -20,6 +20,9 @@ import { recordEvent } from '../events/outbox';
 import type { Changes } from '../events/types';
 import { enforceRateLimit, TOOL_LIMIT } from '../rate-limit';
 import { nextFreeSlug, slugify } from '../../slug';
+import { applyTransition } from '../state/transition';
+import { listingMachine } from '../../state/listing-machines';
+import type { ListingStatus } from '@mesaaberta/db/listing-status';
 
 // "Ferramentas" (/tools): the platforms and apps tables use. A member suggests one, it waits for an
 // admin (`approvedAt`), and an admin edits, approves, turns down or removes it. Who suggested it is
@@ -379,7 +382,15 @@ export async function approveTool(
     if (!tool) throw new Invalid('id', 'not_found');
     if (tool.removedAt) throw new Invalid('id', 'closed');
     if (tool.approvedAt) throw new Invalid('id', 'already_approved');
-    await t.update(tools).set({ approvedAt: now, approvedBy: actor!.id }).where(eq(tools.id, id));
+    await applyTransition<ListingStatus>(t, {
+      table: tools,
+      status: tools.status,
+      where: eq(tools.id, id),
+      machine: listingMachine,
+      from: tool.status,
+      event: 'APPROVE',
+      set: { approvedAt: now, approvedBy: actor!.id },
+    });
     return [
       await recordEvent(
         t,
@@ -412,15 +423,20 @@ export async function removeTool(
     const [tool] = await t.select().from(tools).where(eq(tools.id, id)).for('update');
     if (!tool) throw new Invalid('id', 'not_found');
     if (tool.removedAt) throw new Invalid('id', 'closed');
-    await t
-      .update(tools)
-      .set({
+    await applyTransition<ListingStatus>(t, {
+      table: tools,
+      status: tools.status,
+      where: eq(tools.id, id),
+      machine: listingMachine,
+      from: tool.status,
+      event: 'REMOVE',
+      set: {
         removedAt: now,
         removedBy: actor!.id,
         removalReason: reason,
         removalNote: note || null,
-      })
-      .where(eq(tools.id, id));
+      },
+    });
     return [
       await recordEvent(
         t,

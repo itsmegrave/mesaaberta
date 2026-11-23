@@ -32,6 +32,8 @@ import { Invalid } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import { applyTransition } from '../state/transition';
 import { reportMachine } from '../../moderation/report-machine';
+import { listingMachine } from '../../state/listing-machines';
+import type { ListingStatus } from '@mesaaberta/db/listing-status';
 
 // The admin side of the partners: what waits for review, what is up and what was taken down, and
 // approving, rejecting and removing. Every function authorizes the actor itself; the routes check
@@ -263,10 +265,15 @@ export async function approvePartner(
     if (partner.removedAt) throw new Invalid('id', 'closed');
     if (partner.approvedAt) throw new Invalid('id', 'already_approved');
 
-    await t
-      .update(partners)
-      .set({ approvedAt: now, approvedBy: actor!.id })
-      .where(eq(partners.id, id));
+    await applyTransition<ListingStatus>(t, {
+      table: partners,
+      status: partners.status,
+      where: eq(partners.id, id),
+      machine: listingMachine,
+      from: partner.status,
+      event: 'APPROVE',
+      set: { approvedAt: now, approvedBy: actor!.id },
+    });
     return [
       await recordEvent(
         t,
@@ -305,15 +312,20 @@ export async function removePartner(
     if (!partner) throw new Invalid('id', 'not_found');
     if (partner.removedAt) throw new Invalid('id', 'closed');
 
-    await t
-      .update(partners)
-      .set({
+    await applyTransition<ListingStatus>(t, {
+      table: partners,
+      status: partners.status,
+      where: eq(partners.id, id),
+      machine: listingMachine,
+      from: partner.status,
+      event: 'REMOVE',
+      set: {
         removedAt: now,
         removedBy: actor!.id,
         removalReason: reason,
         removalNote: note || null,
-      })
-      .where(eq(partners.id, id));
+      },
+    });
 
     const eventIds = await resolveOpenPartnerReports(t, actor!.id, id, now);
     eventIds.push(

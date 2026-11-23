@@ -175,3 +175,27 @@ stateDiagram-v2
   paused --> closed: CLOSE
   closed --> [*]
 ```
+
+## Directory listing (parceiro, ferramenta, lugar)
+
+`partners / tools / places.status`
+
+```mermaid
+stateDiagram-v2
+  pending --> approved: APPROVE
+  pending --> pending: REVIEW_AGAIN
+  pending --> removed: REMOVE
+  approved --> pending: REVIEW_AGAIN
+  approved --> removed: REMOVE
+  removed --> [*]
+```
+
+## Crowdfunding campaign (financiamento coletivo)
+
+`crowdfundings.status`
+
+```mermaid
+stateDiagram-v2
+  listed --> removed: REMOVE
+  removed --> [*]
+```
