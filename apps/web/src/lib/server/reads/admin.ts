@@ -24,13 +24,6 @@ export async function read({ locals, setHeaders }: RequestEvent) {
           ? new Date(remote.attention.reports.oldestAt)
           : null,
       },
-      awaiting: {
-        ...remote.attention.awaiting,
-        first: remote.attention.awaiting.first && {
-          ...remote.attention.awaiting.first,
-          startsAt: new Date(remote.attention.awaiting.first.startsAt),
-        },
-      },
     },
     recent: remote.recent.map((row) => ({ ...row, startsAt: new Date(row.startsAt) })),
     updatedAt: new Date(remote.updatedAt),

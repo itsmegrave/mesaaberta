@@ -505,15 +505,21 @@ export async function banAccount(
       .for('no key update');
     if (!target) throw new NotFound('no such profile');
     authorize(actor, 'account:ban', target);
-    if (target.status === 'suspended') throw new Invalid('profileId', 'banned');
+    if (target.status !== 'active') throw new Invalid('profileId', 'banned');
     // Stabilize the owned family before discovering and locking the bulk table set.
     await lockTableSchedule(t, profileId);
     await lockInvitationTablesForProfile(t, profileId);
 
     await t
       .update(profiles)
-      .set({ status: 'suspended', bannedAt: now, bannedUntil: until, banReason: reason })
-      .where(eq(profiles.id, profileId));
+      // A ban with an end date suspends; one without bans for good.
+      .set({
+        status: until ? 'suspended' : 'banned',
+        bannedAt: now,
+        bannedUntil: until,
+        banReason: reason,
+      })
+      .where(and(eq(profiles.id, profileId), eq(profiles.status, 'active')));
     const eventIds: string[] = await cancelPendingInvitations(
       t,
       or(eq(playerInvitations.playerId, profileId), eq(playerInvitations.gmId, profileId))!,
@@ -603,13 +609,13 @@ export async function revokeBan(
       .for('update');
     if (!target) throw new NotFound('no such profile');
     authorize(actor, 'account:ban', target);
-    // A closed account is suspended with no ban on it: it cannot come back.
-    if (target.status === 'active' || !target.bannedAt) return [];
+    // A closed account cannot come back (an old closed row is suspended with no ban on it).
+    if (target.status === 'active' || target.status === 'closed' || !target.bannedAt) return [];
 
     await t
       .update(profiles)
       .set({ status: 'active', bannedAt: null, bannedUntil: null, banReason: null })
-      .where(eq(profiles.id, profileId));
+      .where(and(eq(profiles.id, profileId), eq(profiles.status, target.status)));
     return [
       await recordEvent(t, {
         type: 'AccountReinstated',

@@ -146,7 +146,7 @@ describe('api calendar feed over a database', () => {
       .set({ calendarFeedToken: legacy, calendarFeedTokenHash: null })
       .where(eq(profiles.id, player));
     expect((await feed(legacy)).status).toBe(404);
-    // The backfill in drizzle/0091_calendar_feed_token_hash.sql, which must hash like the code does.
+    // The backfill in drizzle/0092_calendar_feed_token_hash.sql, which must hash like the code does.
     await test.db.execute(
       sql`UPDATE "profiles" SET "calendar_feed_token_hash" = encode(sha256(convert_to("calendar_feed_token", 'UTF8')), 'hex') WHERE "calendar_feed_token" IS NOT NULL`,
     );

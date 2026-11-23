@@ -1,5 +1,5 @@
 {
-  "id": "cb07d13f-18f2-4d0b-82c6-bdc8b6a05cc2",
+  "id": "089ba117-c1c5-496d-8664-6f89d524c5a6",
   "prevId": "a1487b54-0371-42f2-af9f-1192e010d53b",
   "version": "7",
   "dialect": "postgresql",
@@ -6212,12 +6212,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "calendar_feed_token_hash": {
-          "name": "calendar_feed_token_hash",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "availability": {
           "name": "availability",
           "type": "integer",
@@ -6302,21 +6296,6 @@
           "columns": [
             {
               "expression": "calendar_feed_token",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "profiles_calendar_feed_token_hash_unique": {
-          "name": "profiles_calendar_feed_token_hash_unique",
-          "columns": [
-            {
-              "expression": "calendar_feed_token_hash",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -8624,7 +8603,9 @@
       "schema": "public",
       "values": [
         "active",
-        "suspended"
+        "suspended",
+        "banned",
+        "closed"
       ]
     },
     "public.registration_status": {

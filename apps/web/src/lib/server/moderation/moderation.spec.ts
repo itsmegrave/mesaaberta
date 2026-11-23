@@ -458,7 +458,36 @@ describe('banAccount', () => {
 
     const rows = await test.db.select().from(profiles);
     expect(rows.find((row) => row.id === id(5))?.status).toBe('active');
-    expect(rows.find((row) => row.id === id(6))?.status).toBe('suspended');
+    expect(rows.find((row) => row.id === id(6))?.status).toBe('banned');
+  });
+
+  it('writes a temporary ban as suspended and one without an end as banned', async () => {
+    await banAccount(test.db, admin, id(5), { until: week, reason: 'x', now });
+    await banAccount(test.db, admin, id(6), { until: null, reason: 'x', now });
+    const rows = await test.db.select().from(profiles);
+    expect(rows.find((row) => row.id === id(5))?.status).toBe('suspended');
+    expect(rows.find((row) => row.id === id(6))?.status).toBe('banned');
+    // Neither can be banned again before the ban is revoked.
+    await expect(
+      banAccount(test.db, admin, id(6), { until: week, reason: 'x', now }),
+    ).rejects.toThrow();
+  });
+
+  it('keeps a closed account closed: no ban, no revoke, never let back in', async () => {
+    await test.db
+      .update(profiles)
+      .set({ status: 'closed' })
+      .where(eq(profiles.id, id(5)));
+    await expect(
+      banAccount(test.db, admin, id(5), { until: null, reason: 'x', now }),
+    ).rejects.toThrow();
+    expect(await revokeBan(test.db, admin, id(5))).toEqual([]);
+    const [profile] = await test.db
+      .select()
+      .from(profiles)
+      .where(eq(profiles.id, id(5)));
+    expect(profile.status).toBe('closed');
+    expect((await stillBanned(test.db, profile, now)).banned).toBe(true);
   });
 
   it('lets someone whose ban ran out back in on their next request', async () => {

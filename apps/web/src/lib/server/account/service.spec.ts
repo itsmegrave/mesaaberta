@@ -318,7 +318,7 @@ describe('anonymiseProfile', () => {
       avatarPath: null,
       tableRole: null,
       tableRoleInferred: false,
-      status: 'suspended',
+      status: 'closed',
     });
     expect(
       await test.db
