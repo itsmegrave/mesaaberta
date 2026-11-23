@@ -71,7 +71,8 @@ test('users table paginates, filters status and username, and links to the selec
   const username = `${prefix}-suspended`;
   const db = database();
   try {
-    await db`insert into profiles (id, username, status, name) values (${userId}, ${username}, 'suspended', 'Selected User')`;
+    // A temporary ban (it has an end date); a suspended row with no ban on it reads as closed.
+    await db`insert into profiles (id, username, status, name, banned_at, banned_until) values (${userId}, ${username}, 'suspended', 'Selected User', now(), now() + interval '7 days')`;
     for (let index = 0; index < 23; index++) {
       await db`insert into profiles (id, username) values (${randomUUID()}, ${`${prefix}-${String(index).padStart(2, '0')}`})`;
     }
@@ -101,8 +102,7 @@ test('users table paginates, filters status and username, and links to the selec
   await expect(
     page.getByText('Selected User', { exact: true }).locator('visible=true'),
   ).toBeVisible();
-  // The list shows the profile's status; the profile page shows the ban (see #172), and this
-  // profile was suspended directly in the database, with no ban recorded.
+  // The list shows the profile's status; the profile page shows the ban (see #172).
   await expect(rows.getByText('Suspenso', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('admin-users.png'), fullPage: true });
   await expect(
