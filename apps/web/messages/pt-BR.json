@@ -941,6 +941,8 @@
   "calendar_feed_refresh_hint": "Os apps de agenda buscam novidades de tempos em tempos (o Google pode levar algumas horas). Os e-mails com o convite continuam chegando na hora.",
   "calendar_feed_renew": "Gerar novo link",
   "calendar_feed_renewed": "Novo link criado. O antigo parou de funcionar.",
+  "calendar_feed_shown_once": "Copie agora: por segurança, este endereço só aparece uma vez.",
+  "calendar_feed_active": "Sua agenda está ligada. Por segurança, o endereço só aparece quando é criado. Para copiar de novo, gere um novo link e troque no app de agenda (o antigo para de funcionar).",
   "calendar_feed_stop": "Desligar",
   "calendar_feed_stopped": "Link da agenda desligado.",
   "dash_waiting": "Aguardando aprovação",
