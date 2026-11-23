@@ -53,3 +53,23 @@ stateDiagram-v2
   expired --> [*]
   cancelled --> [*]
 ```
+
+## Seat (vaga na mesa)
+
+`registrations.status`
+
+```mermaid
+stateDiagram-v2
+  pending --> confirmed: APPROVE
+  confirmed --> [*]
+```
+
+## Session sign-up (vaga na sessão)
+
+`table_session_signups.status`
+
+```mermaid
+stateDiagram-v2
+  waiting --> going: PROMOTE
+  going --> [*]
+```

@@ -50,13 +50,11 @@ const STATUS_WRITES_NOT_MIGRATED = [
   'packages/core/src/server/places/admin.ts',
   'packages/core/src/server/places/claims.ts',
   'packages/core/src/server/places/partner-links.ts',
-  'packages/core/src/server/registrations/service.ts',
   'packages/core/src/server/systems/logos/service.ts',
   'packages/core/src/server/tables/close-reminders.ts',
   'packages/core/src/server/tables/end.ts',
   'packages/core/src/server/tables/lifecycle.ts',
   'packages/core/src/server/tables/session-actions.ts',
-  'packages/core/src/server/tables/session-signups.ts',
   'packages/core/src/server/tables/sessions.ts',
   'packages/core/src/server/tables/write.ts',
 ];

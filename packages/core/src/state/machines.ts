@@ -6,6 +6,8 @@ import { reportMachine } from '../moderation/report-machine';
 import { tableLifecycle } from '../tables/lifecycle-machine';
 import { INVITATION_STATUSES } from '@mesaaberta/db/invitation-status';
 import { invitationMachine } from './invitation-machine';
+import { REGISTRATION_STATUSES, SESSION_SIGNUP_STATUSES } from '@mesaaberta/db/seat-status';
+import { registrationMachine, sessionSignupMachine } from './seat-machines';
 
 /**
  * Every status machine, with the values its column can hold. A spec checks each machine has one
@@ -34,5 +36,17 @@ export const STATUS_MACHINES: {
     column: 'player_invitations / partner_invitations / place_host_invitations.status',
     machine: invitationMachine,
     values: INVITATION_STATUSES,
+  },
+  {
+    title: 'Seat (vaga na mesa)',
+    column: 'registrations.status',
+    machine: registrationMachine,
+    values: REGISTRATION_STATUSES,
+  },
+  {
+    title: 'Session sign-up (vaga na sessão)',
+    column: 'table_session_signups.status',
+    machine: sessionSignupMachine,
+    values: SESSION_SIGNUP_STATUSES,
   },
 ];
