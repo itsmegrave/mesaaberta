@@ -25,6 +25,8 @@ import { NEW_CATALOG_PREFIX, SUGGESTION_NAME } from '@mesaaberta/core/tables/cat
 
 import { guardTableSchedule, lockTableSchedule } from './schedule-guard';
 import { syncTableSessions } from './sessions';
+import { tableLifecycle } from '../../tables/lifecycle-machine';
+import { applyTransition } from '../state/transition';
 import { checkTablePlace, placeSlugOf } from '../places/picker';
 import { promoteWaitlistOf } from '../registrations/waitlist';
 
@@ -566,12 +568,16 @@ export async function publishTable(
     if (system.status === 'pending') throw new Invalid('systemSlug', 'system_pending');
     if (system.status === 'rejected') throw new Invalid('systemSlug', 'system_rejected');
     await enforceRateLimit(tx as unknown as AnyDb, actor!.id, TABLE_CREATION_LIMIT, now);
-    const published = await tx
-      .update(gameTables)
-      .set({ status: 'active', publishedAt: now })
-      .where(and(eq(gameTables.id, table.id), eq(gameTables.status, 'draft')))
-      .returning({ id: gameTables.id });
-    if (!published.length) throw new Invalid('slug', 'not_a_draft');
+    const published = await applyTransition(tx as unknown as AnyDb, {
+      table: gameTables,
+      status: gameTables.status,
+      where: eq(gameTables.id, table.id),
+      machine: tableLifecycle,
+      from: 'draft',
+      event: 'PUBLISH',
+      set: { publishedAt: now },
+    });
+    if (!published) throw new Invalid('slug', 'not_a_draft');
 
     return recordEvent(
       tx as unknown as AnyDb,
@@ -607,10 +613,17 @@ export async function disableTable(
       .for('update');
     if (!locked) throw new NotFound();
     authorize(actor, 'table:disable', { gmId: locked.gmId, tableStatus: locked.status });
-    await tx
-      .update(gameTables)
-      .set({ status: 'disabled', icalSequence: locked.icalSequence + 1 })
-      .where(eq(gameTables.id, table.id));
+    // Taking down a table that is already down changes nothing; its notices still go out again.
+    if (locked.status !== 'disabled')
+      await applyTransition(tx as unknown as AnyDb, {
+        table: gameTables,
+        status: gameTables.status,
+        where: eq(gameTables.id, table.id),
+        machine: tableLifecycle,
+        from: locked.status,
+        event: 'DISABLE',
+        set: { icalSequence: locked.icalSequence + 1 },
+      });
     await syncTableSessions(tx as unknown as AnyDb, [table.id]);
 
     await cancelPendingInvitations(

@@ -15,12 +15,18 @@ was read in. A move missing from a diagram is refused.
 stateDiagram-v2
   active --> awaiting_confirmation: SESSION_ENDED
   active --> concluded: FINISH
+  active --> disabled: DISABLE
   awaiting_confirmation --> concluded: HAPPENED
   awaiting_confirmation --> active: SESSION_HELD
   awaiting_confirmation --> not_held: NOT_HELD
   awaiting_confirmation --> active: POSTPONE
+  awaiting_confirmation --> concluded: FINISH
+  awaiting_confirmation --> disabled: DISABLE
+  not_held --> disabled: DISABLE
+  draft --> active: PUBLISH
+  draft --> disabled: DISABLE
   concluded --> [*]
-  not_held --> [*]
+  disabled --> [*]
 ```
 
 ## Report (denúncia)
