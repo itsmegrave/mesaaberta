@@ -37,3 +37,19 @@ stateDiagram-v2
   resolved --> [*]
   dismissed --> [*]
 ```
+
+## Invitation (mesa, parceiro, lugar)
+
+`player_invitations / partner_invitations / place_host_invitations.status`
+
+```mermaid
+stateDiagram-v2
+  pending --> accepted: ACCEPT
+  pending --> declined: DECLINE
+  pending --> cancelled: CANCEL
+  pending --> expired: EXPIRE
+  accepted --> [*]
+  declined --> [*]
+  expired --> [*]
+  cancelled --> [*]
+```

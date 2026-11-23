@@ -4,6 +4,8 @@ import { TABLE_STATUSES } from '../tables/status-values';
 import { REPORT_STATUSES } from '../moderation/reports';
 import { reportMachine } from '../moderation/report-machine';
 import { tableLifecycle } from '../tables/lifecycle-machine';
+import { INVITATION_STATUSES } from '@mesaaberta/db/invitation-status';
+import { invitationMachine } from './invitation-machine';
 
 /**
  * Every status machine, with the values its column can hold. A spec checks each machine has one
@@ -26,5 +28,11 @@ export const STATUS_MACHINES: {
     column: 'reports.status',
     machine: reportMachine,
     values: REPORT_STATUSES,
+  },
+  {
+    title: 'Invitation (mesa, parceiro, lugar)',
+    column: 'player_invitations / partner_invitations / place_host_invitations.status',
+    machine: invitationMachine,
+    values: INVITATION_STATUSES,
   },
 ];

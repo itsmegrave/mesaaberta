@@ -13,7 +13,8 @@ import { next } from '../../state/machine';
  * status `event` leads to from `from`, updates only the rows still in `from` (so two moves at once
  * cannot both win), and records the domain event in the same transaction: pass the caller's
  * transaction as `db`. Returns null when no row was in `from` any more, which the caller turns into
- * its own refusal. A move the machine does not have is a bug and throws.
+ * its own refusal. A move the machine does not have is a bug and throws. `rows` are the moved rows
+ * as they are now, for callers that record their own event from them.
  */
 export async function applyTransition<S extends string>(
   db: AnyDb,
@@ -41,7 +42,12 @@ export async function applyTransition<S extends string>(
     /** The domain event to record when at least one row moved. */
     record?: NewEvent | ((to: S) => NewEvent);
   },
-): Promise<{ to: S; count: number; eventId: string | null } | null> {
+): Promise<{
+  to: S;
+  count: number;
+  eventId: string | null;
+  rows: Record<string, unknown>[];
+} | null> {
   const froms: readonly S[] = typeof from === 'string' ? [from] : from;
   const targets = new Set(froms.map((state) => next<S>(machine, state, event)));
   if (targets.has(null) || targets.size !== 1)
@@ -55,10 +61,10 @@ export async function applyTransition<S extends string>(
     .update(table)
     .set({ ...set, [key]: to })
     .where(and(where, inArray(status, [...froms])))
-    .returning({ status });
+    .returning();
   if (!moved.length) return null;
 
   const event_ = typeof record === 'function' ? record(to) : record;
   const eventId = event_ ? await recordEvent(db, event_) : null;
-  return { to, count: moved.length, eventId };
+  return { to, count: moved.length, eventId, rows: moved as Record<string, unknown>[] };
 }
