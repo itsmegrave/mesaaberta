@@ -1,11 +1,14 @@
 // Relative imports only: the Cron Trigger's Worker entry bundles this file without `#lib`.
 import type { AnyStateMachine } from 'xstate';
-import { TABLE_STATUSES } from '../tables/status-values';
+import { TABLE_SESSION_STATUSES, TABLE_STATUSES } from '../tables/status-values';
 import { REPORT_STATUSES } from '../moderation/reports';
 import { reportMachine } from '../moderation/report-machine';
 import { tableLifecycle } from '../tables/lifecycle-machine';
+import { tableSessionMachine } from '../tables/session-machine';
 import { INVITATION_STATUSES } from '@mesaaberta/db/invitation-status';
 import { invitationMachine } from './invitation-machine';
+import { CATALOG_STATUSES } from '@mesaaberta/db/catalog-status';
+import { catalogMachine } from './catalog-machine';
 import { REGISTRATION_STATUSES, SESSION_SIGNUP_STATUSES } from '@mesaaberta/db/seat-status';
 import { registrationMachine, sessionSignupMachine } from './seat-machines';
 
@@ -24,6 +27,12 @@ export const STATUS_MACHINES: {
     column: 'game_tables.status',
     machine: tableLifecycle,
     values: TABLE_STATUSES,
+  },
+  {
+    title: 'Table session (sessão)',
+    column: 'table_sessions.status',
+    machine: tableSessionMachine,
+    values: TABLE_SESSION_STATUSES,
   },
   {
     title: 'Report (denúncia)',
@@ -48,5 +57,11 @@ export const STATUS_MACHINES: {
     column: 'table_session_signups.status',
     machine: sessionSignupMachine,
     values: SESSION_SIGNUP_STATUSES,
+  },
+  {
+    title: 'Catalog entry (sistema, plataforma, tag, recurso de lugar)',
+    column: 'systems / platforms / tags / place_features.status',
+    machine: catalogMachine,
+    values: CATALOG_STATUSES,
   },
 ];

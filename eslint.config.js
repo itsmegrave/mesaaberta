@@ -41,7 +41,6 @@ const webDatabaseRead = {
 // its machine and takes its files off this list; when it is empty, the list goes.
 const STATUS_WRITES_NOT_MIGRATED = [
   'packages/core/src/server/account/service.ts',
-  'packages/core/src/server/admin/catalog.ts',
   'packages/core/src/server/crowdfunding/admin.ts',
   'packages/core/src/server/crowdfunding/import/store.ts',
   'packages/core/src/server/moderation/admin.ts',
@@ -51,8 +50,6 @@ const STATUS_WRITES_NOT_MIGRATED = [
   'packages/core/src/server/places/claims.ts',
   'packages/core/src/server/places/partner-links.ts',
   'packages/core/src/server/systems/logos/service.ts',
-  'packages/core/src/server/tables/session-actions.ts',
-  'packages/core/src/server/tables/sessions.ts',
 ];
 
 // A status changes only through its machine (`applyTransition`, packages/core/src/server/state), so

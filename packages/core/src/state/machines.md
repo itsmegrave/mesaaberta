@@ -29,6 +29,20 @@ stateDiagram-v2
   disabled --> [*]
 ```
 
+## Table session (sessão)
+
+`table_sessions.status`
+
+```mermaid
+stateDiagram-v2
+  scheduled --> held: HELD
+  scheduled --> not_held: NOT_HELD
+  scheduled --> cancelled: CANCEL
+  held --> [*]
+  not_held --> [*]
+  cancelled --> [*]
+```
+
 ## Report (denúncia)
 
 `reports.status`
@@ -78,4 +92,19 @@ stateDiagram-v2
 stateDiagram-v2
   waiting --> going: PROMOTE
   going --> [*]
+```
+
+## Catalog entry (sistema, plataforma, tag, recurso de lugar)
+
+`systems / platforms / tags / place_features.status`
+
+```mermaid
+stateDiagram-v2
+  pending --> approved: APPROVE
+  pending --> rejected: REJECT
+  pending --> rejected: MERGE
+  approved --> disabled: DISABLE
+  approved --> rejected: MERGE
+  disabled --> rejected: MERGE
+  rejected --> [*]
 ```
