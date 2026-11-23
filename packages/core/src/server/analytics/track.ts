@@ -13,7 +13,8 @@ export type RequestEventName =
   | 'gm_directory_viewed'
   | 'places_directory_viewed'
   | 'theme_in_use'
-  | 'theme_changed';
+  | 'theme_changed'
+  | 'widget_answered';
 
 export type RequestEventProperties = Record<string, string | number>;
 

@@ -2002,10 +2002,75 @@ export const widgetDismissals = pgTable(
       .references(() => profiles.id, { onDelete: 'cascade' }),
     dismissedAt: timestamp('dismissed_at', { withTimezone: true }).notNull().defaultNow(),
     times: smallint('times').notNull().default(1),
+    // A widget closed for a while (a popup's "Agora não"): offered again after this. Null is for
+    // good, as every poll dismissal is.
+    hiddenUntil: timestamp('hidden_until', { withTimezone: true }),
   },
   (dismissal) => [
     primaryKey({ columns: [dismissal.widgetId, dismissal.profileId] }),
     index('widget_dismissals_profile_idx').on(dismissal.profileId),
+  ],
+).enableRLS();
+
+// When a popup opens: on the first page after someone signs in, or on any page it is placed on.
+export const popupTrigger = pgEnum('popup_trigger', ['sign_in', 'page']);
+
+// A popup: a widget of kind `popup` drawn as a dialog over the page (a title, a line of text, an
+// optional picture and one button), aimed and scheduled like a poll.
+export const popups = pgTable(
+  'popups',
+  {
+    widgetId: uuid('widget_id')
+      .primaryKey()
+      .references(() => widgets.id, { onDelete: 'cascade' }),
+    heading: text('heading').notNull(),
+    body: text('body').notNull(),
+    // The button: its words and where it goes (a path on the site or an https address).
+    ctaLabel: text('cta_label').notNull(),
+    ctaUrl: text('cta_url').notNull(),
+    // A picture over the title: its public address, stored in the table-images bucket under
+    // `popups/` (the widget payload carries no deployment settings to build it from a path).
+    imageUrl: text('image_url'),
+    imageAlt: text('image_alt'),
+    trigger: popupTrigger('trigger').notNull().default('sign_in'),
+    // Whether it offers "Não mostrar mais", which hides it for good for that person.
+    allowForever: boolean('allow_forever').notNull().default(true),
+  },
+  (popup) => [
+    check('popups_heading_length', sql`char_length(${popup.heading}) BETWEEN 1 AND 80`),
+    check('popups_body_length', sql`char_length(${popup.body}) BETWEEN 1 AND 400`),
+    check('popups_cta_label_length', sql`char_length(${popup.ctaLabel}) BETWEEN 1 AND 40`),
+    check(
+      'popups_cta_url_format',
+      // A path on the site (never `//host` or `/\host`, which leave it) or an https address.
+      sql`char_length(${popup.ctaUrl}) <= 500 AND ((${popup.ctaUrl} LIKE '/%' AND substr(${popup.ctaUrl}, 2, 1) NOT IN ('/', chr(92))) OR ${popup.ctaUrl} LIKE 'https://%')`,
+    ),
+    check('popups_image_alt_length', sql`char_length(${popup.imageAlt}) <= 200`),
+    check(
+      'popups_image_url_format',
+      sql`${popup.imageUrl} IS NULL OR (char_length(${popup.imageUrl}) <= 1000 AND ${popup.imageUrl} ~ '^https?://')`,
+    ),
+  ],
+).enableRLS();
+
+// Who was shown a popup and who pressed its button, for the admin's counts. Personal data: only
+// counts leave the admin, and closing an account deletes the rows (`onAccountClosed`).
+export const popupViews = pgTable(
+  'popup_views',
+  {
+    widgetId: uuid('widget_id')
+      .notNull()
+      .references(() => popups.widgetId, { onDelete: 'cascade' }),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    shownAt: timestamp('shown_at', { withTimezone: true }).notNull().defaultNow(),
+    times: smallint('times').notNull().default(1),
+    clickedAt: timestamp('clicked_at', { withTimezone: true }),
+  },
+  (view) => [
+    primaryKey({ columns: [view.widgetId, view.profileId] }),
+    index('popup_views_profile_idx').on(view.profileId),
   ],
 ).enableRLS();
 

@@ -35,6 +35,7 @@ const setup = ({
       url,
       getClientAddress: () => '203.0.113.7',
       setHeaders: vi.fn(),
+      cookies: { set: vi.fn() },
       request: new Request(url, { method: 'POST', body }),
     } as unknown as RequestEvent;
   };

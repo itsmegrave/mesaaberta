@@ -4,11 +4,14 @@ import { GET } from './+server';
 const { finishLogin } = vi.hoisted(() => ({ finishLogin: vi.fn() }));
 vi.mock('@mesaaberta/core/server/auth/login', () => ({ finishLogin }));
 
+const cookies = { set: vi.fn() };
+
 const call = async (query: string, locals: object = { supabase: {}, db: null, log: {} }) => {
   const event = {
     url: new URL(`https://mesaaberta.test/auth/callback?${query}`),
     locals,
     getClientAddress: () => '127.0.0.1',
+    cookies,
   };
   try {
     await GET(event as never);
@@ -19,7 +22,19 @@ const call = async (query: string, locals: object = { supabase: {}, db: null, lo
 };
 
 describe('the auth callback', () => {
-  beforeEach(() => finishLogin.mockReset().mockResolvedValue('/'));
+  beforeEach(() => {
+    finishLogin.mockReset().mockResolvedValue('/');
+    cookies.set.mockReset();
+  });
+
+  it('marks a sign-in that went through, and not one sent back to the login page', async () => {
+    await call('code=abc');
+    expect(cookies.set).toHaveBeenCalledWith('ma_signed_in', '1', expect.anything());
+    cookies.set.mockReset();
+    finishLogin.mockResolvedValue('/login?error=suspended');
+    await call('code=abc');
+    expect(cookies.set).not.toHaveBeenCalled();
+  });
 
   it('takes someone who was connecting an account back to their profile, saying why it failed', async () => {
     const next = encodeURIComponent('/u/profile/edit/account?conta=conectada');

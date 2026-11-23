@@ -68,7 +68,9 @@ const LARGE: OptimizeOptions = { maxWidth: 1600, maxHeight: 1600, quality: 80 };
 
 /** How big a picture in `path` is kept: covers large, everything shown as a square small. */
 export const optimizeOptionsFor = (path: string): OptimizeOptions =>
-  /^(tables|crowdfunding|places)\//.test(path) || /^[^/]+\/banners\//.test(path) ? LARGE : SMALL;
+  /^(tables|crowdfunding|places|popups)\//.test(path) || /^[^/]+\/banners\//.test(path)
+    ? LARGE
+    : SMALL;
 
 /**
  * The picture as a WebP no bigger than its place needs, under the same name with a `.webp` end.

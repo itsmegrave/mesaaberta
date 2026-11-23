@@ -38,11 +38,17 @@
     () => client,
   );
 
-  // One at a time: the first one this build has a component for.
-  const shown = $derived(
+  // The ones this build has a component for, on a page that shows widgets.
+  const drawable = $derived(
     showsWidgets(routeId)
-      ? query.data?.widgets.find(({ widget }) => Object.hasOwn(widgets, widget.kind))
-      : undefined,
+      ? (query.data?.widgets ?? []).filter(({ widget }) => Object.hasOwn(widgets, widget.kind))
+      : [],
+  );
+  // At most one dialog (a popup) and one corner card (a poll), and the card waits while a dialog
+  // is open: the person deals with one thing at a time.
+  const dialog = $derived(drawable.find(({ widget }) => widget.presentation === 'modal'));
+  const shown = $derived(
+    dialog ? undefined : drawable.find(({ widget }) => widget.presentation !== 'modal'),
   );
 
   // An answered widget (a vote, "Agora não") never comes back: the page shows what the answer
@@ -69,7 +75,21 @@
   }
 </script>
 
-{#if shown}
+{#if dialog}
+  {@const { ext, widget } = dialog}
+  <!-- Draws its own dialog (DialogShell): centred on desktop, a bottom sheet on a phone. -->
+  {#key widget.id}
+    {#await loadWidget(widget.kind) then Widget}
+      <Widget
+        {widget}
+        mode="modal"
+        action="/{ext}/w/{widget.id}?/respond"
+        next={page.url.pathname + page.url.search}
+        onAnswer={(next) => answered(ext, widget.id, next)}
+      />
+    {/await}
+  {/key}
+{:else if shown}
   {@const { ext, widget } = shown}
   <!-- Bottom-left: the messages launcher and the toasts own bottom-right. On a phone it sits above
        the tab bar and stops short of the launcher (56px wide, 16px from the edge). -->

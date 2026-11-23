@@ -30,6 +30,8 @@ export { SEGMENTS, type Segment };
  * - `player`: has a confirmed seat.
  * - `recent`: played or ran a session (a table that went ahead or still will) in the last 90 days.
  * - `new`: the account is younger than 30 days.
+ * - `has_passkey` / `no_passkey`: the account has a passkey, or has none (Supabase Auth keeps them;
+ *   the `has_passkey` function reads them). Where Auth cannot be read, an account is in neither.
  */
 export type ViewerSegments = Readonly<Record<Segment, boolean>>;
 
@@ -80,6 +82,10 @@ export function segmentWhere(segment: Segment, now: Date = new Date()): SQL {
     }
     case 'new':
       return gte(profiles.createdAt, new Date(now.getTime() - NEW_MEMBER_DAYS * DAY_MS));
+    case 'has_passkey':
+      return sql`public.has_passkey(${profiles.id}) is true`;
+    case 'no_passkey':
+      return sql`public.has_passkey(${profiles.id}) is false`;
   }
 }
 

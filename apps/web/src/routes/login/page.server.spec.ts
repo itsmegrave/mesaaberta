@@ -9,6 +9,7 @@ import { actions } from './+page.server';
 
 const setup = (env: object = {}, setSession = vi.fn().mockResolvedValue({ error: null })) => {
   const setHeaders = vi.fn();
+  const cookies = { set: vi.fn() };
   const locals = {
     env,
     supabase: { auth: { setSession } },
@@ -24,10 +25,11 @@ const setup = (env: object = {}, setSession = vi.fn().mockResolvedValue({ error:
       url,
       getClientAddress: () => '203.0.113.7',
       setHeaders,
+      cookies,
       request: new Request(url, { method: 'POST', body }),
     } as unknown as RequestEvent;
   };
-  return { event, locals, setHeaders, setSession };
+  return { event, locals, setHeaders, setSession, cookies };
 };
 
 const api = (answer: { status: number; body: object } | 'down') => {
@@ -48,9 +50,11 @@ describe('signing in with e-mail', () => {
       status: 200,
       body: { result: 'ok', session: { accessToken: 'jwt-a', refreshToken: 'jwt-r' } },
     });
-    const { event, setSession, locals } = setup(env);
+    const { event, setSession, locals, cookies } = setup(env);
 
     await expect(submit(event())).rejects.toMatchObject({ status: 303, location: '/dashboard' });
+    // The first page after it may open a popup that waits for a sign-in.
+    expect(cookies.set).toHaveBeenCalledWith('ma_signed_in', '1', expect.anything());
     expect(setSession).toHaveBeenCalledWith({ access_token: 'jwt-a', refresh_token: 'jwt-r' });
     const request = fetch.mock.calls[0][0];
     expect(new URL(request.url).pathname).toBe('/v1/auth/sign-in');

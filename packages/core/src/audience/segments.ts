@@ -3,5 +3,13 @@
  * queries: the MCP and the forms validate with them. What each one means is in
  * `server/audience/segments.ts`.
  */
-export const SEGMENTS = ['admin', 'gm', 'player', 'recent', 'new'] as const;
+export const SEGMENTS = [
+  'admin',
+  'gm',
+  'player',
+  'recent',
+  'new',
+  'has_passkey',
+  'no_passkey',
+] as const;
 export type Segment = (typeof SEGMENTS)[number];

@@ -2,9 +2,10 @@ import { redirect } from '@sveltejs/kit';
 import { safeNext } from '@mesaaberta/core/server/auth/safe-next';
 import { finishLogin } from '@mesaaberta/core/server/auth/login';
 import { finishLoginViaApi } from '#lib/server/auth/finish-login.js';
+import { markSignedIn } from '#lib/server/auth/signed-in-marker.js';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ url, locals, getClientAddress }) => {
+export const GET: RequestHandler = async ({ url, locals, getClientAddress, cookies }) => {
   if (!locals.supabase) redirect(303, '/login?error=unavailable');
 
   // The provider or Supabase refused (the account is already connected to someone else, say) and
@@ -30,5 +31,7 @@ export const GET: RequestHandler = async ({ url, locals, getClientAddress }) => 
     { code: url.searchParams.get('code'), next: url.searchParams.get('next') },
   );
 
+  // A refused sign-in goes back to /login with its reason; anything else is signed in.
+  if (!target.startsWith('/login')) markSignedIn(cookies);
   redirect(303, target);
 };

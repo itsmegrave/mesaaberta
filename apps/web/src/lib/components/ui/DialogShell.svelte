@@ -18,6 +18,7 @@
     trigger,
     triggerClass = '',
     triggerLabel,
+    media,
     title,
     description,
     children,
@@ -45,6 +46,8 @@
     triggerClass?: string;
     /** Names the trigger for screen readers when its content alone would not. */
     triggerLabel?: string;
+    /** Drawn above the title, edge to edge across the top of the card (a popup's picture). */
+    media?: Snippet;
     title: string | Snippet;
     description?: string | Snippet;
     children: Snippet;
@@ -82,6 +85,10 @@
             ? 'max-h-full overflow-y-auto'
             : ''} {sheet ? 'rounded-b-none pb-8 md:rounded-b-lg md:pb-6' : ''}"
         >
+          {#if media}
+            <!-- Edge to edge: the card's own padding (p-6) pulled back on three sides. -->
+            <div class="-mx-6 -mt-6 mb-5 overflow-hidden rounded-t-lg">{@render media()}</div>
+          {/if}
           <Dialog.Title class="text-xl font-semibold"
             >{#if typeof title === 'string'}{title}{:else}{@render title()}{/if}</Dialog.Title
           >

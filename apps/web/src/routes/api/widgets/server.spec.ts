@@ -20,14 +20,38 @@ vi.mock('@mesaaberta/core/server/audience/segments', () => ({ viewerSegments: vi
 
 const viewer = {
   id: 'ana',
-  segments: { admin: false, gm: true, player: false, recent: false, new: false },
+  segments: {
+    admin: false,
+    gm: true,
+    player: false,
+    recent: false,
+    new: false,
+    has_passkey: false,
+    no_passkey: true,
+  },
+  signedIn: false,
 };
 
-const get = (route: string | null, user: object | null = { id: 'ana' }) => {
+/** The request's cookies, with the sign-in mark when `signedIn`. */
+const jar = (signedIn = false) => {
+  const cookies = new Map<string, string>(signedIn ? [['ma_signed_in', '1']] : []);
+  return {
+    cookies,
+    get: (name: string) => cookies.get(name),
+    delete: (name: string) => void cookies.delete(name),
+  };
+};
+
+const get = (
+  route: string | null,
+  user: object | null = { id: 'ana' },
+  cookies: ReturnType<typeof jar> = jar(),
+) => {
   const url = new URL('https://x.test/api/widgets');
   if (route !== null) url.searchParams.set('route', route);
   return GET({
     url,
+    cookies,
     locals: {
       getUser: async () => user,
       getProfile: async () => user && { id: 'ana', role: 'member', status: 'active' },
@@ -60,6 +84,28 @@ describe('GET /api/widgets', () => {
       expect.anything(),
       viewer,
       '/t/[slug]',
+      expect.anything(),
+    );
+  });
+
+  it('tells the first page after a sign-in so, once', async () => {
+    const cookies = jar(true);
+    await get('/admin', undefined, cookies);
+    // A page without widgets leaves the mark for the next one.
+    expect(cookies.cookies.has('ma_signed_in')).toBe(true);
+    await get('/', undefined, cookies);
+    expect(forViewer).toHaveBeenLastCalledWith(
+      expect.anything(),
+      { ...viewer, signedIn: true },
+      '/',
+      expect.anything(),
+    );
+    expect(cookies.cookies.has('ma_signed_in')).toBe(false);
+    await get('/tables', undefined, cookies);
+    expect(forViewer).toHaveBeenLastCalledWith(
+      expect.anything(),
+      viewer,
+      '/tables',
       expect.anything(),
     );
   });

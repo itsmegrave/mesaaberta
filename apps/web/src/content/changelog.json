@@ -1,5 +1,22 @@
 [
   {
+    "date": "2026-11-23",
+    "title": "Avisos em popup",
+    "summary": "A equipe agora pode mostrar avisos curtos em popup, com imagem e um botão. O primeiro convida quem ainda não tem passkey a criar uma.",
+    "changes": [
+      {
+        "kind": "new",
+        "title": "Popups da equipe",
+        "description": "Um aviso curto pode abrir logo depois que você entra na conta ou, no máximo uma vez por dia, em algumas páginas. Feche com “Agora não” ou marque “Não mostrar mais” para ele não voltar."
+      },
+      {
+        "kind": "new",
+        "title": "Convite para criar passkey",
+        "description": "Quem ainda não tem passkey vê um convite depois de entrar, com um botão que leva direto a Conta e acesso para criar uma."
+      }
+    ]
+  },
+  {
     "date": "2026-11-17",
     "title": "Perfil mais punk no Overdrive",
     "summary": "Com o pedal Overdrive ligado, os sistemas e as conquistas do perfil viraram adesivos. E a capa do perfil agora ocupa a faixa inteira.",

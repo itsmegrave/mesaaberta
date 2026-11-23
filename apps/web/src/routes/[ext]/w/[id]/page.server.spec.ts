@@ -27,9 +27,18 @@ vi.mock('@mesaaberta/core/server/audience/segments', () => ({ viewerSegments: vi
 
 const viewer = {
   id: 'ana',
-  segments: { admin: false, gm: false, player: true, recent: true, new: false },
+  segments: {
+    admin: false,
+    gm: false,
+    player: true,
+    recent: true,
+    new: false,
+    has_passkey: false,
+    no_passkey: false,
+  },
 };
 
+const track = vi.fn();
 const ana = { id: 'ana', role: 'member', status: 'active' };
 const event = ({
   ext = 'fake',
@@ -47,6 +56,7 @@ const event = ({
       getProfile: async () => profile,
       env: apiOver(actorsOnly([ana])),
       log: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
+      track,
     },
     url,
     request: new Request(url, {
@@ -104,6 +114,21 @@ describe('answering a widget', () => {
       expect.anything(),
     );
     expect(result).toEqual({ widget: { ...results, data: { voted: true } } });
+  });
+
+  it('tells Mixpanel what was done, never the answer itself', async () => {
+    await answer(event({ fields: [['intent', 'click']] }));
+    expect(track).toHaveBeenLastCalledWith('widget_answered', 'ana', {
+      extension: 'fake',
+      widget_id: 'p1',
+      intent: 'click',
+    });
+    await answer(event({ fields: [['option', 'o2']] }));
+    expect(track.mock.lastCall?.[2]).toMatchObject({ intent: 'answer' });
+    track.mockClear();
+    respond.mockResolvedValueOnce({ invalid: true });
+    await answer(event({ fields: [['intent', 'click']] }));
+    expect(track).not.toHaveBeenCalled();
   });
 
   it('goes back to the page when the form was sent without JavaScript, never off the site', async () => {
