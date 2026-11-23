@@ -552,6 +552,150 @@ describe('polls', () => {
   });
 });
 
+describe('popups', () => {
+  const popup = {
+    heading: 'Entre sem senha',
+    body: 'Com uma passkey você entra com a digital, o rosto ou o PIN do aparelho.',
+    cta_label: 'Criar passkey',
+    cta_url: '/u/profile/edit/account#passkeys',
+    include: ['no_passkey'],
+  };
+
+  it('only counts the reach until it is confirmed', async () => {
+    const { call, seen } = setUp({
+      answers: { '/v1/admin/widgets/reach': { body: { eventIds: [], reach: 40 } } },
+    });
+    expect(await call('create_popup', popup)).toEqual({
+      isError: false,
+      body: { step: 'confirm', reach: 40 },
+    });
+    expect(seen.filter((request) => request.method === 'POST')).toEqual([
+      {
+        path: '/v1/admin/widgets/reach',
+        actor: USER,
+        method: 'POST',
+        body: { 'include:no_passkey': 'on' },
+      },
+    ]);
+  });
+
+  it('creates and publishes when confirmed: on sign-in, everywhere, may be hidden for good', async () => {
+    const { call, seen } = setUp({
+      answers: {
+        '/v1/admin/widgets/createPopup': { body: { eventIds: [], created: 'w2' } },
+        '/v1/admin/widgets/publish': { body: { eventIds: [], published: 'w2', reach: 40 } },
+      },
+    });
+    expect(
+      await call('create_popup', {
+        ...popup,
+        image_url: 'https://example.com/passkey.png',
+        confirmed: true,
+      }),
+    ).toEqual({ isError: false, body: { step: 'published', id: 'w2', reach: 40 } });
+    const posts = seen.filter((request) => request.method === 'POST');
+    expect(posts.map((request) => request.path)).toEqual([
+      '/v1/admin/widgets/createPopup',
+      '/v1/admin/widgets/publish',
+    ]);
+    expect(posts[0].body).toEqual({
+      title: popup.heading,
+      heading: popup.heading,
+      body: popup.body,
+      ctaLabel: popup.cta_label,
+      ctaUrl: popup.cta_url,
+      imageUrl: 'https://example.com/passkey.png',
+      imageAlt: '',
+      trigger: 'sign_in',
+      allowForever: 'on',
+      priority: '0',
+      'placement:everywhere': 'on',
+      'include:no_passkey': 'on',
+    });
+  });
+
+  it('refuses a button that leaves for another site without https', async () => {
+    const { call, seen } = setUp({});
+    expect(
+      (await call('create_popup', { ...popup, cta_url: '//evil.example', confirmed: true }))
+        .isError,
+    ).toBe(true);
+    expect(seen.filter((request) => request.method === 'POST')).toEqual([]);
+  });
+
+  it('says when the picture could not be stored, with nothing written', async () => {
+    const { call } = setUp({
+      answers: {
+        '/v1/admin/widgets/createPopup': { body: { eventIds: [], refused: 'image' } },
+      },
+    });
+    expect(await call('create_popup', { ...popup, confirmed: true })).toEqual({
+      isError: true,
+      body: { error: 'invalid', field: 'image' },
+    });
+  });
+
+  it('lists popups with their counts, not who saw them', async () => {
+    const { call } = setUp({
+      answers: {
+        '/v1/admin/widgets/panel': {
+          body: {
+            panel: {
+              polls: [],
+              popups: [
+                {
+                  id: 'w2',
+                  title: 'Passkey',
+                  status: 'live',
+                  heading: popup.heading,
+                  body: popup.body,
+                  ctaLabel: popup.cta_label,
+                  ctaUrl: popup.cta_url,
+                  imageUrl: null,
+                  trigger: 'sign_in',
+                  allowForever: true,
+                  placements: ['everywhere'],
+                  audience: { include: ['no_passkey'], exclude: [] },
+                  reach: 40,
+                  publishedReach: 41,
+                  publishedAt: '2026-11-24T12:00:00.000Z',
+                  shown: 12,
+                  clicked: 5,
+                  hiddenForGood: 2,
+                },
+              ],
+            },
+          },
+        },
+      },
+    });
+    const { body } = await call('list_popups', {});
+    expect(body).toEqual({
+      popups: [
+        expect.objectContaining({
+          id: 'w2',
+          hasImage: false,
+          audience: { include: ['no_passkey'], exclude: [], people: 0 },
+          shown: 12,
+          clicked: 5,
+          hiddenForGood: 2,
+        }),
+      ],
+    });
+  });
+
+  it('closes a popup', async () => {
+    const id = '00000000-0000-4000-8000-0000000000dd';
+    const { call } = setUp({
+      answers: { '/v1/admin/widgets/close': { body: { eventIds: [], moved: 'closed' } } },
+    });
+    expect(await call('close_popup', { id })).toEqual({
+      isError: false,
+      body: { id, status: 'closed' },
+    });
+  });
+});
+
 describe('post_on_social', () => {
   const reel = {
     caption: 'Procurando gente pra jogar?',

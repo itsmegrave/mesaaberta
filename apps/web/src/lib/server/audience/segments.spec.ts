@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { sql } from 'drizzle-orm';
 import { gameTables, profiles, registrations, systems } from '@mesaaberta/core/server/db/schema';
 import {
   countAudience,
@@ -41,7 +42,15 @@ const table = async (gm: number, over: Partial<typeof gameTables.$inferInsert> =
   return row;
 };
 
-const none: ViewerSegments = { admin: false, gm: false, player: false, recent: false, new: false };
+const none: ViewerSegments = {
+  admin: false,
+  gm: false,
+  player: false,
+  recent: false,
+  new: false,
+  has_passkey: false,
+  no_passkey: false,
+};
 
 beforeAll(async () => {
   test = await createTestDb();
@@ -124,5 +133,39 @@ describe('audiences', () => {
     // A picked person who cannot be reached (id(7)) or does not exist (id(99)) is not counted.
     const people = [id(1), id(2), id(7), id(99)];
     expect(await countAudience(test.db, { include: [], exclude: [], people }, now)).toBe(2);
+  });
+});
+
+describe('passkeys', () => {
+  it('puts nobody in either group while Supabase Auth cannot be read', async () => {
+    expect(await countAudience(test.db, { include: ['no_passkey'], exclude: [] }, now)).toBe(0);
+    expect(await countAudience(test.db, { include: ['has_passkey'], exclude: [] }, now)).toBe(0);
+  });
+
+  it('reads who has a passkey from Supabase Auth', async () => {
+    // The part of Supabase's `auth.webauthn_credentials` the check reads.
+    await test.db.execute(sql`create schema if not exists auth`);
+    await test.db.execute(
+      sql`create table auth.webauthn_credentials (id uuid primary key default gen_random_uuid(), user_id uuid not null)`,
+    );
+    await test.db.execute(
+      sql`insert into auth.webauthn_credentials (user_id) values (${id(2)}), (${id(2)}), (${id(4)})`,
+    );
+
+    expect(await viewerSegments(test.db, id(2), now)).toEqual({
+      ...none,
+      gm: true,
+      has_passkey: true,
+    });
+    expect(await viewerSegments(test.db, id(9), now)).toEqual({
+      ...none,
+      gm: true,
+      no_passkey: true,
+    });
+    expect(await countAudience(test.db, { include: ['has_passkey'], exclude: [] }, now)).toBe(2);
+    expect(await countAudience(test.db, { include: ['no_passkey'], exclude: [] }, now)).toBe(5);
+    expect(await countAudience(test.db, { include: ['gm'], exclude: ['has_passkey'] }, now)).toBe(
+      3,
+    );
   });
 });

@@ -53,14 +53,24 @@ export interface AdminSurface {
   readonly section?: AdminSection;
 }
 
-/** The signed-in person a widget is chosen for, with the facts an audience rule reads. */
-export type WidgetViewer = { id: string; segments: ViewerSegments };
+/**
+ * The signed-in person a widget is chosen for, with the facts an audience rule reads. `signedIn`:
+ * this is the first page they see since signing in (a popup that opens on sign-in waits for it).
+ */
+export type WidgetViewer = { id: string; segments: ViewerSegments; signedIn?: boolean };
 
 /**
  * A widget for the page to show. `kind` picks its component (the `widgets` map of the web app's
  * `panels.ts`), which is the only reader of `data`. Plain JSON: it crosses the network.
+ * `presentation`: a card in the corner (the default, a poll) or a dialog over the page (a popup).
+ * A page shows at most one of each, and a dialog first: the card waits while one is open.
  */
-export type WidgetPayload = { id: string; kind: string; data: Record<string, unknown> };
+export type WidgetPayload = {
+  id: string;
+  kind: string;
+  data: Record<string, unknown>;
+  presentation?: 'card' | 'modal';
+};
 
 /** What an answer did: the widget as it now stands, null once it has nothing more to show, or a refusal. */
 export type WidgetAnswer = { widget: WidgetPayload | null } | { invalid: true };

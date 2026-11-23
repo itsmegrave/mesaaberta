@@ -42,6 +42,14 @@ export const actions: Actions = {
       if (cause instanceof Invalid) return fail(400, { invalid: true });
       throw cause;
     }
+    // Mixpanel learns what was done (a vote, a popup shown, clicked or closed); the answer itself
+    // stays out. An intent that isn't a plain word is counted as an answer.
+    const intent = typeof fields.intent === 'string' && /^[a-z_]{1,20}$/.test(fields.intent);
+    locals.track('widget_answered', profile.id, {
+      extension: params.ext,
+      widget_id: params.id,
+      intent: intent ? fields.intent : 'answer',
+    });
     if (!request.headers.has('x-sveltekit-action'))
       redirect(303, safeNext(typeof next === 'string' ? next : null, '/'));
     return { widget };

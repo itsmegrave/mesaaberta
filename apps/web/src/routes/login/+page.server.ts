@@ -16,6 +16,7 @@ import {
 import { passkeyAnswerSchema } from '#lib/auth/passkey.js';
 import { finishLoginViaApi } from '#lib/server/auth/finish-login.js';
 import { captchaField, captchaSiteKey, captchaTokenFrom } from '#lib/server/auth/captcha.js';
+import { markSignedIn } from '#lib/server/auth/signed-in-marker.js';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -86,7 +87,7 @@ async function signInViaApi(
 
 export const actions: Actions = {
   // Email and password. Supabase checks them; a wrong email and a wrong password look the same.
-  email: async ({ request, locals, getClientAddress, setHeaders }) => {
+  email: async ({ request, locals, getClientAddress, setHeaders, cookies }) => {
     if (!locals.supabase) redirect(303, '/login?error=unavailable');
 
     const data = await request.formData();
@@ -102,7 +103,10 @@ export const actions: Actions = {
       password,
       ...captchaField(data),
     });
-    if (viaApi.result === 'ok') redirect(303, await afterSignIn(locals, next));
+    if (viaApi.result === 'ok') {
+      markSignedIn(cookies);
+      redirect(303, await afterSignIn(locals, next));
+    }
     if (viaApi.result === 'rate_limited') {
       const retryAfter = viaApi.retryAfter ?? 60;
       setHeaders({ 'Retry-After': String(retryAfter) });
@@ -123,7 +127,7 @@ export const actions: Actions = {
 
   // Step two: the browser's answer. Supabase checks it and makes the session (the cookies); the
   // api then finishes the sign-in like a provider's, and any refusal there signs the person out.
-  passkey: async ({ request, locals, getClientAddress }) => {
+  passkey: async ({ request, locals, getClientAddress, cookies }) => {
     if (!locals.supabase || !(await passkeysOn(locals))) return fail(404, { passkey: 'off' });
     const form = validateStringForm(await request.formData(), passkeyAnswerSchema, [
       'challengeId',
@@ -145,6 +149,7 @@ export const actions: Actions = {
       { challengeId: form.data.challengeId, credential, next: form.data.next || null },
     );
     if (!target) return fail(400, { passkey: 'refused' });
+    if (!target.startsWith('/login')) markSignedIn(cookies);
     redirect(303, target);
   },
 };

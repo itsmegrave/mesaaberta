@@ -496,6 +496,11 @@ export function registerTools(server: McpServer, context: ToolContext) {
       ),
   );
 
+  // The audience groups, as create_poll and create_popup describe them.
+  const SEGMENT_HELP =
+    'admin, gm (opened a table), player (a confirmed seat), recent (played in 90 days), new ' +
+    '(account under 30 days), has_passkey, no_passkey (signs in without a passkey).';
+
   // Polls are the private package's widgets extension (`/v1/admin/widgets/...`); a build without it
   // answers 404, so these tools answer `not_found` there.
   const POLLS = '/v1/admin/widgets';
@@ -550,10 +555,7 @@ export function registerTools(server: McpServer, context: ToolContext) {
         include: z
           .array(z.enum(SEGMENTS))
           .optional()
-          .describe(
-            'Aim at anyone in one of these groups (none: everyone): admin, gm (opened a table), ' +
-              'player (a confirmed seat), recent (played in 90 days), new (account under 30 days).',
-          ),
+          .describe('Aim at anyone in one of these groups (none: everyone): ' + SEGMENT_HELP),
         exclude: z.array(z.enum(SEGMENTS)).optional().describe('Leave out these groups.'),
         people: z
           .array(z.string().trim().min(1).max(64))
@@ -707,6 +709,218 @@ export function registerTools(server: McpServer, context: ToolContext) {
     },
   );
 
+  // Popups are the same extension's second widget kind: a dialog over the page.
+  server.registerTool(
+    'create_popup',
+    {
+      title: 'Create a popup (Admin > Enquetes e popups)',
+      description:
+        'Publishes a popup: a dialog over the page with a title, a short text, an optional ' +
+        'picture and one button, for the people it aims at. `trigger` sign_in (default) opens it ' +
+        'on the first page after someone signs in; page opens it on its pages at most once a day. ' +
+        'Closing it hides it until the next sign-in (sign_in) or for 7 days (page); with ' +
+        '`allow_forever` (default true) the person may tick "Não mostrar mais" to hide it for ' +
+        'good, and pressing the button also hides it for good. Admins only. Two steps: without ' +
+        '`confirmed` it writes nothing and answers `{ step: "confirm", reach }`; tell the person ' +
+        'that number and call again with `confirmed: true` only after they say to publish. Write ' +
+        'it in Brazilian Portuguese, gender-neutral, no emoji. close_popup ends it.',
+      inputSchema: {
+        heading: z.string().trim().min(1).max(80),
+        body: z.string().trim().min(1).max(400).describe('Plain text; line breaks are kept.'),
+        cta_label: z
+          .string()
+          .trim()
+          .min(1)
+          .max(40)
+          .describe('The button, a verb: "Criar passkey".'),
+        cta_url: z
+          .string()
+          .trim()
+          .max(500)
+          .regex(/^(\/(?!\/)\S*|https:\/\/\S+)$/)
+          .describe(
+            'Where the button goes: a path on the site (/u/profile/edit/account) or https.',
+          ),
+        image_url: z
+          .string()
+          .trim()
+          .max(2048)
+          .regex(/^https:\/\/\S+$/)
+          .optional()
+          .describe('A public https address of a JPEG, PNG or WebP picture (up to 5 MB).'),
+        image_alt: z.string().trim().max(200).optional().describe('What the picture shows.'),
+        title: z
+          .string()
+          .trim()
+          .min(1)
+          .max(120)
+          .optional()
+          .describe('A name for admins only; empty: the heading.'),
+        trigger: z.enum(['sign_in', 'page']).optional(),
+        allow_forever: z.boolean().optional(),
+        placements: z
+          .array(z.string().regex(/^[a-z][a-z-]*$/))
+          .min(1)
+          .max(10)
+          .optional()
+          .describe('Where it may open: everywhere (default) or the names create_poll lists.'),
+        include: z
+          .array(z.enum(SEGMENTS))
+          .optional()
+          .describe('Aim at anyone in one of these groups (none: everyone): ' + SEGMENT_HELP),
+        exclude: z.array(z.enum(SEGMENTS)).optional().describe('Leave out these groups.'),
+        people: z
+          .array(z.string().trim().min(1).max(64))
+          .max(1000)
+          .optional()
+          .describe('Only these people: usernames or profile ids, as for create_poll.'),
+        priority: z.number().int().min(-999).max(9999).optional(),
+        confirmed: z.boolean().optional(),
+      },
+      annotations: ASK_FIRST,
+    },
+    async (input) => {
+      const audience = {
+        ...Object.fromEntries((input.include ?? []).map((s) => [`include:${s}`, 'on'])),
+        ...Object.fromEntries((input.exclude ?? []).map((s) => [`exclude:${s}`, 'on'])),
+        ...(input.people?.length ? { people: input.people.join('\n') } : {}),
+      };
+      const unknownPeople = (body: unknown) => {
+        const { refused: why, unknown } = (body ?? {}) as { refused?: unknown; unknown?: unknown };
+        return why === 'people'
+          ? result({ error: 'invalid', field: 'people', code: 'unknown', unknown }, true)
+          : null;
+      };
+      if (!input.confirmed) {
+        let counted: ApiAnswer;
+        try {
+          counted = await write(`${POLLS}/reach`, audience);
+        } catch (error) {
+          return failed('create_popup', error);
+        }
+        if (!ok(counted)) return refused('create_popup', counted);
+        const { eventIds: _eventIds, ...rest } = (counted.body ?? {}) as Record<string, unknown>;
+        return unknownPeople(rest) ?? result({ step: 'confirm', ...rest });
+      }
+
+      const form = {
+        title: input.title ?? input.heading.slice(0, 120),
+        heading: input.heading,
+        body: input.body,
+        ctaLabel: input.cta_label,
+        ctaUrl: input.cta_url,
+        ...(input.image_url ? { imageUrl: input.image_url } : {}),
+        imageAlt: input.image_alt ?? '',
+        trigger: input.trigger ?? 'sign_in',
+        ...((input.allow_forever ?? true) ? { allowForever: 'on' } : {}),
+        priority: String(input.priority ?? 0),
+        ...Object.fromEntries(
+          (input.placements ?? ['everywhere']).map((name) => [`placement:${name}`, 'on']),
+        ),
+        ...audience,
+      };
+      let created: ApiAnswer;
+      try {
+        created = await write(`${POLLS}/createPopup`, form);
+      } catch (error) {
+        return failed('create_popup', error);
+      }
+      const body = (created.body ?? {}) as { created?: unknown; refused?: unknown };
+      const id = body.created;
+      if (ok(created) && typeof id !== 'string') {
+        const unknown = unknownPeople(created.body);
+        if (unknown) return unknown;
+        // `image`: the picture could not be read or stored; nothing was written.
+        if (body.refused) return result({ error: 'invalid', field: body.refused }, true);
+      }
+      if (!ok(created) || typeof id !== 'string') return refused('create_popup', created);
+      try {
+        const published = await write(`${POLLS}/publish`, { id });
+        const answered = (published.body ?? {}) as { reach?: unknown; refused?: unknown };
+        if (!ok(published) || answered.refused)
+          return result(
+            { id, pending: true, error: answered.refused ?? refusal(published.status) },
+            true,
+          );
+        return result({ step: 'published', id, reach: answered.reach });
+      } catch (error) {
+        return failed('create_popup', error, { id, pending: true });
+      }
+    },
+  );
+
+  server.registerTool(
+    'list_popups',
+    {
+      title: 'List popups and their numbers',
+      description:
+        'The popups of Admin > Enquetes e popups, newest first (up to 50): status, text, button, ' +
+        'who they aim at, how many they reach now and reached when published, and how many people ' +
+        'saw one, pressed its button and hid it for good. Admins only.',
+      inputSchema: {},
+      annotations: READ,
+    },
+    async () =>
+      answer(
+        'list_popups',
+        () => read(`${POLLS}/panel`),
+        (body) => {
+          const popups = ((body as { panel?: { popups?: unknown } } | null)?.panel?.popups ??
+            []) as Record<string, unknown>[];
+          return {
+            popups: popups.map((popup) => {
+              const audience = (popup.audience ?? {}) as { people?: unknown[] };
+              return {
+                id: popup.id,
+                title: popup.title,
+                status: popup.status,
+                heading: popup.heading,
+                body: popup.body,
+                ctaLabel: popup.ctaLabel,
+                ctaUrl: popup.ctaUrl,
+                hasImage: Boolean(popup.imageUrl),
+                trigger: popup.trigger,
+                allowForever: popup.allowForever,
+                placements: popup.placements,
+                audience: { ...audience, people: audience.people?.length ?? 0 },
+                reach: popup.reach,
+                publishedReach: popup.publishedReach,
+                publishedAt: popup.publishedAt,
+                shown: popup.shown,
+                clicked: popup.clicked,
+                hiddenForGood: popup.hiddenForGood,
+              };
+            }),
+          };
+        },
+      ),
+  );
+
+  server.registerTool(
+    'close_popup',
+    {
+      title: 'Close a popup',
+      description:
+        'Ends a live or paused popup: nobody sees it again, and its numbers stay in the admin. ' +
+        'Admins only. It cannot be reopened, so confirm with the person first.',
+      inputSchema: { id: z.string().uuid().describe('From list_popups or create_popup.') },
+      annotations: { ...WRITE, destructiveHint: true },
+    },
+    async ({ id }) => {
+      let closed: ApiAnswer;
+      try {
+        closed = await write(`${POLLS}/close`, { id });
+      } catch (error) {
+        return failed('close_popup', error);
+      }
+      const body = (closed.body ?? {}) as { moved?: unknown; refused?: unknown };
+      if (!ok(closed)) return refused('close_popup', closed);
+      return body.refused
+        ? result({ error: 'refused', reason: body.refused }, true)
+        : result({ id, status: body.moved });
+    },
+  );
+
   server.registerTool(
     'post_on_social',
     {
@@ -785,6 +999,9 @@ export const TOOL_NAMES = [
   'create_poll',
   'list_polls',
   'close_poll',
+  'create_popup',
+  'list_popups',
+  'close_popup',
   'post_on_social',
   'get_social_post',
 ] as const;
@@ -795,6 +1012,8 @@ export const WRITE_TOOL_NAMES = [
   'send_announcement',
   'create_poll',
   'close_poll',
+  'create_popup',
+  'close_popup',
   'post_on_social',
 ] as const satisfies readonly (typeof TOOL_NAMES)[number][];
 
@@ -806,5 +1025,7 @@ export const DESTRUCTIVE_TOOL_NAMES = [
   'send_announcement',
   'create_poll',
   'close_poll',
+  'create_popup',
+  'close_popup',
   'post_on_social',
 ] as const satisfies readonly (typeof WRITE_TOOL_NAMES)[number][];

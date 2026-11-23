@@ -45,14 +45,15 @@ export function widgetRoutes(open: Open = openDb, installed: readonly Extension[
   app.use('/*', userGuard(open));
 
   // `?route=/t/[slug]`: the widgets the actor may see there, most important first. None for an
-  // account that widgets never aim at (suspended, still onboarding).
+  // account that widgets never aim at (suspended, still onboarding). `signedIn=1`: the first page
+  // since they signed in, where a popup that opens on sign-in may show.
   app.get('/', async (c) => {
     const db = c.get('db');
     const route = c.req.query('route') ?? '';
     const segments = await viewerSegments(db, c.get('actorId'));
     const widgets: { ext: string; widget: unknown }[] = [];
     if (segments && route) {
-      const viewer = { id: c.get('actorId'), segments };
+      const viewer = { id: c.get('actorId'), segments, signedIn: c.req.query('signedIn') === '1' };
       const flags = apiFlags(c.env);
       for (const extension of widgetExtensions(installed))
         for (const widget of await extension.widgets.forViewer(db, viewer, route, flags))

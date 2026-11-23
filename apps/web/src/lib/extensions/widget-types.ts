@@ -10,8 +10,11 @@ export type WidgetProps = {
   action: string;
   /** The page it is on, for a form sent without JavaScript to come back to. */
   next: string;
-  /** Floating over a page, or alone on its own page (a poll's public results). */
-  mode: 'card' | 'page';
+  /**
+   * Floating in a corner of a page (a poll), a dialog over the page (a popup, whose component draws
+   * the dialog), or alone on its own page (a poll's public results).
+   */
+  mode: 'card' | 'modal' | 'page';
   /** The widget after an answer, or null once it has nothing more to show. */
   onAnswer: (widget: WidgetPayload | null) => void;
 };
