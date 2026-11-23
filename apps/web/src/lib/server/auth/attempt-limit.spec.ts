@@ -3,7 +3,10 @@ import { authAttempts } from '@mesaaberta/core/server/db/schema';
 import { createTestDb } from '../db/test-db';
 import {
   SIGN_IN_LIMIT,
+  accountWait,
   attemptKey,
+  networkOf,
+  recordSignInFailure,
   attemptWait,
   isLoopback,
   pruneAuthAttempts,
@@ -97,5 +100,45 @@ describe('attemptWait', () => {
     const tight = { ...limit, max: 1 };
     expect(await attemptWait(test.db, tight, '127.0.0.1')).toBeNull();
     expect(await attemptWait(test.db, tight, '127.0.0.1')).toBeNull();
+  });
+});
+
+describe('networkOf', () => {
+  it('counts an IPv6 visitor by its /64, so a new address in it does not reset the limit', () => {
+    expect(networkOf('2001:db8:1:2:aaaa::1')).toBe('2001:db8:1:2::/64');
+    expect(networkOf('2001:DB8:1:2:ffff:ffff:ffff:ffff')).toBe('2001:db8:1:2::/64');
+  });
+
+  it('keeps IPv4 as it is, also when written as IPv6', () => {
+    expect(networkOf('203.0.113.7')).toBe('203.0.113.7');
+    expect(networkOf('::ffff:203.0.113.7')).toBe('203.0.113.7');
+  });
+
+  it('shares one limit across a /64 in attemptWait', async () => {
+    for (let n = 0; n < SIGN_IN_LIMIT.max; n++)
+      expect(
+        await attemptWait(test.db, SIGN_IN_LIMIT, `2001:db8:1:2::${n.toString(16)}`),
+      ).toBeNull();
+    expect(await attemptWait(test.db, SIGN_IN_LIMIT, '2001:db8:1:2::ffff')).toBeGreaterThan(0);
+  });
+});
+
+describe('the per-account sign-in limit', () => {
+  const account = { action: 'sign_in_failed_account', max: 2, windowSeconds: 600 } as const;
+
+  it('stops guesses at one e-mail from any network once it had too many wrong passwords', async () => {
+    expect(await accountWait(test.db, account, 'ana@example.com', at(0))).toBeNull();
+    await recordSignInFailure(test.db, account, 'ana@example.com', at(0));
+    await recordSignInFailure(test.db, account, ' ANA@example.com', at(1));
+    // The first failure leaves the 10-minute window at 12:10, eight minutes after 12:02.
+    expect(await accountWait(test.db, account, 'ana@example.com', at(2))).toBe(480);
+    expect(await accountWait(test.db, account, 'bia@example.com', at(2))).toBeNull();
+  });
+
+  it('never throws when the account is already over the limit', async () => {
+    for (const minute of [0, 1, 2])
+      await expect(
+        recordSignInFailure(test.db, account, 'ana@example.com', at(minute)),
+      ).resolves.toBeUndefined();
   });
 });

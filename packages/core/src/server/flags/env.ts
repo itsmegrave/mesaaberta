@@ -4,7 +4,11 @@ import { growthBookPayload, isolateCache } from './payload';
 // Kept in this isolate, so each sweep and each extension publisher doesn't fetch the payload again.
 const cache = isolateCache();
 
-type Env = { GROWTHBOOK_API_HOST?: string; GROWTHBOOK_CLIENT_KEY?: string };
+type Env = {
+  GROWTHBOOK_API_HOST?: string;
+  GROWTHBOOK_CLIENT_KEY?: string;
+  GROWTHBOOK_DECRYPTION_KEY?: string;
+};
 
 /**
  * Flags for code that has no request to take them from (an extension's publisher in the sweeper or
@@ -25,6 +29,6 @@ export function flagsFromEnv(
           waitUntil: () => {},
         })
       : async () => null,
-    { extensionFlags },
+    { extensionFlags, decryptionKey: env?.GROWTHBOOK_DECRYPTION_KEY },
   );
 }

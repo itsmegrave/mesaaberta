@@ -37,6 +37,24 @@ const webDatabaseRead = {
     'The web Worker has no database. Read or write through the api (readFromApi, writeViaApi).',
 };
 
+// Files that still write a status directly. Each phase of the state machine plan moves an area to
+// its machine and takes its files off this list; when it is empty, the list goes.
+const STATUS_WRITES_NOT_MIGRATED = [
+  'packages/core/src/server/account/service.ts',
+  // Profile status writes wait for the profile machine (profile statuses thread).
+  'packages/core/src/server/moderation/admin.ts',
+  'packages/core/src/server/moderation/bans.ts',
+];
+
+// A status changes only through its machine (`applyTransition`, packages/core/src/server/state), so
+// every move is one the machine has and is checked against the row's current status.
+const bareStatusWrite = {
+  selector:
+    "CallExpression[callee.property.name='set'] > ObjectExpression > Property[key.name='status']",
+  message:
+    'Write a status through applyTransition (@mesaaberta/core/server/state/transition) and its machine.',
+};
+
 export default defineConfig(
   includeIgnoreFile(gitignorePath),
   js.configs.recommended,
@@ -203,5 +221,10 @@ export default defineConfig(
   {
     files: ['apps/web/src/lib/server/runtime.ts', 'apps/web/src/lib/server/host/*.ts'],
     rules: { 'no-restricted-syntax': ['error', roleRead, webDatabaseRead] },
+  },
+  {
+    files: ['packages/**/*.ts', 'apps/api/src/**/*.ts', 'apps/worker/src/**/*.ts'],
+    ignores: ['**/*.spec.ts', ...STATUS_WRITES_NOT_MIGRATED],
+    rules: { 'no-restricted-syntax': ['error', bareStatusWrite] },
   },
 );

@@ -1,5 +1,11 @@
 import { Hono, type Context } from 'hono';
 import {
+  RECOVERY_SIGN_IN_MINUTES,
+  lastSignInAt,
+  signedInWithin,
+  unverifiedClaims,
+} from '@mesaaberta/core/server/auth/recent-sign-in';
+import {
   credentialsSchema,
   emailSchema,
   newPasswordSchema,
@@ -11,6 +17,10 @@ import {
   SIGN_IN_LIMIT,
   SIGN_UP_LIMIT,
   attemptWait,
+  accountWait,
+  isLoopback,
+  recordSignInFailure,
+  SIGN_IN_ACCOUNT_LIMIT,
 } from '@mesaaberta/core/server/auth/attempt-limit';
 import { completeLogin } from '@mesaaberta/core/server/auth/login';
 import { ensureProfile } from '@mesaaberta/core/server/auth/profile';
@@ -199,14 +209,29 @@ export function authRoutes(
     const { db, close } = open(connectionString);
     try {
       // Counted per network before Supabase sees it, so a script cannot guess passwords in a loop.
-      const wait = await attemptWait(db, SIGN_IN_LIMIT, ip);
-      if (wait !== null) return c.json({ result: 'rate_limited', retryAfter: wait }, 429);
+      // And per account, from any network: too many wrong passwords for this e-mail. Like the
+      // network limit, never on this machine (local development and the e2e suite).
+      const counted = isLoopback(ip) ? null : db;
+      const wait =
+        (await attemptWait(db, SIGN_IN_LIMIT, ip)) ??
+        (await accountWait(counted, SIGN_IN_ACCOUNT_LIMIT, parsed.data.email));
+      if (wait !== null) {
+        logger.info('auth.sign_in_refused', { reason: 'rate_limited' });
+        return c.json({ result: 'rate_limited', retryAfter: wait }, 429);
+      }
 
       const { result, session } = await signInForSession(
         { supabase: makeSupabase(url, key), db, log: logger, ip: ip || null },
         { ...parsed.data, captchaToken: captchaTokenOf(body) },
       );
-      if (result !== 'ok') return c.json({ result }, SIGN_IN_STATUS[result]);
+      if (result === 'invalid')
+        await recordSignInFailure(counted, SIGN_IN_ACCOUNT_LIMIT, parsed.data.email);
+      if (result !== 'ok') {
+        // One line per refused sign-in, without who or from where: the Sentry alert
+        // "Sign-in refusals burst" counts them to spot password guessing.
+        logger.info('auth.sign_in_refused', { reason: result });
+        return c.json({ result }, SIGN_IN_STATUS[result]);
+      }
       return c.json({ result, session });
     } finally {
       await close();
@@ -262,6 +287,10 @@ export function authRoutes(
 
     const token = /^Bearer (.+)$/.exec(c.req.header('authorization') ?? '')?.[1];
     if (!token) return c.json({ result: 'no_session' }, 401);
+    // Only a session a recovery link opened just now may set a password without the old one. The
+    // claims are read before Supabase checks the token, so this can only refuse, never let in.
+    if (!signedInWithin(lastSignInAt(unverifiedClaims(token)), RECOVERY_SIGN_IN_MINUTES))
+      return c.json({ result: 'no_session' }, 401);
     const body = (await c.req.json().catch(() => null)) as {
       password?: unknown;
       passwordConfirm?: unknown;

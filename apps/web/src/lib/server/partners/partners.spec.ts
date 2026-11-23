@@ -71,6 +71,14 @@ beforeEach(async () => {
   await test.db.delete(events);
 });
 
+const statusOf = async (partnerId: string) =>
+  (
+    await test.db
+      .select({ status: partners.status })
+      .from(partners)
+      .where(eq(partners.id, partnerId))
+  )[0]?.status;
+
 describe('a new partner', () => {
   it('waits for an admin: nobody but its submitter sees it', async () => {
     await send();
@@ -81,9 +89,11 @@ describe('a new partner', () => {
 
   it('is public once an admin approves it, and the submitter is told', async () => {
     const { id: partnerId } = await send();
+    expect(await statusOf(partnerId)).toBe('pending');
     const [eventId] = await approvePartner(test.db, admin, partnerId, { now });
     expect(eventId).toBeTruthy();
     expect(await names()).toEqual(['Taverna do Dado']);
+    expect(await statusOf(partnerId)).toBe('approved');
   });
 
   it('is approved by admins only', async () => {
@@ -274,6 +284,9 @@ describe('editing and withdrawing', () => {
     await updatePartner(test.db, ana, partnerId, input({ name: 'Taverna Nova' }), { now });
     expect(await names()).toEqual([]);
     expect(await names(id(1))).toEqual(['Taverna Nova']);
+    expect(await statusOf(partnerId)).toBe('pending');
+    await withdrawPartner(test.db, ana, partnerId, { now });
+    expect(await statusOf(partnerId)).toBe('removed');
   });
 
   it('replaces the logo and says which file to delete', async () => {

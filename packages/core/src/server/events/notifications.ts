@@ -9,6 +9,7 @@ import {
   type TableMetadata,
 } from '../../notifications/kinds';
 import type { Changes, Handler, StoredEvent } from './types';
+import { isTableDown } from '../../tables/status-values';
 
 /** The events that notify someone. `TableCreated` tells nobody new, and `UserSignedIn` is a log. */
 type NotifyingEvent = Extract<
@@ -213,7 +214,7 @@ export const notificationHandler: Handler = {
     // A queued request/update can arrive after closure. Its cancellation already tells people
     // what remains true; never send a stale approval or session prompt after that.
     if (
-      table.status === 'disabled' &&
+      isTableDown(table.status) &&
       [
         'TableUpdated',
         'TableAwaitingConfirmation',

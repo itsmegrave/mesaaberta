@@ -1,5 +1,5 @@
 {
-  "id": "294d8981-e5a5-4751-9446-475d75e7d33e",
+  "id": "089ba117-c1c5-496d-8664-6f89d524c5a6",
   "prevId": "a1487b54-0371-42f2-af9f-1192e010d53b",
   "version": "7",
   "dialect": "postgresql",
@@ -5722,211 +5722,6 @@
       },
       "isRLSEnabled": true
     },
-    "public.popup_views": {
-      "name": "popup_views",
-      "schema": "",
-      "columns": {
-        "widget_id": {
-          "name": "widget_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "profile_id": {
-          "name": "profile_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "shown_at": {
-          "name": "shown_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "times": {
-          "name": "times",
-          "type": "smallint",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
-        "clicked_at": {
-          "name": "clicked_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "popup_views_profile_idx": {
-          "name": "popup_views_profile_idx",
-          "columns": [
-            {
-              "expression": "profile_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "popup_views_widget_id_popups_widget_id_fk": {
-          "name": "popup_views_widget_id_popups_widget_id_fk",
-          "tableFrom": "popup_views",
-          "tableTo": "popups",
-          "columnsFrom": [
-            "widget_id"
-          ],
-          "columnsTo": [
-            "widget_id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "popup_views_profile_id_profiles_id_fk": {
-          "name": "popup_views_profile_id_profiles_id_fk",
-          "tableFrom": "popup_views",
-          "tableTo": "profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "popup_views_widget_id_profile_id_pk": {
-          "name": "popup_views_widget_id_profile_id_pk",
-          "columns": [
-            "widget_id",
-            "profile_id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": true
-    },
-    "public.popups": {
-      "name": "popups",
-      "schema": "",
-      "columns": {
-        "widget_id": {
-          "name": "widget_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "heading": {
-          "name": "heading",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "body": {
-          "name": "body",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "cta_label": {
-          "name": "cta_label",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "cta_url": {
-          "name": "cta_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "image_url": {
-          "name": "image_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "image_alt": {
-          "name": "image_alt",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "trigger": {
-          "name": "trigger",
-          "type": "popup_trigger",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'sign_in'"
-        },
-        "allow_forever": {
-          "name": "allow_forever",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "popups_widget_id_widgets_id_fk": {
-          "name": "popups_widget_id_widgets_id_fk",
-          "tableFrom": "popups",
-          "tableTo": "widgets",
-          "columnsFrom": [
-            "widget_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "popups_heading_length": {
-          "name": "popups_heading_length",
-          "value": "char_length(\"popups\".\"heading\") BETWEEN 1 AND 80"
-        },
-        "popups_body_length": {
-          "name": "popups_body_length",
-          "value": "char_length(\"popups\".\"body\") BETWEEN 1 AND 400"
-        },
-        "popups_cta_label_length": {
-          "name": "popups_cta_label_length",
-          "value": "char_length(\"popups\".\"cta_label\") BETWEEN 1 AND 40"
-        },
-        "popups_cta_url_format": {
-          "name": "popups_cta_url_format",
-          "value": "char_length(\"popups\".\"cta_url\") <= 500 AND ((\"popups\".\"cta_url\" LIKE '/%' AND substr(\"popups\".\"cta_url\", 2, 1) NOT IN ('/', chr(92))) OR \"popups\".\"cta_url\" LIKE 'https://%')"
-        },
-        "popups_image_alt_length": {
-          "name": "popups_image_alt_length",
-          "value": "char_length(\"popups\".\"image_alt\") <= 200"
-        },
-        "popups_image_url_format": {
-          "name": "popups_image_url_format",
-          "value": "\"popups\".\"image_url\" IS NULL OR (char_length(\"popups\".\"image_url\") <= 1000 AND \"popups\".\"image_url\" ~ '^https?://')"
-        }
-      },
-      "isRLSEnabled": true
-    },
     "public.postal_codes": {
       "name": "postal_codes",
       "schema": "",
@@ -8409,12 +8204,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": 1
-        },
-        "hidden_until": {
-          "name": "hidden_until",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -8801,14 +8590,6 @@
         "public"
       ]
     },
-    "public.popup_trigger": {
-      "name": "popup_trigger",
-      "schema": "public",
-      "values": [
-        "sign_in",
-        "page"
-      ]
-    },
     "public.profile_role": {
       "name": "profile_role",
       "schema": "public",
@@ -8822,7 +8603,9 @@
       "schema": "public",
       "values": [
         "active",
-        "suspended"
+        "suspended",
+        "banned",
+        "closed"
       ]
     },
     "public.registration_status": {

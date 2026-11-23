@@ -4,9 +4,12 @@ import type { AnyDb } from '../db/client';
 import { conversations, events, gameTables, registrations, playerInvitations } from '../db/schema';
 import { Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
+import { tableLifecycle } from '../../tables/lifecycle-machine';
+import { applyTransition } from '../state/transition';
 import { cancelPendingInvitations } from '../invitations/service';
 import { lockTableFamily, lockTableSchedule } from './schedule-guard';
 import { syncTableSessions } from './sessions';
+import { isTableDown } from '../../tables/status-values';
 
 /** Owner actions: acquire the schedule lock before the table lock, like publish and duplicate. */
 async function lockedOwnedTable(
@@ -69,14 +72,20 @@ export async function closeTable(db: AnyDb, actor: Actor | null, slug: string) {
   return db.transaction(async (tx) => {
     const transaction = tx as unknown as AnyDb;
     const table = await lockedOwnedTable(transaction, actor, slug);
-    if (table.status === 'disabled') return { eventIds: [], slug };
+    if (isTableDown(table.status)) return { eventIds: [], slug };
     if (table.status !== 'active' && table.status !== 'awaiting_confirmation') {
       throw new Invalid('slug', 'table_not_active');
     }
-    await tx
-      .update(gameTables)
-      .set({ status: 'disabled', icalSequence: table.icalSequence + 1 })
-      .where(eq(gameTables.id, table.id));
+    const moved = await applyTransition(transaction, {
+      table: gameTables,
+      status: gameTables.status,
+      where: eq(gameTables.id, table.id),
+      machine: tableLifecycle,
+      from: ['active', 'awaiting_confirmation'],
+      event: 'DISABLE',
+      set: { icalSequence: table.icalSequence + 1 },
+    });
+    if (!moved) throw new Invalid('slug', 'table_not_active');
     await syncTableSessions(transaction, [table.id]);
     const cancelledRequests = await tx
       .delete(registrations)

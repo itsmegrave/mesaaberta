@@ -16,6 +16,8 @@ import {
 } from '@mesaaberta/core/server/db/schema';
 import { listQueue } from './catalog';
 import { matchGraphStats } from '../matches/graph';
+import { standingWhere } from './profiles';
+import { TABLE_DOWN_STATUSES } from '../../tables/status-values';
 
 const countWhere = (condition: SQL) =>
   sql<number>`count(*) filter (where ${condition})`.mapWith(Number);
@@ -39,15 +41,11 @@ export async function adminOverview(db: AnyDb, now = new Date()) {
     db
       .select({
         total: sql<number>`count(*)`.mapWith(Number),
-        active: countWhere(sql`${profiles.status} = 'active'`),
-        // A ban that never ends is "banned"; the rest of the suspended (a ban with an end date, or a
-        // closed account) are "suspended".
-        banned: countWhere(
-          sql`${profiles.status} = 'suspended' and ${profiles.bannedAt} is not null and ${profiles.bannedUntil} is null`,
-        ),
-        suspended: countWhere(
-          sql`${profiles.status} = 'suspended' and not (${profiles.bannedAt} is not null and ${profiles.bannedUntil} is null)`,
-        ),
+        active: countWhere(standingWhere.active),
+        // A temporary ban, a ban that never ends and an account its owner closed, apart.
+        suspended: countWhere(standingWhere.suspended),
+        banned: countWhere(standingWhere.banned),
+        closed: countWhere(standingWhere.closed),
         new30d: countWhere(
           sql`${profiles.createdAt} >= ${since.toISOString()}::timestamptz and ${profiles.createdAt} <= ${now.toISOString()}::timestamptz`,
         ),
@@ -57,7 +55,7 @@ export async function adminOverview(db: AnyDb, now = new Date()) {
       .select({
         total: sql<number>`count(*)`.mapWith(Number),
         active: countWhere(sql`${gameTables.status} = 'active'`),
-        disabled: countWhere(sql`${gameTables.status} = 'disabled'`),
+        disabled: countWhere(inArray(gameTables.status, [...TABLE_DOWN_STATUSES])),
         awaiting: countWhere(sql`${gameTables.status} = 'awaiting_confirmation'`),
         concluded: countWhere(sql`${gameTables.status} = 'concluded'`),
         notHeld: countWhere(sql`${gameTables.status} = 'not_held'`),
@@ -102,7 +100,7 @@ export async function adminOverview(db: AnyDb, now = new Date()) {
       })
       .from(playerRatings),
   ]);
-  const [oldestReport, uncertainPosts, awaitingTables, suggestions, recent] = await Promise.all([
+  const [oldestReport, uncertainPosts, suggestions, recent] = await Promise.all([
     db
       .select({ createdAt: reports.createdAt })
       .from(reports)
@@ -115,15 +113,6 @@ export async function adminOverview(db: AnyDb, now = new Date()) {
       .innerJoin(gameTables, eq(gameTables.id, instagramPosts.tableId))
       .where(eq(instagramPosts.status, 'uncertain'))
       .orderBy(asc(instagramPosts.createdAt)),
-    db
-      .select({
-        title: gameTables.title,
-        startsAt: gameTables.startsAt,
-        timezone: gameTables.timezone,
-      })
-      .from(gameTables)
-      .where(eq(gameTables.status, 'awaiting_confirmation'))
-      .orderBy(asc(gameTables.startsAt)),
     listQueue(db),
     db
       .select({
@@ -147,21 +136,11 @@ export async function adminOverview(db: AnyDb, now = new Date()) {
   ]);
   return {
     // What waits on an admin, with the one thing worth naming about each: the oldest report, the
-    // first post to check, the table that waits longest for its GM, and how many suggestions repeat
-    // an entry the catalog already has.
+    // first post to check, and how many suggestions repeat an entry the catalog already has. A table
+    // waiting for its GM to confirm is the GM's to do, not an admin's, so it is not listed here.
     attention: {
       reports: { oldestAt: oldestReport[0]?.createdAt ?? null },
       posts: { count: uncertainPosts.length, first: uncertainPosts[0]?.title ?? null },
-      awaiting: {
-        count: awaitingTables.length,
-        first: awaitingTables[0]
-          ? {
-              title: awaitingTables[0].title,
-              startsAt: awaitingTables[0].startsAt,
-              timezone: awaitingTables[0].timezone,
-            }
-          : null,
-      },
       suggestions: {
         platforms: suggestions.filter((entry) => entry.kind === 'platform').length,
         tags: suggestions.filter((entry) => entry.kind === 'tag').length,

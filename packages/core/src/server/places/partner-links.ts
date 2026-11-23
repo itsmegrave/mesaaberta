@@ -12,6 +12,8 @@ import {
 } from '@mesaaberta/core/server/db/schema';
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import { partnerLinkMachine } from '../../state/review-machines';
+import { applyTransition } from '../state/transition';
 import { ownerIdsOf, ownersOf } from '../partners/owners';
 
 // A place that is also a partner ("Parceiro Mesa Aberta"). Someone who is the place's owner and
@@ -140,10 +142,15 @@ export async function requestPlacePartner(
     const approved = await linkOf(t, place.id, 'approved');
     if (approved?.partnerId === partner.id) throw new Invalid('partnerId', 'already_linked');
 
-    await t
-      .update(placePartnerLinks)
-      .set({ status: 'cancelled', updatedAt: now })
-      .where(and(eq(placePartnerLinks.placeId, place.id), eq(placePartnerLinks.status, 'pending')));
+    await applyTransition(t, {
+      table: placePartnerLinks,
+      status: placePartnerLinks.status,
+      where: eq(placePartnerLinks.placeId, place.id),
+      machine: partnerLinkMachine,
+      from: 'pending',
+      event: 'CANCEL',
+      set: { updatedAt: now },
+    });
     const [link] = await t
       .insert(placePartnerLinks)
       .values({
@@ -190,10 +197,15 @@ export async function endPlacePartner(
       placeOwnerId: place.ownerId,
       partnerOwnerIds: await ownersOf(t, partner),
     });
-    await t
-      .update(placePartnerLinks)
-      .set({ status: which === 'pending' ? 'cancelled' : 'removed', updatedAt: now })
-      .where(eq(placePartnerLinks.id, link.id));
+    await applyTransition(t, {
+      table: placePartnerLinks,
+      status: placePartnerLinks.status,
+      where: eq(placePartnerLinks.id, link.id),
+      machine: partnerLinkMachine,
+      from: which,
+      event: which === 'pending' ? 'CANCEL' : 'REMOVE',
+      set: { updatedAt: now },
+    });
     if (which === 'pending') return [];
     return [
       await recordEvent(
@@ -293,16 +305,24 @@ export async function approvePartnerLink(
     if (place.removedAt || !place.approvedAt || partner.removedAt || !partner.approvedAt)
       throw new Invalid('id', 'closed');
 
-    await t
-      .update(placePartnerLinks)
-      .set({ status: 'removed', updatedAt: now })
-      .where(
-        and(eq(placePartnerLinks.placeId, place.id), eq(placePartnerLinks.status, 'approved')),
-      );
-    await t
-      .update(placePartnerLinks)
-      .set({ status: 'approved', decidedBy: actor!.id, decidedAt: now, updatedAt: now })
-      .where(eq(placePartnerLinks.id, link.id));
+    await applyTransition(t, {
+      table: placePartnerLinks,
+      status: placePartnerLinks.status,
+      where: eq(placePartnerLinks.placeId, place.id),
+      machine: partnerLinkMachine,
+      from: 'approved',
+      event: 'REMOVE',
+      set: { updatedAt: now },
+    });
+    await applyTransition(t, {
+      table: placePartnerLinks,
+      status: placePartnerLinks.status,
+      where: eq(placePartnerLinks.id, link.id),
+      machine: partnerLinkMachine,
+      from: 'pending',
+      event: 'APPROVE',
+      set: { decidedBy: actor!.id, decidedAt: now, updatedAt: now },
+    });
     return [
       await recordEvent(
         t,
@@ -329,16 +349,20 @@ export async function rejectPartnerLink(
   return db.transaction(async (tx) => {
     const t = tx as unknown as AnyDb;
     const { link, place, partner } = await waitingLink(t, id);
-    await t
-      .update(placePartnerLinks)
-      .set({
-        status: 'rejected',
+    await applyTransition(t, {
+      table: placePartnerLinks,
+      status: placePartnerLinks.status,
+      where: eq(placePartnerLinks.id, link.id),
+      machine: partnerLinkMachine,
+      from: 'pending',
+      event: 'REJECT',
+      set: {
         decidedBy: actor!.id,
         decidedAt: now,
         decisionNote: note.trim() || null,
         updatedAt: now,
-      })
-      .where(eq(placePartnerLinks.id, link.id));
+      },
+    });
     return [
       await recordEvent(
         t,

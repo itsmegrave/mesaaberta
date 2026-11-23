@@ -3,6 +3,7 @@ import type { AnyDb } from '../db/client';
 import { gameTables } from '../db/schema';
 import { Invalid, NotFound } from '../errors';
 import { intervalsOverlap } from './schedule';
+import { isTableDown } from '../../tables/status-values';
 
 type Session = { startsAt: Date; durationMinutes: number };
 type Table = typeof gameTables.$inferSelect;
@@ -51,7 +52,7 @@ export async function lockTableFamily(db: AnyDb, tableId: string, { newCopy = fa
 
 /** A table whose session will not happen does not hold its slot. */
 const holdsSlot = (table: { status: string }) =>
-  table.status !== 'disabled' && table.status !== 'not_held';
+  !isTableDown(table.status) && table.status !== 'not_held';
 
 export function assertTableSchedule(
   linked: readonly Table[],

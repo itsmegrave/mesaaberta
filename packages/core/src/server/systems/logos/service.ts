@@ -4,6 +4,8 @@ import type { AnyDb } from '../../db/client';
 import { systemLogos, systems } from '../../db/schema';
 import { authorize, type Actor } from '../../auth/policy';
 import { Invalid } from '../../errors';
+import { logoMachine } from '../../../state/review-machines';
+import { applyTransition } from '../../state/transition';
 import { isInside } from '../../storage';
 import { LOGO_STATUSES, type LogoStatus } from '../../../admin/system-logos';
 
@@ -218,34 +220,32 @@ export async function uploadLogo(
 /** Approves a pending logo. */
 export async function approveLogo(db: AnyDb, actor: Actor, systemId: string) {
   authorize(actor, 'admin:access');
-  const updated = await db
-    .update(systemLogos)
-    .set({
-      status: 'approved',
-      reviewedBy: actor.id,
-      reviewedAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .where(and(eq(systemLogos.systemId, systemId), eq(systemLogos.status, 'pending')))
-    .returning({ systemId: systemLogos.systemId });
-  if (updated.length === 0) throw new Invalid('systemId', 'not_pending');
-  return { approved: updated.length };
+  const moved = await applyTransition(db, {
+    table: systemLogos,
+    status: systemLogos.status,
+    where: eq(systemLogos.systemId, systemId),
+    machine: logoMachine,
+    from: 'pending',
+    event: 'APPROVE',
+    set: { reviewedBy: actor.id, reviewedAt: new Date(), updatedAt: new Date() },
+  });
+  if (!moved) throw new Invalid('systemId', 'not_pending');
+  return { approved: moved.count };
 }
 
 /** Approves every pending logo the search was sure of (`high`): one exact Wikidata match each. */
 export async function approveSureLogos(db: AnyDb, actor: Actor) {
   authorize(actor, 'admin:access');
-  const updated = await db
-    .update(systemLogos)
-    .set({
-      status: 'approved',
-      reviewedBy: actor.id,
-      reviewedAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .where(and(eq(systemLogos.status, 'pending'), eq(systemLogos.confidence, 'high')))
-    .returning({ systemId: systemLogos.systemId });
-  return { approved: updated.length };
+  const moved = await applyTransition(db, {
+    table: systemLogos,
+    status: systemLogos.status,
+    where: eq(systemLogos.confidence, 'high'),
+    machine: logoMachine,
+    from: 'pending',
+    event: 'APPROVE',
+    set: { reviewedBy: actor.id, reviewedAt: new Date(), updatedAt: new Date() },
+  });
+  return { approved: moved?.count ?? 0 };
 }
 
 /**
@@ -262,16 +262,15 @@ export async function rejectLogo(db: AnyDb, actor: Actor, systemId: string) {
       .for('update');
     if (!before || (before.status !== 'pending' && before.status !== 'approved'))
       throw new Invalid('systemId', 'not_found');
-    await tx
-      .update(systemLogos)
-      .set({
-        status: 'rejected',
-        path: null,
-        reviewedBy: actor.id,
-        reviewedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(systemLogos.systemId, systemId));
+    await applyTransition(tx as unknown as AnyDb, {
+      table: systemLogos,
+      status: systemLogos.status,
+      where: eq(systemLogos.systemId, systemId),
+      machine: logoMachine,
+      from: before.status,
+      event: 'REJECT',
+      set: { path: null, reviewedBy: actor.id, reviewedAt: new Date(), updatedAt: new Date() },
+    });
     return { removed: before.path };
   });
 }

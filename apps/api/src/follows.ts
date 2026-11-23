@@ -1,4 +1,4 @@
-import { and, eq, ne } from 'drizzle-orm';
+import { and, eq, notInArray } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { gameTables } from '@mesaaberta/db/schema';
@@ -18,6 +18,7 @@ import {
 import { supabaseUrlOf } from '@mesaaberta/core/server/images';
 import { refusal } from './refusal';
 import { userGuard, viewerGuard, type UserVariables, type ViewerVariables } from './user-guard';
+import { TABLE_DOWN_STATUSES } from '@mesaaberta/core/tables/status-values';
 
 type Open = typeof createDb;
 type Env = DatabaseEnv & { SUPABASE_URL?: string };
@@ -44,7 +45,12 @@ export function followRoutes(open: Open = openDb) {
       .get('db')
       .select({ gmId: gameTables.gmId, status: gameTables.status })
       .from(gameTables)
-      .where(and(eq(gameTables.slug, c.req.param('slug')), ne(gameTables.status, 'disabled')));
+      .where(
+        and(
+          eq(gameTables.slug, c.req.param('slug')),
+          notInArray(gameTables.status, [...TABLE_DOWN_STATUSES]),
+        ),
+      );
     const visible =
       table &&
       (table.status !== 'draft' ||

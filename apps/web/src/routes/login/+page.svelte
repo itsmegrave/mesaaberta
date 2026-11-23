@@ -27,6 +27,14 @@
 </svelte:head>
 
 <AuthShell title={m.login_title()} lede={m.login_lede()}>
+  {#if data.reauth && !data.failed}
+    <p
+      role="status"
+      class="mb-5 rounded-lg border-2 border-primary-500 bg-panel px-4 py-3 font-semibold"
+    >
+      {m.login_reauth()}
+    </p>
+  {/if}
   {#if data.failed}
     <p
       role="alert"

@@ -20,6 +20,7 @@ import { formatSession } from '../../tables/format';
 import type { Handler, StoredEvent } from './types';
 import { NAMELESS } from '../db/public-name';
 import { atHandle } from '../../profile/handle';
+import { isTableDown } from '../../tables/status-values';
 
 /** Secrets stay in the Worker environment. Do not put any of these in `wrangler.jsonc`. */
 export type InviteEnv = TemplateEnv & {
@@ -211,7 +212,7 @@ export function createInviteHandler(
         event.type === 'PlayerLeft' || event.type === 'TableDisabled' ? 'CANCEL' : 'REQUEST';
       // Queue order is not guaranteed. A delayed create/join/edit must not recreate a calendar
       // entry after the table's cancellation, including an edit made through the legacy form.
-      if (table.status === 'disabled' && tableMethod === 'REQUEST') return;
+      if (isTableDown(table.status) && tableMethod === 'REQUEST') return;
       const recipients = await recipientsFor(db, event, table);
       const notification = event.type === 'JoinRequested' || event.type === 'JoinDeclined';
       const url = tableUrl(env.APP_ORIGIN, table.slug);

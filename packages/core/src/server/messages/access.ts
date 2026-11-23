@@ -10,7 +10,7 @@ import {
 import { can, type Actor } from '@mesaaberta/core/server/auth/policy';
 import { firstSessionEnded } from '../ratings/service';
 import { blockState } from '../blocks/service';
-import type { TableStatus } from '../../tables/status-values';
+import { isTableDown, type TableStatus } from '../../tables/status-values';
 import { TABLE_CHAT_DAYS_AFTER_END, isAdminConversation } from '../../messages/schema';
 
 type Conversation = typeof conversations.$inferSelect;
@@ -24,7 +24,7 @@ export function tableChatState(
   table: { status: TableStatus; startsAt: Date; durationMinutes: number },
   now: Date,
 ): 'open' | 'ended' | 'disabled' {
-  if (table.status === 'disabled' || table.status === 'draft') return 'disabled';
+  if (isTableDown(table.status) || table.status === 'draft') return 'disabled';
   const windowStart = new Date(now.getTime() - TABLE_CHAT_DAYS_AFTER_END * 24 * 3600 * 1000);
   return firstSessionEnded(table, windowStart) ? 'ended' : 'open';
 }

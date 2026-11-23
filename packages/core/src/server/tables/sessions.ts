@@ -3,6 +3,8 @@ import { and, asc, eq, gt, inArray, sql } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { events, gameTables, tableSessionAttendance, tableSessions } from '../db/schema';
 import { nextWeeklySession, weeklyInterval } from './schedule';
+import { SESSION_OUTCOME, tableSessionMachine } from '../../tables/session-machine';
+import { applyTransition } from '../state/transition';
 import type { SessionSeats } from './session-signups';
 
 // The sessions of a table (`table_sessions`). The table's `startsAt` is always its first scheduled
@@ -39,10 +41,15 @@ export async function closeSession(
 
   let sessionId: string;
   if (match) {
-    await tx
-      .update(tableSessions)
-      .set({ status, startsAt: table.startsAt })
-      .where(eq(tableSessions.id, match.id));
+    await applyTransition(tx, {
+      table: tableSessions,
+      status: tableSessions.status,
+      where: eq(tableSessions.id, match.id),
+      machine: tableSessionMachine,
+      from: 'scheduled',
+      event: SESSION_OUTCOME[status],
+      set: { startsAt: table.startsAt },
+    });
     sessionId = match.id;
   } else {
     const [created] = await tx
@@ -85,10 +92,14 @@ async function dropSessions(tx: AnyDb, rows: Row[]) {
   const pinned = rows.filter((row) => row.pinned).map(({ id }) => id);
   const loose = rows.filter((row) => !row.pinned).map(({ id }) => id);
   if (pinned.length > 0) {
-    await tx
-      .update(tableSessions)
-      .set({ status: 'cancelled' })
-      .where(inArray(tableSessions.id, pinned));
+    await applyTransition(tx, {
+      table: tableSessions,
+      status: tableSessions.status,
+      where: inArray(tableSessions.id, pinned),
+      machine: tableSessionMachine,
+      from: 'scheduled',
+      event: 'CANCEL',
+    });
   }
   if (loose.length > 0) await tx.delete(tableSessions).where(inArray(tableSessions.id, loose));
 }
@@ -139,10 +150,14 @@ export async function syncTableSessions(
     const [next, ...rest] = scheduled;
     if (!GOING.has(table.status)) {
       if (next) {
-        await tx
-          .update(tableSessions)
-          .set({ status: 'cancelled' })
-          .where(eq(tableSessions.id, next.id));
+        await applyTransition(tx, {
+          table: tableSessions,
+          status: tableSessions.status,
+          where: eq(tableSessions.id, next.id),
+          machine: tableSessionMachine,
+          from: 'scheduled',
+          event: 'CANCEL',
+        });
       }
       await dropSessions(tx, rest);
       continue;

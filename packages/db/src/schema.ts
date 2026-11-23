@@ -1,5 +1,12 @@
 import { TABLE_SESSION_STATUSES, TABLE_STATUSES } from './table-status';
 import { PROFILE_STATUSES } from './profile-status';
+import { CATALOG_STATUSES } from './catalog-status';
+import { LOGO_STATUSES, PARTNER_LINK_STATUSES, PLACE_CLAIM_STATUSES } from './review-status';
+import { IMPORT_RUN_STATUSES } from './import-run-status';
+import { INVITATION_STATUSES } from './invitation-status';
+import { WIDGET_STATUSES } from './widget-status';
+import { CROWDFUNDING_STATUSES, LISTING_STATUSES } from './listing-status';
+import { REGISTRATION_STATUSES, SESSION_SIGNUP_STATUSES } from './seat-status';
 import { EVENT_REVIEWS } from './event-review';
 import type { ReportExcerpt } from './report-excerpt';
 import { sql } from 'drizzle-orm';
@@ -64,14 +71,9 @@ export const tableSessionStatus = pgEnum('table_session_status', TABLE_SESSION_S
 export const tableModality = pgEnum('table_modality', ['online', 'in_person']);
 // Where a platform or a tag stands in the catalog. Only approved ones are public; the rest are for
 // the GM who suggested them and the admins (the suggestion flow is card #34).
-export const catalogStatus = pgEnum('catalog_status', [
-  'pending',
-  'approved',
-  'rejected',
-  'disabled',
-]);
+export const catalogStatus = pgEnum('catalog_status', CATALOG_STATUSES);
 // A pending request takes no seat; only a confirmed one does.
-export const registrationStatus = pgEnum('registration_status', ['pending', 'confirmed']);
+export const registrationStatus = pgEnum('registration_status', REGISTRATION_STATUSES);
 
 const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -138,6 +140,10 @@ export const profiles = pgTable(
     // The secret in the person's calendar feed address (`/calendar/<token>.ics`), which a calendar
     // app reads without signing in. Null: no feed. A new one replaces it, and the old address stops.
     calendarFeedToken: text('calendar_feed_token'),
+    // The SHA-256 (hex) of that secret, which is what the feed is looked up by, so a database read
+    // does not hand out working feed addresses. New secrets are stored only here (the plain column
+    // above is left null and goes away in a later contract step), so the address is shown once.
+    calendarFeedTokenHash: text('calendar_feed_token_hash'),
     // "Quando posso jogar": a bit per day and part of the day (Monday morning is bit 0, Sunday
     // night bit 20), as `@mesaaberta/core/profile/availability` reads it. 0: not said.
     availability: integer('availability').notNull().default(0),
@@ -159,6 +165,7 @@ export const profiles = pgTable(
     // normalise. Nulls do not collide: many profiles can be waiting for onboarding.
     uniqueIndex('profiles_username_unique').on(sql`lower(${profile.username})`),
     uniqueIndex('profiles_calendar_feed_token_unique').on(profile.calendarFeedToken),
+    uniqueIndex('profiles_calendar_feed_token_hash_unique').on(profile.calendarFeedTokenHash),
     check('profiles_username_format', sql`${profile.username} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
     // Mirrors RESOLUTION_NOTE_MAX in apps/web/src/lib/moderation/reports.
     check('profiles_ban_reason_length', sql`char_length(${profile.banReason}) <= 1000`),
@@ -238,12 +245,7 @@ export const systems = pgTable(
 // until an admin approves it; only an `approved` logo is shown. `missing` means the search found
 // nothing, so the next run skips it and the admin knows to add one by hand. A rejected logo keeps
 // its source (so the same one is not proposed again) but its file is deleted.
-export const systemLogoStatus = pgEnum('system_logo_status', [
-  'pending',
-  'approved',
-  'rejected',
-  'missing',
-]);
+export const systemLogoStatus = pgEnum('system_logo_status', LOGO_STATUSES);
 export const systemLogos = pgTable(
   'system_logos',
   {
@@ -714,7 +716,7 @@ export const tableSessionAttendance = pgTable(
 // (`waiting`, in order of `created_at`); when someone playing leaves, the first who waits takes
 // the place in the same transaction. Quem mestra may add or take out anyone. Personal data: it goes
 // with the session and with the account, and with the player's seat at the table.
-export const sessionSignupStatus = pgEnum('session_signup_status', ['going', 'waiting']);
+export const sessionSignupStatus = pgEnum('session_signup_status', SESSION_SIGNUP_STATUSES);
 
 export const tableSessionSignups = pgTable(
   'table_session_signups',
@@ -1203,6 +1205,8 @@ export const crowdfundings = pgTable(
     endsOn: date('ends_on', { mode: 'string' }).notNull(),
     // A path in the table images bucket, or null: the tile then shows the chest and the host.
     imagePath: text('image_path'),
+    // `crowdfundingMachine`. Kept in step with `removed_at`, which says when.
+    status: text('status', { enum: CROWDFUNDING_STATUSES }).notNull().default('listed'),
     removedAt: timestamp('removed_at', { withTimezone: true }),
     // The admin who removed it, and why. Not a foreign key, like `reports.resolved_by`.
     removedBy: uuid('removed_by'),
@@ -1227,6 +1231,7 @@ export const crowdfundings = pgTable(
     check('crowdfundings_owner_length', sql`char_length(${campaign.owner}) BETWEEN 1 AND 80`),
     check('crowdfundings_dates_order', sql`${campaign.endsOn} >= ${campaign.startsOn}`),
     check('crowdfundings_removal_note_length', sql`char_length(${campaign.removalNote}) <= 1000`),
+    check('crowdfundings_status', sql`${campaign.status} IN ('listed','removed')`),
   ],
 ).enableRLS();
 
@@ -1262,6 +1267,8 @@ export const partners = pgTable(
     // and a line saying what it gives. Both optional; a description needs a code.
     couponCode: text('coupon_code'),
     couponDescription: text('coupon_description'),
+    // `listingMachine`. Kept in step with `approved_at` and `removed_at`, which say when.
+    status: text('status', { enum: LISTING_STATUSES }).notNull().default('pending'),
     // Null while the partner waits for an admin (or after an edit); the list shows approved ones only.
     approvedAt: timestamp('approved_at', { withTimezone: true }),
     // The admin who approved it. Not a foreign key, like `crowdfundings.removed_by`.
@@ -1297,6 +1304,7 @@ export const partners = pgTable(
       sql`${partner.couponDescription} IS NULL OR ${partner.couponCode} IS NOT NULL`,
     ),
     check('partners_removal_note_length', sql`char_length(${partner.removalNote}) <= 1000`),
+    check('partners_status', sql`${partner.status} IN ('pending','approved','removed')`),
   ],
 ).enableRLS();
 
@@ -1349,6 +1357,8 @@ export const tools = pgTable(
     platformId: uuid('platform_id').references(() => platforms.id, { onDelete: 'set null' }),
     // Null for the seeded ones.
     submitterId: uuid('submitter_id').references(() => profiles.id, { onDelete: 'set null' }),
+    // `listingMachine`. Kept in step with `approved_at` and `removed_at`, which say when.
+    status: text('status', { enum: LISTING_STATUSES }).notNull().default('pending'),
     approvedAt: timestamp('approved_at', { withTimezone: true }),
     // The admin who approved it. Not a foreign key, like `partners.approved_by`.
     approvedBy: uuid('approved_by'),
@@ -1377,6 +1387,7 @@ export const tools = pgTable(
     check('tools_description_length', sql`char_length(${tool.description}) BETWEEN 1 AND 140`),
     check('tools_site_url_length', sql`char_length(${tool.siteUrl}) <= 300`),
     check('tools_removal_note_length', sql`char_length(${tool.removalNote}) <= 1000`),
+    check('tools_status', sql`${tool.status} IN ('pending','approved','removed')`),
   ],
 ).enableRLS();
 
@@ -1426,6 +1437,8 @@ export const places = pgTable(
     siteUrl: text('site_url'),
     // A path in the table images bucket, or null.
     imagePath: text('image_path'),
+    // `listingMachine`. Kept in step with `approved_at` and `removed_at`, which say when.
+    status: text('status', { enum: LISTING_STATUSES }).notNull().default('pending'),
     // Null while it waits for an admin (or after the submitter edits it).
     approvedAt: timestamp('approved_at', { withTimezone: true }),
     // The admin who approved it. Not a foreign key, like `partners.approved_by`.
@@ -1474,6 +1487,7 @@ export const places = pgTable(
       sql`(${place.hiddenAt} IS NULL) = (${place.hiddenReason} IS NULL)`,
     ),
     check('places_removal_note_length', sql`char_length(${place.removalNote}) <= 1000`),
+    check('places_status', sql`${place.status} IN ('pending','approved','removed')`),
   ],
 ).enableRLS();
 
@@ -1562,9 +1576,7 @@ export const placeClaims = pgTable(
     relation: text('relation', { enum: ['owner', 'staff', 'organizer'] }).notNull(),
     contact: text('contact').notNull(),
     note: text('note'),
-    status: text('status', { enum: ['pending', 'approved', 'rejected'] })
-      .notNull()
-      .default('pending'),
+    status: text('status', { enum: PLACE_CLAIM_STATUSES }).notNull().default('pending'),
     // The admin who decided. Not a foreign key, like `places.approved_by`.
     decidedBy: uuid('decided_by'),
     decidedAt: timestamp('decided_at', { withTimezone: true }),
@@ -1611,7 +1623,7 @@ export const crowdfundingImportRuns = pgTable(
   {
     source: text('source', { enum: ['catarse', 'meeplestarter'] }).notNull(),
     runDate: date('run_date', { mode: 'string' }).notNull(),
-    status: text('status', { enum: ['running', 'complete', 'partial', 'failed'] }).notNull(),
+    status: text('status', { enum: IMPORT_RUN_STATUSES }).notNull(),
     token: uuid('token').notNull(),
     leaseUntil: timestamp('lease_until', { withTimezone: true }).notNull(),
     cursor: text('cursor'),
@@ -1643,13 +1655,7 @@ export const workerHeartbeats = pgTable('worker_heartbeats', {
 }).enableRLS();
 
 // Consent-based invitations are not registrations; pending rows reserve seats without membership.
-export const invitationStatus = pgEnum('invitation_status', [
-  'pending',
-  'accepted',
-  'declined',
-  'expired',
-  'cancelled',
-]);
+export const invitationStatus = pgEnum('invitation_status', INVITATION_STATUSES);
 export const playerInvitations = pgTable(
   'player_invitations',
   {
@@ -1771,11 +1777,7 @@ export const placePartnerLinks = pgTable(
       .notNull()
       .references(() => partners.id, { onDelete: 'cascade' }),
     requestedBy: uuid('requested_by').references(() => profiles.id, { onDelete: 'set null' }),
-    status: text('status', {
-      enum: ['pending', 'approved', 'rejected', 'cancelled', 'removed'],
-    })
-      .notNull()
-      .default('pending'),
+    status: text('status', { enum: PARTNER_LINK_STATUSES }).notNull().default('pending'),
     // The admin who decided. Not a foreign key, like `place_claims.decided_by`.
     decidedBy: uuid('decided_by'),
     decidedAt: timestamp('decided_at', { withTimezone: true }),
@@ -1874,7 +1876,7 @@ export const placeHostInvitations = pgTable(
 // Widgets an extension floats over the app's pages, a poll today (Trello #231). The tables live here,
 // not in the private package, so every deployment keeps one schema; a build without that extension
 // never reads them.
-export const widgetStatus = pgEnum('widget_status', ['draft', 'live', 'paused', 'closed']);
+export const widgetStatus = pgEnum('widget_status', WIDGET_STATUSES);
 
 export const widgets = pgTable(
   'widgets',

@@ -223,7 +223,7 @@ describe('admin pages on a phone', () => {
   it('Visão geral does not scroll sideways', async () => {
     render(Overview, {
       data: {
-        people: { total: 26, active: 20, suspended: 4, banned: 2, new30d: 3 },
+        people: { total: 26, active: 20, suspended: 3, banned: 2, closed: 1, new30d: 3 },
         combinar: { people: 4, matches: 2, playedAfter: 1, alone: 1, groups: 1, largest: 3 },
         ratings: { total: 7, new30d: 2, ofGms: 5, ofPlayers: 2 },
         tables: {
@@ -244,10 +244,6 @@ describe('admin pages on a phone', () => {
         attention: {
           reports: { oldestAt: new Date('2026-10-01T12:00:00Z') },
           posts: { count: 1, first: long },
-          awaiting: {
-            count: 1,
-            first: { title: long, startsAt: new Date('2026-10-10T22:00:00Z'), timezone: 'UTC' },
-          },
           suggestions: { platforms: 1, tags: 2, duplicates: 1 },
         },
         recent: [

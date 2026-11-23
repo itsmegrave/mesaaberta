@@ -25,6 +25,9 @@ import {
 import { lockTableRows, lockTableSchedule } from '../tables/schedule-guard';
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import { applyTransition } from '../state/transition';
+import { tableLifecycle } from '../../tables/lifecycle-machine';
+import { reportMachine } from '../../moderation/report-machine';
 import { removeTableMember } from '@mesaaberta/core/server/messages/service';
 import { reportSubject } from './reports';
 import type { PlaceKind } from '../../places/types';
@@ -308,22 +311,28 @@ async function reportForDecision(db: AnyDb, id: string) {
   return report;
 }
 
-const isOpen = (status: ReportStatus) =>
-  (OPEN_REPORT_STATUSES as readonly string[]).includes(status);
-
 /** An admin takes a report up: it stays waiting, marked as being looked at. */
 export async function startReview(db: AnyDb, actor: Actor | null, id: string) {
   authorize(actor, 'moderation:manage');
   return db.transaction(async (tx) => {
     const t = tx as unknown as AnyDb;
     const report = await reportForDecision(t, id);
-    if (report.status !== 'open') throw new Invalid('id', 'not_open');
-    await t.update(reports).set({ status: 'reviewing' }).where(eq(reports.id, id));
-    return recordEvent(t, {
-      type: 'ReportReviewing',
-      actorId: actor!.id,
-      payload: { reportId: id, reporterId: report.reporterId },
+    const moved = await applyTransition(t, {
+      table: reports,
+      status: reports.status,
+      where: eq(reports.id, id),
+      machine: reportMachine,
+      from: 'open',
+      event: 'REVIEW',
+      record: {
+        type: 'ReportReviewing',
+        actorId: actor!.id,
+        payload: { reportId: id, reporterId: report.reporterId },
+      },
     });
+    // Someone else took it up or closed it since it was read.
+    if (!moved) throw new Invalid('id', 'not_open');
+    return moved.eventId!;
   });
 }
 
@@ -336,16 +345,23 @@ async function settle(
   note: string,
   now: Date,
 ) {
-  if (!isOpen(report.status)) throw new Invalid('id', 'closed');
-  await t
-    .update(reports)
-    .set({ status: outcome, resolvedBy: actor.id, resolutionNote: note || null, resolvedAt: now })
-    .where(eq(reports.id, report.id));
-  return recordEvent(t, {
-    type: outcome === 'resolved' ? 'ReportResolved' : 'ReportDismissed',
-    actorId: actor.id,
-    payload: { reportId: report.id, reporterId: report.reporterId },
+  const moved = await applyTransition(t, {
+    table: reports,
+    status: reports.status,
+    where: eq(reports.id, report.id),
+    machine: reportMachine,
+    from: OPEN_REPORT_STATUSES,
+    event: outcome === 'resolved' ? 'RESOLVE' : 'DISMISS',
+    set: { resolvedBy: actor.id, resolutionNote: note || null, resolvedAt: now },
+    record: {
+      type: outcome === 'resolved' ? 'ReportResolved' : 'ReportDismissed',
+      actorId: actor.id,
+      payload: { reportId: report.id, reporterId: report.reporterId },
+    },
   });
+  // Closed already, now or by another admin since it was read.
+  if (!moved) throw new Invalid('id', 'closed');
+  return moved.eventId!;
 }
 
 /**
@@ -392,15 +408,15 @@ export async function closeReportedTable(
     if (table.status !== 'active') throw new Invalid('id', 'closed');
 
     const accepted = await settle(t, actor!, report, 'resolved', note, now);
-    await t
-      .update(gameTables)
-      .set({
-        status: 'disabled',
-        icalSequence: table.icalSequence + 1,
-        moderatedAt: now,
-        moderationNote: note,
-      })
-      .where(eq(gameTables.id, table.id));
+    await applyTransition(t, {
+      table: gameTables,
+      status: gameTables.status,
+      where: eq(gameTables.id, table.id),
+      machine: tableLifecycle,
+      from: 'active',
+      event: 'DISABLE',
+      set: { icalSequence: table.icalSequence + 1, moderatedAt: now, moderationNote: note },
+    });
     await syncTableSessions(t, [table.id]);
     const facts = { tableId: table.id, slug: table.slug, title: table.title };
     return [
@@ -444,15 +460,15 @@ export async function closeTableByAdmin(
       .for('update');
     if (!table) throw new Invalid('tableId', 'not_found');
     if (table.status !== 'active') throw new Invalid('tableId', 'closed');
-    await t
-      .update(gameTables)
-      .set({
-        status: 'disabled',
-        icalSequence: table.icalSequence + 1,
-        moderatedAt: now,
-        moderationNote: note,
-      })
-      .where(eq(gameTables.id, table.id));
+    await applyTransition(t, {
+      table: gameTables,
+      status: gameTables.status,
+      where: eq(gameTables.id, table.id),
+      machine: tableLifecycle,
+      from: 'active',
+      event: 'DISABLE',
+      set: { icalSequence: table.icalSequence + 1, moderatedAt: now, moderationNote: note },
+    });
     await syncTableSessions(t, [table.id]);
     const facts = { tableId: table.id, slug: table.slug, title: table.title };
     return [
@@ -505,15 +521,21 @@ export async function banAccount(
       .for('no key update');
     if (!target) throw new NotFound('no such profile');
     authorize(actor, 'account:ban', target);
-    if (target.status === 'suspended') throw new Invalid('profileId', 'banned');
+    if (target.status !== 'active') throw new Invalid('profileId', 'banned');
     // Stabilize the owned family before discovering and locking the bulk table set.
     await lockTableSchedule(t, profileId);
     await lockInvitationTablesForProfile(t, profileId);
 
     await t
       .update(profiles)
-      .set({ status: 'suspended', bannedAt: now, bannedUntil: until, banReason: reason })
-      .where(eq(profiles.id, profileId));
+      // A ban with an end date suspends; one without bans for good.
+      .set({
+        status: until ? 'suspended' : 'banned',
+        bannedAt: now,
+        bannedUntil: until,
+        banReason: reason,
+      })
+      .where(and(eq(profiles.id, profileId), eq(profiles.status, 'active')));
     const eventIds: string[] = await cancelPendingInvitations(
       t,
       or(eq(playerInvitations.playerId, profileId), eq(playerInvitations.gmId, profileId))!,
@@ -538,10 +560,15 @@ export async function banAccount(
       )
     ).filter(({ status }) => status === 'active');
     for (const table of open) {
-      await t
-        .update(gameTables)
-        .set({ status: 'disabled', icalSequence: table.icalSequence + 1 })
-        .where(eq(gameTables.id, table.id));
+      await applyTransition(t, {
+        table: gameTables,
+        status: gameTables.status,
+        where: eq(gameTables.id, table.id),
+        machine: tableLifecycle,
+        from: 'active',
+        event: 'DISABLE',
+        set: { icalSequence: table.icalSequence + 1 },
+      });
       await syncTableSessions(t, [table.id]);
       eventIds.push(
         await recordEvent(t, {
@@ -603,13 +630,13 @@ export async function revokeBan(
       .for('update');
     if (!target) throw new NotFound('no such profile');
     authorize(actor, 'account:ban', target);
-    // A closed account is suspended with no ban on it: it cannot come back.
-    if (target.status === 'active' || !target.bannedAt) return [];
+    // A closed account cannot come back (an old closed row is suspended with no ban on it).
+    if (target.status === 'active' || target.status === 'closed' || !target.bannedAt) return [];
 
     await t
       .update(profiles)
       .set({ status: 'active', bannedAt: null, bannedUntil: null, banReason: null })
-      .where(eq(profiles.id, profileId));
+      .where(and(eq(profiles.id, profileId), eq(profiles.status, target.status)));
     return [
       await recordEvent(t, {
         type: 'AccountReinstated',

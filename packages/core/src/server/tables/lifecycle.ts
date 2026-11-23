@@ -5,10 +5,11 @@ import { gameTables, playerInvitations, ratings, registrations } from '../db/sch
 import { authorize, type Actor } from '../auth/policy';
 import { Forbidden, Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
+import { applyTransition } from '../state/transition';
 import type { NewEvent } from '@mesaaberta/events';
 import { diffFields } from '../events/changes';
 import type { Changes } from '../events/types';
-import { nextStatus, type LifecycleEvent } from '../../tables/lifecycle-machine';
+import { tableLifecycle, type LifecycleEvent } from '../../tables/lifecycle-machine';
 import { cancelPendingInvitations } from '../invitations/service';
 import { markedPresentAt } from './attendance';
 import { closeSession, nextScheduledAfter, syncTableSessions, type Attendance } from './sessions';
@@ -45,20 +46,21 @@ export async function closeElapsedTables(db: AnyDb, now: Date): Promise<string[]
       tx as unknown as AnyDb,
       due.map(({ id }) => id),
     );
-    const closed = await tx
-      .update(gameTables)
-      .set({ status: nextStatus('active', 'SESSION_ENDED')! })
-      .where(
-        and(
-          inArray(
-            gameTables.id,
-            due.map(({ id }) => id),
-          ),
-          eq(gameTables.status, 'active'),
-          sessionEndedBy(now),
+    const moved = await applyTransition(tx as unknown as AnyDb, {
+      table: gameTables,
+      status: gameTables.status,
+      where: and(
+        inArray(
+          gameTables.id,
+          due.map(({ id }) => id),
         ),
-      )
-      .returning({ id: gameTables.id, slug: gameTables.slug, title: gameTables.title });
+        sessionEndedBy(now),
+      ),
+      machine: tableLifecycle,
+      from: 'active',
+      event: 'SESSION_ENDED',
+    });
+    const closed = (moved?.rows ?? []) as (typeof gameTables.$inferSelect)[];
 
     const eventIds: string[] = [];
     for (const table of closed) {
@@ -119,11 +121,15 @@ async function answer(
       passed = current;
       assertTableSchedule(linked, { ...current, ...values }, current.id);
     }
-    const [updated] = await tx
-      .update(gameTables)
-      .set({ ...values, status: nextStatus('awaiting_confirmation', move)! })
-      .where(and(eq(gameTables.id, table.id), eq(gameTables.status, 'awaiting_confirmation')))
-      .returning({ id: gameTables.id });
+    const updated = await applyTransition(tx as unknown as AnyDb, {
+      table: gameTables,
+      status: gameTables.status,
+      where: eq(gameTables.id, table.id),
+      machine: tableLifecycle,
+      from: 'awaiting_confirmation',
+      event: move,
+      set: values,
+    });
     if (!updated) throw new Forbidden('table:confirm');
     const attendance = presentPlayerIds
       ? await markAttendance(tx as unknown as AnyDb, table.id, presentPlayerIds, {
@@ -304,16 +310,14 @@ export async function finishTable(
   });
 
   const eventId = await db.transaction(async (tx) => {
-    const [updated] = await tx
-      .update(gameTables)
-      .set({ status: 'concluded' })
-      .where(
-        and(
-          eq(gameTables.id, found.id),
-          inArray(gameTables.status, ['active', 'awaiting_confirmation']),
-        ),
-      )
-      .returning({ id: gameTables.id });
+    const updated = await applyTransition(tx as unknown as AnyDb, {
+      table: gameTables,
+      status: gameTables.status,
+      where: eq(gameTables.id, found.id),
+      machine: tableLifecycle,
+      from: ['active', 'awaiting_confirmation'],
+      event: 'FINISH',
+    });
     if (!updated) throw new Forbidden('table:finish');
     // The session that was next will not happen: the table ends without it.
     await syncTableSessions(tx as unknown as AnyDb, [found.id]);

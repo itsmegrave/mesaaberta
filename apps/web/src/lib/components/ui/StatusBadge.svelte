@@ -7,6 +7,7 @@
     | 'user:active'
     | 'user:suspended'
     | 'user:banned'
+    | 'user:closed'
     | 'table:active'
     | 'table:awaiting_confirmation'
     | 'table:concluded'
@@ -14,6 +15,8 @@
     | 'table:not_held'
     | 'table:draft'
     | 'table:disabled'
+    | 'table:cancelled'
+    | 'table:removed'
     | 'seat:pending'
     | 'seat:confirmed'
     | 'invitation:pending'
@@ -81,6 +84,7 @@
     'user:active': { label: () => m.status_user_active(), dot: 'bg-success-500' },
     'user:suspended': { label: () => m.status_user_suspended(), dot: 'bg-warning-500' },
     'user:banned': { label: () => m.status_user_banned(), dot: 'bg-error-500', text: 'danger' },
+    'user:closed': { label: () => m.status_user_closed(), dot: 'bg-surface-500', text: 'muted' },
     'table:active': { label: () => m.status_table_active(), dot: 'bg-success-500' },
     'table:awaiting_confirmation': {
       label: () => m.status_table_awaiting_confirmation(),
@@ -103,6 +107,16 @@
     },
     'table:disabled': {
       label: () => m.status_table_disabled(),
+      dot: 'bg-surface-500',
+      text: 'muted',
+    },
+    'table:cancelled': {
+      label: () => m.status_table_cancelled(),
+      dot: 'bg-surface-500',
+      text: 'muted',
+    },
+    'table:removed': {
+      label: () => m.status_table_removed(),
       dot: 'bg-surface-500',
       text: 'muted',
     },

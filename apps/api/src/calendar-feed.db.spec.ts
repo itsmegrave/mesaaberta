@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { events, gameTables, profiles, registrations, systems } from '@mesaaberta/db/schema';
 import { createTestDb } from '../../web/src/lib/server/db/test-db';
 import { ACTOR_HEADER } from './admin-guard';
+import { hashFeedToken } from '@mesaaberta/core/server/calendar/feed';
 import { calendarFeedRoutes } from './calendar-feed';
 import { meRoutes } from './me';
 
@@ -80,7 +81,7 @@ const feed = (token: string) => calendarFeedRoutes(opener).request(`/${token}`, 
 
 describe('api calendar feed over a database', () => {
   it('has no feed until the person makes one', async () => {
-    expect(await (await me(player)).json()).toEqual({ token: null });
+    expect(await (await me(player)).json()).toEqual({ on: false });
   });
 
   it('refuses a body without `on`', async () => {
@@ -98,7 +99,14 @@ describe('api calendar feed over a database', () => {
       .from(events)
       .where(eq(events.type, 'CalendarFeedChanged'));
     expect(event.payload).toEqual({ profileId: player, on: true });
-    expect(await (await me(player)).json()).toEqual({ token });
+    expect(await (await me(player)).json()).toEqual({ on: true });
+    // Only the hash is kept: a database read does not hand out a working address.
+    const [row] = await test.db
+      .select({ plain: profiles.calendarFeedToken, hash: profiles.calendarFeedTokenHash })
+      .from(profiles)
+      .where(eq(profiles.id, player));
+    expect(row).toEqual({ plain: null, hash: await hashFeedToken(token) });
+    expect(row.hash).toMatch(/^[0-9a-f]{64}$/);
 
     const answer = await feed(token);
     expect(answer.status).toBe(200);
@@ -121,7 +129,7 @@ describe('api calendar feed over a database', () => {
   });
 
   it('a new secret stops the old address, and turning it off stops both', async () => {
-    const { token: first } = await (await me(player)).json();
+    const { token: first } = await (await me(player, { on: true })).json();
     const { token: second } = await (await me(player, { on: true })).json();
     expect(second).not.toBe(first);
     expect((await feed(first)).status).toBe(404);
@@ -131,9 +139,23 @@ describe('api calendar feed over a database', () => {
     expect((await feed(second)).status).toBe(404);
   });
 
+  it('keeps a feed made before hashing working once the migration fills in its hash', async () => {
+    const legacy = 'L'.repeat(43);
+    await test.db
+      .update(profiles)
+      .set({ calendarFeedToken: legacy, calendarFeedTokenHash: null })
+      .where(eq(profiles.id, player));
+    expect((await feed(legacy)).status).toBe(404);
+    // The backfill in drizzle/0092_calendar_feed_token_hash.sql, which must hash like the code does.
+    await test.db.execute(
+      sql`UPDATE "profiles" SET "calendar_feed_token_hash" = encode(sha256(convert_to("calendar_feed_token", 'UTF8')), 'hex') WHERE "calendar_feed_token" IS NOT NULL`,
+    );
+    expect((await feed(legacy)).status).toBe(200);
+  });
+
   it('answers 404 for a malformed secret and for an inactive person', async () => {
     expect((await feed('nope')).status).toBe(404);
-    const { token } = await (await me(gm)).json();
+    const { token } = await (await me(gm, { on: true })).json();
     await test.db.update(profiles).set({ status: 'suspended' }).where(eq(profiles.id, gm));
     expect((await feed(token)).status).toBe(404);
   });

@@ -20,6 +20,12 @@ type Options = {
   overrides?: Partial<Record<FlagName, boolean>>;
   /** The defaults extensions declare for their own flags; the app's own names win on a clash. */
   extensionFlags?: Readonly<Record<string, boolean>>;
+  /**
+   * The SDK connection's decryption key (`GROWTHBOOK_DECRYPTION_KEY`) when GrowthBook encrypts the
+   * payload, so the targeting rules (profile ids among them) are not readable by whoever can fetch
+   * the client key's URL. Decrypted once per request; a payload sent in the clear is used as it is.
+   */
+  decryptionKey?: string;
 };
 
 const localHostnames = new Set(['localhost', '127.0.0.1']);
@@ -65,7 +71,13 @@ export function flagOverrides(
  */
 export function createFlags(
   loadPayload: () => Promise<FeatureApiResponse | null>,
-  { forceAll = false, overrides = {}, extensionFlags = {}, log = logger }: Options = {},
+  {
+    forceAll = false,
+    overrides = {},
+    extensionFlags = {},
+    decryptionKey,
+    log = logger,
+  }: Options = {},
 ): Flags {
   let payload: Promise<FeatureApiResponse | null> | undefined;
   const defaultFor = (name: AnyFlagName): boolean =>
@@ -74,7 +86,15 @@ export function createFlags(
   const load = () =>
     (payload ??= (async () => {
       try {
-        return await loadPayload();
+        const loaded = await loadPayload();
+        if (!loaded || !isEncrypted(loaded)) return loaded;
+        if (!decryptionKey) {
+          log.warn('flags.payload.encrypted_without_key', {});
+          return null;
+        }
+        const reader = new GrowthBook({ decryptionKey });
+        await reader.setPayload(loaded);
+        return reader.getDecryptedPayload();
       } catch (error) {
         log.warn('flags.payload.failed', { error });
         return null;
@@ -107,3 +127,9 @@ export function createFlags(
     },
   };
 }
+
+/** Whether GrowthBook sent the payload encrypted (the SDK connection's "Encrypt" setting). */
+const isEncrypted = (payload: FeatureApiResponse) =>
+  typeof payload.encryptedFeatures === 'string' ||
+  typeof payload.encryptedSavedGroups === 'string' ||
+  typeof payload.encryptedExperiments === 'string';

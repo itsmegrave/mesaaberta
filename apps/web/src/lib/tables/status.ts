@@ -5,9 +5,13 @@ import { m } from '#lib/paraglide/messages.js';
  * Once the session is over it waits for the GM (`awaiting_confirmation`), who says it happened
  * (`concluded`) or that it did not (`not_held`), or moves it to a new date (back to `active`).
  * `draft` comes before all of it: saved but not public, until its GM publishes it (`active`).
+ * `disabled` is being split: `cancelled` when the GM calls it off, `removed` when moderation
+ * takes it down. All three mean the table is down (`isTableDown`).
  */
 export {
   TABLE_STATUSES,
+  TABLE_DOWN_STATUSES,
+  isTableDown,
   isTableOver,
   type TableStatus,
 } from '@mesaaberta/core/tables/status-values';
@@ -28,5 +32,9 @@ export function tableStatusLabel(status: TableStatus): string | null {
       return m.table_status_not_held();
     case 'draft':
       return m.table_status_draft();
+    case 'cancelled':
+      return m.table_status_cancelled();
+    case 'removed':
+      return m.table_status_removed();
   }
 }

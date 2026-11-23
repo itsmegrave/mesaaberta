@@ -29,6 +29,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     failed: url.searchParams.has('error'),
     confirmHint: url.searchParams.get('error') === 'exchange_failed',
     suspended: url.searchParams.get('error') === 'suspended',
+    // Sent back here before a password, passkey or account change (`requireRecentSignIn`).
+    reauth: url.searchParams.has('reauth'),
     form: initialForm({ email: '', password: '', next }),
     passkeys: await passkeysOn(locals),
     captchaSiteKey: captchaSiteKey(locals?.env),

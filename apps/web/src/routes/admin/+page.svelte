@@ -63,6 +63,7 @@
         [m.admin_active_profiles(), data.people.active],
         [m.admin_suspended(), data.people.suspended],
         [m.admin_banned(), data.people.banned],
+        [m.admin_closed(), data.people.closed],
       ],
     },
     {
@@ -120,7 +121,7 @@
     href: string;
   };
   const attention = $derived.by(() => {
-    const { reports, posts, awaiting, suggestions } = data.attention;
+    const { reports, posts, suggestions } = data.attention;
     const found: Attention[] = [];
     const waitingReports = counts.current.reports;
     if (reports.oldestAt)
@@ -142,18 +143,6 @@
         count: posts.count,
         detail: m.admin_attention_posts_detail({ title: posts.first ?? '' }),
         href: '/admin/tables?post=uncertain',
-      });
-    if (awaiting.count > 0 && awaiting.first)
-      found.push({
-        id: 'awaiting',
-        icon: 'clock',
-        title: m.admin_attention_awaiting(),
-        count: awaiting.count,
-        detail: m.admin_attention_awaiting_detail({
-          title: awaiting.first.title,
-          date: shortDate(awaiting.first.startsAt, locale, awaiting.first.timezone),
-        }),
-        href: '/admin/tables?status=awaiting_confirmation',
       });
     const waitingSuggestions = suggestions.platforms + suggestions.tags;
     if (waitingSuggestions > 0)

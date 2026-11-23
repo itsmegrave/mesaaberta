@@ -37,7 +37,7 @@ function isPublicV4(ip: string): boolean {
 }
 
 /** Expands an IPv6 address to its eight 16-bit groups, or null when it is not one. */
-function groupsOfV6(ip: string): number[] | null {
+export function groupsOfV6(ip: string): number[] | null {
   let text = ip.split('%')[0];
   // A dotted tail (::ffff:1.2.3.4) is two groups.
   const tail = text.match(/(\d+\.\d+\.\d+\.\d+)$/);

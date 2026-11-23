@@ -21,8 +21,12 @@ import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { places, profiles, reports } from '@mesaaberta/core/server/db/schema';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import { applyTransition } from '../state/transition';
+import { reportMachine } from '../../moderation/report-machine';
 import { featuresOf } from './features';
 import { clearPlaceTags, rebuildPlaceTags } from './tags';
+import { listingMachine } from '../../state/listing-machines';
+import type { ListingStatus } from '@mesaaberta/db/listing-status';
 
 // The admin side of "Onde jogar": approving, rejecting and removing places. Every function
 // authorizes the actor itself; the routes check again before calling.
@@ -183,10 +187,15 @@ export async function resolveOpenPlaceReports(
     .for('update');
   const eventIds: string[] = [];
   for (const report of waiting) {
-    await t
-      .update(reports)
-      .set({ status: 'resolved', resolvedBy: actorId, resolvedAt: now })
-      .where(eq(reports.id, report.id));
+    await applyTransition(t, {
+      table: reports,
+      status: reports.status,
+      where: eq(reports.id, report.id),
+      machine: reportMachine,
+      from: OPEN_REPORT_STATUSES,
+      event: 'RESOLVE',
+      set: { resolvedBy: actorId, resolvedAt: now },
+    });
     eventIds.push(
       await recordEvent(
         t,
@@ -222,7 +231,15 @@ export async function approvePlace(
     if (place.removedAt) throw new Invalid('id', 'closed');
     if (place.approvedAt) throw new Invalid('id', 'already_approved');
 
-    await t.update(places).set({ approvedAt: now, approvedBy: actor!.id }).where(eq(places.id, id));
+    await applyTransition<ListingStatus>(t, {
+      table: places,
+      status: places.status,
+      where: eq(places.id, id),
+      machine: listingMachine,
+      from: place.status,
+      event: 'APPROVE',
+      set: { approvedAt: now, approvedBy: actor!.id },
+    });
     await rebuildPlaceTags(t, id, place);
     return [
       await recordEvent(
@@ -267,15 +284,20 @@ export async function removePlace(
     if (!place) throw new Invalid('id', 'not_found');
     if (place.removedAt) throw new Invalid('id', 'closed');
 
-    await t
-      .update(places)
-      .set({
+    await applyTransition<ListingStatus>(t, {
+      table: places,
+      status: places.status,
+      where: eq(places.id, id),
+      machine: listingMachine,
+      from: place.status,
+      event: 'REMOVE',
+      set: {
         removedAt: now,
         removedBy: actor!.id,
         removalReason: reason,
         removalNote: note.trim() || null,
-      })
-      .where(eq(places.id, id));
+      },
+    });
     await clearPlaceTags(t, id);
 
     const eventIds = await resolveOpenPlaceReports(t, actor!.id, id, now);
@@ -336,15 +358,19 @@ export async function restorePlace(
       .for('update');
     const eventIds: string[] = [];
     for (const report of waiting) {
-      await t
-        .update(reports)
-        .set({
-          status: 'dismissed',
+      await applyTransition(t, {
+        table: reports,
+        status: reports.status,
+        where: eq(reports.id, report.id),
+        machine: reportMachine,
+        from: OPEN_REPORT_STATUSES,
+        event: 'DISMISS',
+        set: {
           resolvedBy: actor!.id,
           resolutionNote: note.trim() || null,
           resolvedAt: now,
-        })
-        .where(eq(reports.id, report.id));
+        },
+      });
       eventIds.push(
         await recordEvent(
           t,

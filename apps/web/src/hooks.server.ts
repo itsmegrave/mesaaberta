@@ -87,7 +87,14 @@ const handleFlags: Handle = ({ event, resolve }) => {
           waitUntil: (promise) => waitUntil?.(promise),
         })
       : async () => null,
-    { forceAll, overrides, extensionFlags: extensionFlagDefaults(), log: event.locals.log },
+    {
+      forceAll,
+      overrides,
+      extensionFlags: extensionFlagDefaults(),
+      decryptionKey: (env as { GROWTHBOOK_DECRYPTION_KEY?: string } | undefined)
+        ?.GROWTHBOOK_DECRYPTION_KEY,
+      log: event.locals.log,
+    },
   );
 
   return resolve(event);
