@@ -37,6 +37,42 @@ const webDatabaseRead = {
     'The web Worker has no database. Read or write through the api (readFromApi, writeViaApi).',
 };
 
+// Files that still write a status directly. Each phase of the state machine plan moves an area to
+// its machine and takes its files off this list; when it is empty, the list goes.
+const STATUS_WRITES_NOT_MIGRATED = [
+  'packages/core/src/server/account/service.ts',
+  'packages/core/src/server/admin/catalog.ts',
+  'packages/core/src/server/crowdfunding/admin.ts',
+  'packages/core/src/server/crowdfunding/import/store.ts',
+  'packages/core/src/server/invitations/service.ts',
+  'packages/core/src/server/moderation/admin.ts',
+  'packages/core/src/server/moderation/bans.ts',
+  'packages/core/src/server/partners/admin.ts',
+  'packages/core/src/server/partners/owners.ts',
+  'packages/core/src/server/places/admin.ts',
+  'packages/core/src/server/places/claims.ts',
+  'packages/core/src/server/places/hosts.ts',
+  'packages/core/src/server/places/partner-links.ts',
+  'packages/core/src/server/registrations/service.ts',
+  'packages/core/src/server/systems/logos/service.ts',
+  'packages/core/src/server/tables/close-reminders.ts',
+  'packages/core/src/server/tables/end.ts',
+  'packages/core/src/server/tables/lifecycle.ts',
+  'packages/core/src/server/tables/session-actions.ts',
+  'packages/core/src/server/tables/session-signups.ts',
+  'packages/core/src/server/tables/sessions.ts',
+  'packages/core/src/server/tables/write.ts',
+];
+
+// A status changes only through its machine (`applyTransition`, packages/core/src/server/state), so
+// every move is one the machine has and is checked against the row's current status.
+const bareStatusWrite = {
+  selector:
+    "CallExpression[callee.property.name='set'] > ObjectExpression > Property[key.name='status']",
+  message:
+    'Write a status through applyTransition (@mesaaberta/core/server/state/transition) and its machine.',
+};
+
 export default defineConfig(
   includeIgnoreFile(gitignorePath),
   js.configs.recommended,
@@ -203,5 +239,10 @@ export default defineConfig(
   {
     files: ['apps/web/src/lib/server/runtime.ts', 'apps/web/src/lib/server/host/*.ts'],
     rules: { 'no-restricted-syntax': ['error', roleRead, webDatabaseRead] },
+  },
+  {
+    files: ['packages/**/*.ts', 'apps/api/src/**/*.ts', 'apps/worker/src/**/*.ts'],
+    ignores: ['**/*.spec.ts', ...STATUS_WRITES_NOT_MIGRATED],
+    rules: { 'no-restricted-syntax': ['error', bareStatusWrite] },
   },
 );

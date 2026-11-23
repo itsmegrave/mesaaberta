@@ -25,6 +25,8 @@ import {
 import { lockTableRows, lockTableSchedule } from '../tables/schedule-guard';
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import { applyTransition } from '../state/transition';
+import { reportMachine } from '../../moderation/report-machine';
 import { removeTableMember } from '@mesaaberta/core/server/messages/service';
 import { reportSubject } from './reports';
 import type { PlaceKind } from '../../places/types';
@@ -308,22 +310,28 @@ async function reportForDecision(db: AnyDb, id: string) {
   return report;
 }
 
-const isOpen = (status: ReportStatus) =>
-  (OPEN_REPORT_STATUSES as readonly string[]).includes(status);
-
 /** An admin takes a report up: it stays waiting, marked as being looked at. */
 export async function startReview(db: AnyDb, actor: Actor | null, id: string) {
   authorize(actor, 'moderation:manage');
   return db.transaction(async (tx) => {
     const t = tx as unknown as AnyDb;
     const report = await reportForDecision(t, id);
-    if (report.status !== 'open') throw new Invalid('id', 'not_open');
-    await t.update(reports).set({ status: 'reviewing' }).where(eq(reports.id, id));
-    return recordEvent(t, {
-      type: 'ReportReviewing',
-      actorId: actor!.id,
-      payload: { reportId: id, reporterId: report.reporterId },
+    const moved = await applyTransition(t, {
+      table: reports,
+      status: reports.status,
+      where: eq(reports.id, id),
+      machine: reportMachine,
+      from: 'open',
+      event: 'REVIEW',
+      record: {
+        type: 'ReportReviewing',
+        actorId: actor!.id,
+        payload: { reportId: id, reporterId: report.reporterId },
+      },
     });
+    // Someone else took it up or closed it since it was read.
+    if (!moved) throw new Invalid('id', 'not_open');
+    return moved.eventId!;
   });
 }
 
@@ -336,16 +344,23 @@ async function settle(
   note: string,
   now: Date,
 ) {
-  if (!isOpen(report.status)) throw new Invalid('id', 'closed');
-  await t
-    .update(reports)
-    .set({ status: outcome, resolvedBy: actor.id, resolutionNote: note || null, resolvedAt: now })
-    .where(eq(reports.id, report.id));
-  return recordEvent(t, {
-    type: outcome === 'resolved' ? 'ReportResolved' : 'ReportDismissed',
-    actorId: actor.id,
-    payload: { reportId: report.id, reporterId: report.reporterId },
+  const moved = await applyTransition(t, {
+    table: reports,
+    status: reports.status,
+    where: eq(reports.id, report.id),
+    machine: reportMachine,
+    from: OPEN_REPORT_STATUSES,
+    event: outcome === 'resolved' ? 'RESOLVE' : 'DISMISS',
+    set: { resolvedBy: actor.id, resolutionNote: note || null, resolvedAt: now },
+    record: {
+      type: outcome === 'resolved' ? 'ReportResolved' : 'ReportDismissed',
+      actorId: actor.id,
+      payload: { reportId: report.id, reporterId: report.reporterId },
+    },
   });
+  // Closed already, now or by another admin since it was read.
+  if (!moved) throw new Invalid('id', 'closed');
+  return moved.eventId!;
 }
 
 /**

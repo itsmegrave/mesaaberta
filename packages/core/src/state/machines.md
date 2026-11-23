@@ -1,0 +1,39 @@
+# State machines
+
+Generated from `packages/core/src/state/machines.ts` by `machines.spec.ts`. Do not edit by hand:
+change a machine, then run the spec with `UPDATE_STATE_DOCS=1` to redraw this file.
+
+Every status is written through `applyTransition` (`packages/core/src/server/state/transition.ts`),
+which asks the machine for the move and updates the row only while it is still in the status it
+was read in. A move missing from a diagram is refused.
+
+## Table (mesa)
+
+`game_tables.status`
+
+```mermaid
+stateDiagram-v2
+  active --> awaiting_confirmation: SESSION_ENDED
+  active --> concluded: FINISH
+  awaiting_confirmation --> concluded: HAPPENED
+  awaiting_confirmation --> active: SESSION_HELD
+  awaiting_confirmation --> not_held: NOT_HELD
+  awaiting_confirmation --> active: POSTPONE
+  concluded --> [*]
+  not_held --> [*]
+```
+
+## Report (denúncia)
+
+`reports.status`
+
+```mermaid
+stateDiagram-v2
+  open --> reviewing: REVIEW
+  open --> resolved: RESOLVE
+  open --> dismissed: DISMISS
+  reviewing --> resolved: RESOLVE
+  reviewing --> dismissed: DISMISS
+  resolved --> [*]
+  dismissed --> [*]
+```
