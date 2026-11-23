@@ -1,5 +1,6 @@
 // Relative imports only: the Cron Trigger's Worker entry bundles this file without `#lib`.
-import { createMachine, getNextSnapshot } from 'xstate';
+import { createMachine } from 'xstate';
+import { next } from '../state/machine';
 import type { TableStatus } from './status-values';
 
 /** What can happen to a table once its date has come. */
@@ -39,8 +40,5 @@ export const tableLifecycle = createMachine({
 
 /** The status `event` takes a table in `from` to, or null when that move does not exist. */
 export function nextStatus(from: TableStatus, event: LifecycleEvent): TableStatus | null {
-  const snapshot = tableLifecycle.resolveState({ value: from, context: undefined });
-  if (!snapshot.can({ type: event })) return null;
-
-  return getNextSnapshot(tableLifecycle, snapshot, { type: event }).value as TableStatus;
+  return next<TableStatus>(tableLifecycle, from, event);
 }

@@ -29,6 +29,11 @@
         "kind": "improved",
         "title": "Precisa de você sem mesas por confirmar",
         "description": "Para a administração: a seção Precisa de você não lista mais as mesas que esperam a confirmação de quem mestra, porque isso cabe a quem mestra. Elas continuam em Mesas, no filtro Aguardando confirmação."
+      },
+      {
+        "kind": "fixed",
+        "title": "Denúncia fechada não volta para análise",
+        "description": "Para a administração: duas pessoas da moderação agindo na mesma denúncia ao mesmo tempo não conseguem mais reabrir uma denúncia já resolvida ou descartada. Vale a primeira decisão."
       }
     ]
   },
