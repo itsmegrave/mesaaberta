@@ -28,7 +28,6 @@ const show = (over = {}) =>
       attention: {
         reports: { oldestAt: null },
         posts: { count: 0, first: null },
-        awaiting: { count: 0, first: null },
         suggestions: { platforms: 0, tags: 0, duplicates: 0 },
       },
       recent: [],
@@ -145,7 +144,6 @@ describe('admin overview', () => {
       attention: {
         reports: { oldestAt: new Date('2026-10-01T12:00:00Z') },
         posts: { count: 0, first: null },
-        awaiting: { count: 0, first: null },
         suggestions: { platforms: 1, tags: 2, duplicates: 1 },
       },
     });
