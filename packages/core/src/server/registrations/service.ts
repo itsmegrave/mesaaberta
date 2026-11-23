@@ -21,6 +21,8 @@ import { Invalid } from '../errors';
 import { hasStarted } from '@mesaaberta/core/server/tables/schedule';
 import { promoteWaitlistOf } from './waitlist';
 import { isMinorAtAdultTable } from './age-gate';
+import { applyTransition } from '../state/transition';
+import { registrationMachine } from '../../state/seat-machines';
 
 // Every operation is one transaction. The ones that can change how many seats are taken lock the
 // table's row first (`SELECT ... FOR UPDATE`), so two of them on the same table run one after the
@@ -186,10 +188,15 @@ export async function approveRegistration(
     if ((await seatAvailability(asDb(tx), table.id, new Date())).available < 1)
       throw new TableFull();
 
-    await tx
-      .update(registrations)
-      .set({ status: 'confirmed' })
-      .where(and(eq(registrations.tableId, table.id), eq(registrations.playerId, playerId)));
+    const moved = await applyTransition(asDb(tx), {
+      table: registrations,
+      status: registrations.status,
+      where: and(eq(registrations.tableId, table.id), eq(registrations.playerId, playerId)),
+      machine: registrationMachine,
+      from: 'pending',
+      event: 'APPROVE',
+    });
+    if (!moved) throw new NotFound('no pending request');
     await addTableMember(asDb(tx), table.id, playerId);
 
     return {

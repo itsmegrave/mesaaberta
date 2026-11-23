@@ -12,6 +12,8 @@ import { publicName } from '../db/public-name';
 import { authorize, type Actor } from '../auth/policy';
 import { Invalid, NotFound } from '../errors';
 import { recordEvent } from '../events/outbox';
+import { applyTransition } from '../state/transition';
+import { sessionSignupMachine } from '../../state/seat-machines';
 
 // Campanha aberta (`use_session_signup`, checked by the web Worker): each session of the table has
 // its own places (`session_size`). A player on the roster signs up for a session and plays it while
@@ -115,6 +117,21 @@ async function signedUp(
   });
 }
 
+/** Moves a waiting player into the session (the waitlist or the GM); no-op if already moved. */
+async function moveUp(tx: AnyDb, sessionId: string, playerId: string) {
+  await applyTransition(tx, {
+    table: tableSessionSignups,
+    status: tableSessionSignups.status,
+    where: and(
+      eq(tableSessionSignups.sessionId, sessionId),
+      eq(tableSessionSignups.playerId, playerId),
+    ),
+    machine: sessionSignupMachine,
+    from: 'waiting',
+    event: 'PROMOTE',
+  });
+}
+
 /** While the session has room, the first who wait take the places. Answers their events. */
 async function promote(
   tx: AnyDb,
@@ -134,15 +151,7 @@ async function promote(
     .limit(room);
   const eventIds: string[] = [];
   for (const { playerId } of next) {
-    await tx
-      .update(tableSessionSignups)
-      .set({ status: 'going' })
-      .where(
-        and(
-          eq(tableSessionSignups.sessionId, session.id),
-          eq(tableSessionSignups.playerId, playerId),
-        ),
-      );
+    await moveUp(tx, session.id, playerId);
     eventIds.push(await signedUp(tx, actorId, table, session, playerId, false, 'waitlist'));
   }
   return eventIds;
@@ -269,15 +278,7 @@ export async function addToSession(
     const status = await signupOf(tx, session.id, playerId);
     if (status === 'going') return null;
     if (status === 'waiting') {
-      await tx
-        .update(tableSessionSignups)
-        .set({ status: 'going' })
-        .where(
-          and(
-            eq(tableSessionSignups.sessionId, session.id),
-            eq(tableSessionSignups.playerId, playerId),
-          ),
-        );
+      await moveUp(tx, session.id, playerId);
     } else {
       await tx.insert(tableSessionSignups).values({
         sessionId: session.id,

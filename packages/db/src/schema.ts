@@ -1,6 +1,7 @@
 import { TABLE_SESSION_STATUSES, TABLE_STATUSES } from './table-status';
 import { PROFILE_STATUSES } from './profile-status';
 import { INVITATION_STATUSES } from './invitation-status';
+import { REGISTRATION_STATUSES, SESSION_SIGNUP_STATUSES } from './seat-status';
 import { EVENT_REVIEWS } from './event-review';
 import type { ReportExcerpt } from './report-excerpt';
 import { sql } from 'drizzle-orm';
@@ -72,7 +73,7 @@ export const catalogStatus = pgEnum('catalog_status', [
   'disabled',
 ]);
 // A pending request takes no seat; only a confirmed one does.
-export const registrationStatus = pgEnum('registration_status', ['pending', 'confirmed']);
+export const registrationStatus = pgEnum('registration_status', REGISTRATION_STATUSES);
 
 const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -720,7 +721,7 @@ export const tableSessionAttendance = pgTable(
 // (`waiting`, in order of `created_at`); when someone playing leaves, the first who waits takes
 // the place in the same transaction. Quem mestra may add or take out anyone. Personal data: it goes
 // with the session and with the account, and with the player's seat at the table.
-export const sessionSignupStatus = pgEnum('session_signup_status', ['going', 'waiting']);
+export const sessionSignupStatus = pgEnum('session_signup_status', SESSION_SIGNUP_STATUSES);
 
 export const tableSessionSignups = pgTable(
   'table_session_signups',
