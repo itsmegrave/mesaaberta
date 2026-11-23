@@ -21,6 +21,8 @@ import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { places, profiles, reports } from '@mesaaberta/core/server/db/schema';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import { applyTransition } from '../state/transition';
+import { reportMachine } from '../../moderation/report-machine';
 import { featuresOf } from './features';
 import { clearPlaceTags, rebuildPlaceTags } from './tags';
 
@@ -183,10 +185,15 @@ export async function resolveOpenPlaceReports(
     .for('update');
   const eventIds: string[] = [];
   for (const report of waiting) {
-    await t
-      .update(reports)
-      .set({ status: 'resolved', resolvedBy: actorId, resolvedAt: now })
-      .where(eq(reports.id, report.id));
+    await applyTransition(t, {
+      table: reports,
+      status: reports.status,
+      where: eq(reports.id, report.id),
+      machine: reportMachine,
+      from: OPEN_REPORT_STATUSES,
+      event: 'RESOLVE',
+      set: { resolvedBy: actorId, resolvedAt: now },
+    });
     eventIds.push(
       await recordEvent(
         t,
@@ -336,15 +343,19 @@ export async function restorePlace(
       .for('update');
     const eventIds: string[] = [];
     for (const report of waiting) {
-      await t
-        .update(reports)
-        .set({
-          status: 'dismissed',
+      await applyTransition(t, {
+        table: reports,
+        status: reports.status,
+        where: eq(reports.id, report.id),
+        machine: reportMachine,
+        from: OPEN_REPORT_STATUSES,
+        event: 'DISMISS',
+        set: {
           resolvedBy: actor!.id,
           resolutionNote: note.trim() || null,
           resolvedAt: now,
-        })
-        .where(eq(reports.id, report.id));
+        },
+      });
       eventIds.push(
         await recordEvent(
           t,

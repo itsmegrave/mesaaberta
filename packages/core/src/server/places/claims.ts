@@ -10,6 +10,8 @@ import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { placeClaims, places, profiles } from '@mesaaberta/core/server/db/schema';
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import { placeClaimMachine } from '../../state/review-machines';
+import { applyTransition } from '../state/transition';
 import { enforceRateLimit, PLACE_CLAIM_LIMIT } from '@mesaaberta/core/server/rate-limit';
 
 // A store (or whoever runs the games there) asks to manage its place. An admin approves, and the
@@ -196,10 +198,15 @@ export async function approveClaim(
       .update(places)
       .set({ ownerId: claim.claimantId, ownerSince: now })
       .where(eq(places.id, place.id));
-    await t
-      .update(placeClaims)
-      .set({ status: 'approved', decidedBy: actor!.id, decidedAt: now, updatedAt: now })
-      .where(eq(placeClaims.id, claim.id));
+    await applyTransition(t, {
+      table: placeClaims,
+      status: placeClaims.status,
+      where: eq(placeClaims.id, claim.id),
+      machine: placeClaimMachine,
+      from: 'pending',
+      event: 'APPROVE',
+      set: { decidedBy: actor!.id, decidedAt: now, updatedAt: now },
+    });
     const eventIds = [
       await recordEvent(
         t,
@@ -208,17 +215,16 @@ export async function approveClaim(
       ),
     ];
 
-    const others = await t
-      .update(placeClaims)
-      .set({ status: 'rejected', decidedBy: actor!.id, decidedAt: now, updatedAt: now })
-      .where(
-        and(
-          eq(placeClaims.placeId, place.id),
-          eq(placeClaims.status, 'pending'),
-          ne(placeClaims.id, claim.id),
-        ),
-      )
-      .returning({ id: placeClaims.id, claimantId: placeClaims.claimantId });
+    const rejected = await applyTransition(t, {
+      table: placeClaims,
+      status: placeClaims.status,
+      where: and(eq(placeClaims.placeId, place.id), ne(placeClaims.id, claim.id)),
+      machine: placeClaimMachine,
+      from: 'pending',
+      event: 'REJECT',
+      set: { decidedBy: actor!.id, decidedAt: now, updatedAt: now },
+    });
+    const others = (rejected?.rows ?? []) as (typeof placeClaims.$inferSelect)[];
     for (const other of others)
       eventIds.push(
         await recordEvent(
@@ -243,16 +249,20 @@ export async function rejectClaim(
   return db.transaction(async (tx) => {
     const t = tx as unknown as AnyDb;
     const { claim, place } = await waitingClaim(t, id);
-    await t
-      .update(placeClaims)
-      .set({
-        status: 'rejected',
+    await applyTransition(t, {
+      table: placeClaims,
+      status: placeClaims.status,
+      where: eq(placeClaims.id, claim.id),
+      machine: placeClaimMachine,
+      from: 'pending',
+      event: 'REJECT',
+      set: {
         decidedBy: actor!.id,
         decidedAt: now,
         decisionNote: note.trim() || null,
         updatedAt: now,
-      })
-      .where(eq(placeClaims.id, claim.id));
+      },
+    });
     return [
       await recordEvent(
         t,

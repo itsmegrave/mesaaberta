@@ -7,6 +7,8 @@ import { publicName } from '@mesaaberta/core/server/db/public-name';
 import { crowdfundings, profiles, reports } from '@mesaaberta/core/server/db/schema';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import { applyTransition } from '../state/transition';
+import { reportMachine } from '../../moderation/report-machine';
 
 // The admin side of the crowdfunding list: what is up and what was taken down, and taking one down.
 // Every function authorizes the actor itself; the routes check again before calling.
@@ -138,10 +140,15 @@ export async function removeCrowdfunding(
       .for('update');
     const eventIds: string[] = [];
     for (const report of waiting) {
-      await t
-        .update(reports)
-        .set({ status: 'resolved', resolvedBy: actor!.id, resolvedAt: now })
-        .where(eq(reports.id, report.id));
+      await applyTransition(t, {
+        table: reports,
+        status: reports.status,
+        where: eq(reports.id, report.id),
+        machine: reportMachine,
+        from: OPEN_REPORT_STATUSES,
+        event: 'RESOLVE',
+        set: { resolvedBy: actor!.id, resolvedAt: now },
+      });
       eventIds.push(
         await recordEvent(
           t,

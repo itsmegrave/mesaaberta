@@ -41,15 +41,10 @@ const webDatabaseRead = {
 // its machine and takes its files off this list; when it is empty, the list goes.
 const STATUS_WRITES_NOT_MIGRATED = [
   'packages/core/src/server/account/service.ts',
-  'packages/core/src/server/crowdfunding/admin.ts',
   'packages/core/src/server/crowdfunding/import/store.ts',
+  // Profile status writes wait for the profile machine (profile statuses thread).
   'packages/core/src/server/moderation/admin.ts',
   'packages/core/src/server/moderation/bans.ts',
-  'packages/core/src/server/partners/admin.ts',
-  'packages/core/src/server/places/admin.ts',
-  'packages/core/src/server/places/claims.ts',
-  'packages/core/src/server/places/partner-links.ts',
-  'packages/core/src/server/systems/logos/service.ts',
 ];
 
 // A status changes only through its machine (`applyTransition`, packages/core/src/server/state), so
