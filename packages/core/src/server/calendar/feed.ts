@@ -70,22 +70,37 @@ const newToken = () => {
   return bytesToBase64(bytes).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 };
 
-/** The person's feed secret, or null when they have no feed. */
-export async function calendarFeedTokenOf(db: AnyDb, profileId: string): Promise<string | null> {
+/** The SHA-256 of a feed secret, as hex: what the database keeps and looks the feed up by. */
+export async function hashFeedToken(token: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Whether the person has a feed. The secret itself is not kept, only its hash, so the address is
+ * shown once, when it is made; to copy it again the person makes a new one.
+ */
+export async function calendarFeedOn(db: AnyDb, profileId: string): Promise<boolean> {
   const [row] = await db
-    .select({ token: profiles.calendarFeedToken })
+    .select({ hash: profiles.calendarFeedTokenHash })
     .from(profiles)
     .where(eq(profiles.id, profileId));
-  return row?.token ?? null;
+  return !!row?.hash;
 }
 
 /**
  * Turns the person's feed on with a new secret (the old address, if any, stops working) or off.
- * Answers the secret now in place.
+ * Answers the secret now in place: the only time it is answered.
  */
 export async function setCalendarFeed(db: AnyDb, profileId: string, on: boolean) {
   const token = on ? newToken() : null;
-  await db.update(profiles).set({ calendarFeedToken: token }).where(eq(profiles.id, profileId));
+  await db
+    .update(profiles)
+    .set({
+      calendarFeedToken: null,
+      calendarFeedTokenHash: token ? await hashFeedToken(token) : null,
+    })
+    .where(eq(profiles.id, profileId));
   const eventId = await recordEvent(db, {
     type: 'CalendarFeedChanged',
     actorId: profileId,
@@ -100,6 +115,11 @@ export async function calendarFeedOwner(db: AnyDb, token: string): Promise<strin
   const [row] = await db
     .select({ id: profiles.id })
     .from(profiles)
-    .where(and(eq(profiles.calendarFeedToken, token), eq(profiles.status, 'active')));
+    .where(
+      and(
+        eq(profiles.calendarFeedTokenHash, await hashFeedToken(token)),
+        eq(profiles.status, 'active'),
+      ),
+    );
   return row?.id ?? null;
 }

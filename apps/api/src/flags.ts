@@ -3,7 +3,11 @@ import { createFlags, type Flags } from '@mesaaberta/core/server/flags/flags';
 import { growthBookPayload, isolateCache } from '@mesaaberta/core/server/flags/payload';
 import { extensionFlagDefaults } from '@mesaaberta/core/server/extensions/index';
 
-export type FlagsEnv = { GROWTHBOOK_API_HOST?: string; GROWTHBOOK_CLIENT_KEY?: string };
+export type FlagsEnv = {
+  GROWTHBOOK_API_HOST?: string;
+  GROWTHBOOK_CLIENT_KEY?: string;
+  GROWTHBOOK_DECRYPTION_KEY?: string;
+};
 
 // The payload, kept in this isolate, so a request rarely waits on GrowthBook.
 const cache = isolateCache();
@@ -24,7 +28,7 @@ export function apiFlags(env: FlagsEnv | undefined): Flags {
           waitUntil: () => {},
         })
       : async () => null,
-    { extensionFlags: extensionFlagDefaults() },
+    { extensionFlags: extensionFlagDefaults(), decryptionKey: env?.GROWTHBOOK_DECRYPTION_KEY },
   );
 }
 

@@ -38,6 +38,8 @@ export function passkeyCeremony(kind: 'sign-in' | 'register', step: Step) {
         const ask = new FormData();
         if (captcha) ask.set('captchaToken', captcha);
         const offered = await postAction(step.options, ask);
+        // Sent to sign in again first (adding a passkey asks for a recent sign-in): go there.
+        if (offered.type === 'redirect') return offered;
         const challenge =
           offered.type === 'success'
             ? (offered.data?.challenge as PasskeyChallenge | undefined)

@@ -138,6 +138,10 @@ export const profiles = pgTable(
     // The secret in the person's calendar feed address (`/calendar/<token>.ics`), which a calendar
     // app reads without signing in. Null: no feed. A new one replaces it, and the old address stops.
     calendarFeedToken: text('calendar_feed_token'),
+    // The SHA-256 (hex) of that secret, which is what the feed is looked up by, so a database read
+    // does not hand out working feed addresses. New secrets are stored only here (the plain column
+    // above is left null and goes away in a later contract step), so the address is shown once.
+    calendarFeedTokenHash: text('calendar_feed_token_hash'),
     // "Quando posso jogar": a bit per day and part of the day (Monday morning is bit 0, Sunday
     // night bit 20), as `@mesaaberta/core/profile/availability` reads it. 0: not said.
     availability: integer('availability').notNull().default(0),
@@ -159,6 +163,7 @@ export const profiles = pgTable(
     // normalise. Nulls do not collide: many profiles can be waiting for onboarding.
     uniqueIndex('profiles_username_unique').on(sql`lower(${profile.username})`),
     uniqueIndex('profiles_calendar_feed_token_unique').on(profile.calendarFeedToken),
+    uniqueIndex('profiles_calendar_feed_token_hash_unique').on(profile.calendarFeedTokenHash),
     check('profiles_username_format', sql`${profile.username} ~ '^[a-z0-9]+(-[a-z0-9]+)*$'`),
     // Mirrors RESOLUTION_NOTE_MAX in apps/web/src/lib/moderation/reports.
     check('profiles_ban_reason_length', sql`char_length(${profile.banReason}) <= 1000`),

@@ -29,7 +29,11 @@ import type { Handler } from './types';
 type PollerEnv = { EVENT_POLLER?: string } & SocialEnv & BuildEnv & FlagsEnv;
 
 /** The GrowthBook settings the sweeper reads its own flags with (`use_session_close_reminders`). */
-type FlagsEnv = { GROWTHBOOK_API_HOST?: string; GROWTHBOOK_CLIENT_KEY?: string };
+type FlagsEnv = {
+  GROWTHBOOK_API_HOST?: string;
+  GROWTHBOOK_CLIENT_KEY?: string;
+  GROWTHBOOK_DECRYPTION_KEY?: string;
+};
 
 type Deps = {
   open?: typeof createDb;

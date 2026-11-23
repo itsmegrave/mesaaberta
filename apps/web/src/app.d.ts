@@ -40,6 +40,11 @@ declare global {
       getProfile: () => Promise<
         typeof import('@mesaaberta/core/server/db/schema').profiles.$inferSelect | null
       >;
+      /**
+       * When the signed-in person last signed in (ms, from the verified token's `amr`), or null when
+       * anonymous or unknown. Password, passkey and account changes ask for a recent one.
+       */
+      signedInAt: () => Promise<number | null>;
       /** Set once someone is signed in; it ends up on the request log line. */
       userId?: string;
     }

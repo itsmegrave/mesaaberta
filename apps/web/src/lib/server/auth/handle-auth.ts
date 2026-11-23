@@ -2,6 +2,7 @@ import type { Handle } from '@sveltejs/kit/hooks';
 import { createServerClient } from '@supabase/ssr';
 import type { User } from '@supabase/supabase-js';
 import type { profiles } from '@mesaaberta/core/server/db/schema';
+import { lastSignInAt } from '@mesaaberta/core/server/auth/recent-sign-in';
 import { apiConfigured, readMe } from '../me';
 
 /** Supabase settings on the Worker. Both are public by design: they only identify the project. */
@@ -59,6 +60,8 @@ export const createHandleAuth =
     event.locals.supabase = supabase;
 
     let verified: Promise<User | null> | undefined;
+    // When the verified session last signed in (its `amr`), for the changes that ask for a recent one.
+    let signedInAt: number | null = null;
 
     event.locals.getUser = () =>
       (verified ??= (async () => {
@@ -86,8 +89,11 @@ export const createHandleAuth =
         }
 
         event.locals.userId = user.id;
+        signedInAt = lastSignInAt(claims);
         return user;
       })());
+
+    event.locals.signedInAt = async () => ((await event.locals.getUser()) ? signedInAt : null);
 
     // The signed-in user's profile: the actor the authorization policy decides about, read by the
     // api Worker. Null when anonymous, without a profile, or while there is no api to ask.
@@ -138,14 +144,10 @@ export function sessionTooOld(
   maxAgeDays: number,
   now: number = Date.now(),
 ): boolean {
-  if (!Number.isFinite(maxAgeDays) || maxAgeDays <= 0 || !Array.isArray(claims.amr)) return false;
-  const times = claims.amr
-    .map((entry: unknown) =>
-      entry && typeof entry === 'object' ? (entry as { timestamp?: unknown }).timestamp : undefined,
-    )
-    .filter((time): time is number => typeof time === 'number' && Number.isFinite(time));
-  if (times.length === 0) return false;
-  return now - Math.max(...times) * 1000 > maxAgeDays * 86_400_000;
+  if (!Number.isFinite(maxAgeDays) || maxAgeDays <= 0) return false;
+  const signedIn = lastSignInAt(claims);
+  if (signedIn === null) return false;
+  return now - signedIn > maxAgeDays * 86_400_000;
 }
 
 /**

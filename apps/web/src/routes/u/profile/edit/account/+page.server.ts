@@ -1,7 +1,7 @@
 import { fail, redirect, error, isHttpError } from '@sveltejs/kit';
 import { initialForm, validateStringForm } from '#lib/forms/contract.js';
 import { refuse, responseForm, withoutSecrets } from '#lib/forms/server.js';
-import { requireUser } from '#lib/server/auth/guard.js';
+import { requireRecentSignIn, requireUser } from '#lib/server/auth/guard.js';
 import { writeViaApi } from '#lib/server/api-write.js';
 import { disconnectSchema } from '#lib/profile/connections.js';
 import { addPasswordFormSchema } from '@mesaaberta/core/auth/password-setup';
@@ -58,6 +58,7 @@ export const actions: Actions = {
   disconnect: async ({ request, locals, url }) => {
     await requireUser(locals, url);
     if (!locals.supabase) error(503, 'Auth not configured');
+    await requireRecentSignIn(locals, url);
 
     const form = validateStringForm(await request.formData(), disconnectSchema, ['provider']);
     if (!form.valid) return fail(400, { form });
@@ -78,6 +79,7 @@ export const actions: Actions = {
     const user = await requireUser(locals, url);
     if (!locals.supabase || !(await passkeysFor(locals, user.id)))
       return fail(404, { passkey: 'off' });
+    await requireRecentSignIn(locals, url);
     const challenge = await registrationChallenge(locals.supabase, locals.log);
     if (!challenge) return fail(503, { passkey: 'unavailable' });
     return { challenge };
@@ -88,6 +90,7 @@ export const actions: Actions = {
     const user = await requireUser(locals, url);
     if (!locals.supabase || !(await passkeysFor(locals, user.id)))
       return fail(404, { passkey: 'off' });
+    await requireRecentSignIn(locals, url);
     const form = validateStringForm(await request.formData(), passkeyAnswerSchema, [
       'challengeId',
       'credential',
@@ -106,6 +109,7 @@ export const actions: Actions = {
   passkeyRemove: async ({ request, locals, url }) => {
     const user = await requireUser(locals, url);
     if (!locals.supabase || !(await passkeysFor(locals, user.id))) error(404);
+    await requireRecentSignIn(locals, url);
     const form = validateStringForm(await request.formData(), passkeyRemoveSchema, ['passkeyId']);
     if (!form.valid) return fail(400, { form });
     if (!(await removePasskey(locals.supabase, locals.log, form.data.passkeyId)))

@@ -21,6 +21,10 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) first: workflow, code style, translation
 
 - Paginated lists take the page number from `?page=N` (the first page has no parameter). A value that isn't a positive whole number reads as page 1, and a page past the last answers 404.
 
+## Security review before merging
+
+- Before merging any PR in mesaaberta, mesaaberta-privy or mesaaberta-infra, review the change against the OWASP Top 10 (2025) with the checklist in `.github/pull_request_template.md`. Fix any finding before merging, and write the result in the PR body ("OWASP Top 10 review: no findings", or each finding and its fix).
+
 ## Architecture migration (Trello #120)
 
 The system is live at mesaaberta.app. The split into web / api / worker and the move to Bun is a strangler migration, not a rewrite. Decisions and ADRs live in the private `itsmegrave/mesaaberta-infra` repo (`docs/adr`), never here.
@@ -60,5 +64,5 @@ The system is live at mesaaberta.app. The split into web / api / worker and the 
 ### Workflow
 
 - Link the Trello card in the PR body and post the PR link and an update on the card (#120: https://trello.com/c/3n967DND). Trello is the source of truth for what is open.
-- Squash merge with `--admin` is authorized once CI is green. Delete the worktree and branch afterwards.
+- Squash merge with `--admin` is authorized once CI is green and the PR body holds the OWASP Top 10 review (below). Delete the worktree and branch afterwards.
 - Work in a `git worktree` off `origin/main`; the main checkout may hold unrelated uncommitted work.

@@ -191,6 +191,14 @@ describe('api sign-up', () => {
 });
 
 describe('api new password', () => {
+  // An access token whose last sign-in was `minutesAgo` (the api reads it before Supabase checks it).
+  const tokenSignedIn = (minutesAgo: number) => {
+    const part = (value: object) =>
+      btoa(JSON.stringify(value)).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
+    const timestamp = Math.floor((Date.now() - minutesAgo * 60_000) / 1000);
+    return `${part({ alg: 'ES256' })}.${part({ sub: 'u-1', amr: [{ method: 'recovery', timestamp }] })}.sig`;
+  };
+  const recent = tokenSignedIn(2);
   const fake = (answers: Array<{ status: number; body?: object } | 'down'>) => {
     const request = vi.fn(async (_url: string | URL | Request, _init?: RequestInit) => {
       const next = answers.shift() ?? { status: 200 };
@@ -202,7 +210,7 @@ describe('api new password', () => {
   const send = (
     request: typeof fetch,
     body: unknown = { password: 'correct horse', passwordConfirm: 'correct horse' },
-    headers: Record<string, string> = { authorization: 'Bearer jwt-a' },
+    headers: Record<string, string> = { authorization: `Bearer ${recent}` },
     environment: object = env,
   ) =>
     authRoutes(open, undefined, { request }).request(
@@ -224,9 +232,19 @@ describe('api new password', () => {
     const [put, logout] = request.mock.calls;
     expect(String(put[0])).toBe('https://supabase.test/auth/v1/user');
     expect(put[1]?.method).toBe('PUT');
-    expect((put[1]?.headers as Record<string, string>).authorization).toBe('Bearer jwt-a');
+    expect((put[1]?.headers as Record<string, string>).authorization).toBe(`Bearer ${recent}`);
     expect(JSON.parse(String(put[1]?.body))).toEqual({ password: 'correct horse' });
     expect(String(logout[0])).toBe('https://supabase.test/auth/v1/logout?scope=others');
+  });
+
+  it('refuses a session that did not sign in just now, before asking Supabase', async () => {
+    const request = fake([{ status: 200 }]);
+    for (const token of [tokenSignedIn(60), 'not-a-jwt']) {
+      const response = await send(request, undefined, { authorization: `Bearer ${token}` });
+      expect(response.status).toBe(401);
+      expect(await response.json()).toEqual({ result: 'no_session' });
+    }
+    expect(request).not.toHaveBeenCalled();
   });
 
   it('refuses without a token, with different passwords, or without the Supabase settings', async () => {

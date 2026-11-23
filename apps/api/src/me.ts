@@ -20,7 +20,7 @@ import { isUsernameAvailable, loadProfileForm } from '@mesaaberta/core/server/pr
 import { exportAccount } from '@mesaaberta/core/server/account/service';
 import { setBadgeHidden } from '@mesaaberta/core/server/badges/reads';
 import {
-  calendarFeedTokenOf,
+  calendarFeedOn,
   listCalendarTables,
   setCalendarFeed,
 } from '@mesaaberta/core/server/calendar/feed';
@@ -155,10 +155,11 @@ export function meRoutes(open: Open = openDb) {
     c.json(await listCalendarTables(c.get('db'), c.get('actorId'), new Date())),
   );
 
-  // The subscribed calendar feed: the actor's secret (null: no feed), and turning it on with a new
-  // secret or off. Web checks `use_calendar_feed` before it calls these.
+  // The subscribed calendar feed: whether the actor has one (only its hash is kept, so the secret
+  // is answered once, by the POST that makes it), and turning it on with a new secret or off. Web
+  // checks `use_calendar_feed` before it calls these.
   app.get('/calendar-feed', async (c) =>
-    c.json({ token: await calendarFeedTokenOf(c.get('db'), c.get('actorId')) }),
+    c.json({ on: await calendarFeedOn(c.get('db'), c.get('actorId')) }),
   );
   app.post('/calendar-feed', async (c) => {
     const body = (await c.req.json().catch(() => null)) as { on?: unknown } | null;
