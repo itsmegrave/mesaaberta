@@ -8,6 +8,7 @@ describe('StatusBadge', () => {
     ['user:active', 'Ativo'],
     ['user:suspended', 'Suspenso'],
     ['user:banned', 'Banido'],
+    ['user:closed', 'Encerrado'],
     ['table:active', 'Ativa'],
     ['table:awaiting_confirmation', 'Aguardando confirmação'],
     ['table:concluded', 'Concluída'],

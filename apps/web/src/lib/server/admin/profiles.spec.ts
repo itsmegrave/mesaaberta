@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
+import { inArray } from 'drizzle-orm';
 import { createTestDb } from '../db/test-db';
 import {
   gameTables,
@@ -65,7 +66,7 @@ it('paginates all users with deterministic ordering', async () => {
 
 it('counts each standing with the search kept, and orders by username when asked', async () => {
   const all = await list();
-  expect(all.counts).toEqual({ all: 27, active: 13, suspended: 13, banned: 1 });
+  expect(all.counts).toEqual({ all: 27, active: 13, suspended: 1, banned: 1, closed: 12 });
   expect((await list('status=banned')).total).toBe(all.counts.banned);
   // The counts follow the search, so "user-1" does not count "banido".
   expect((await list('q=user-1')).counts.all).toBe(10);
@@ -90,24 +91,40 @@ it('tells a ban that never ends (banned) from one with an end date (suspended)',
   const all = (await list('size=100')).rows;
   expect(all.find((row) => row.username === 'banido')?.standing).toBe('banned');
   expect(all.find((row) => row.username === 'suspensa')?.standing).toBe('suspended');
-  // A closed account, suspended with no ban, is suspended too.
-  expect(all.find((row) => row.username === 'user-02')?.standing).toBe('suspended');
+  // An old closed account, suspended with no ban on it, is closed.
+  expect(all.find((row) => row.username === 'user-02')?.standing).toBe('closed');
 });
 
-it('filters active, suspended and banned users, including unfinished onboarding', async () => {
+it('filters active, suspended, banned and closed users, including unfinished onboarding', async () => {
   const active = await list('status=active');
   const suspended = await list('status=suspended');
   const banned = await list('status=banned');
+  const closed = await list('status=closed');
   expect(active.total).toBe(13);
   expect(active.rows.every((row) => row.standing === 'active')).toBe(true);
   expect(active.rows.some((row) => row.username === null)).toBe(true);
-  expect(suspended.total).toBe(13);
-  expect(suspended.rows.every((row) => row.standing === 'suspended')).toBe(true);
+  expect(suspended.rows.map((row) => row.username)).toEqual(['suspensa']);
   expect(banned.rows.map((row) => row.username)).toEqual(['banido']);
+  expect(closed.total).toBe(12);
+  expect(closed.rows.every((row) => row.standing === 'closed')).toBe(true);
+});
+
+it('files rows with the banned and closed statuses under their own filter', async () => {
+  await test.db.insert(profiles).values([
+    { id: id(28), username: 'banida', status: 'banned', bannedAt: new Date('2026-09-01') },
+    { id: id(29), username: 'encerrada', status: 'closed' },
+  ]);
+  try {
+    expect((await list('q=banida&status=banned')).rows).toMatchObject([{ standing: 'banned' }]);
+    expect((await list('q=encerrada&status=closed')).rows).toMatchObject([{ standing: 'closed' }]);
+    expect((await list('q=encerrada&status=suspended')).rows).toEqual([]);
+  } finally {
+    await test.db.delete(profiles).where(inArray(profiles.id, [id(28), id(29)]));
+  }
 });
 
 it('combines status with case-insensitive username search and treats wildcards literally', async () => {
-  expect((await list('q=USER-02&status=suspended')).rows.map((row) => row.id)).toEqual([id(2)]);
+  expect((await list('q=USER-02&status=closed')).rows.map((row) => row.id)).toEqual([id(2)]);
   expect((await list('q=user-02&status=active')).rows).toEqual([]);
   for (const q of ['%', '_', '\\', "' OR 1=1 --"]) {
     expect((await list(new URLSearchParams({ q }).toString())).total).toBe(0);

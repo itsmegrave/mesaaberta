@@ -356,7 +356,7 @@ export async function closeAccount(
 
 /**
  * Clears every personal field of a closed account, its links, favorite systems, follows and notifications. The row itself stays, empty, because
- * the disabled tables still point at it; it is suspended so nothing can act through it.
+ * the disabled tables still point at it; it is closed so nothing can act through it.
  */
 export async function anonymiseProfile(db: AnyDb, userId: string) {
   await db.transaction(async (tx) => {
@@ -391,7 +391,7 @@ export async function anonymiseProfile(db: AnyDb, userId: string) {
         bio: null,
         tableRole: null,
         tableRoleInferred: false,
-        status: 'suspended',
+        status: 'closed',
         invitationsEnabled: false,
       })
       .where(eq(profiles.id, userId));

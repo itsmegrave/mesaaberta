@@ -31,6 +31,11 @@
         "description": "Para a administração: a seção Precisa de você não lista mais as mesas que esperam a confirmação de quem mestra, porque isso cabe a quem mestra. Elas continuam em Mesas, no filtro Aguardando confirmação."
       },
       {
+        "kind": "improved",
+        "title": "Suspensões, banimentos e contas encerradas separados",
+        "description": "Para a administração: a visão geral e a lista de pessoas agora separam quem está suspenso por um tempo, quem foi banido e quem encerrou a própria conta, cada um com o seu filtro e a sua etiqueta."
+      },
+      {
         "kind": "fixed",
         "title": "Denúncia fechada não volta para análise",
         "description": "Para a administração: duas pessoas da moderação agindo na mesma denúncia ao mesmo tempo não conseguem mais reabrir uma denúncia já resolvida ou descartada. Vale a primeira decisão."

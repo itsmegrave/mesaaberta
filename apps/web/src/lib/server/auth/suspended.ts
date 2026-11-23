@@ -10,7 +10,7 @@ const hasSession = (cookies: { name: string }[]) =>
   cookies.some(({ name }) => name.startsWith('sb-') && name.includes('-auth-token'));
 
 /**
- * A banned (suspended) account is signed out on its next request, wherever it was, and sent to the login
+ * A suspended, banned or closed account is signed out on its next request, wherever it was, and sent to the login
  * page, which says why. Signing in again is refused the same way (see `finishLogin` and
  * `signInWithEmail`). Runs after `handleAuth`, which it needs.
  */
@@ -19,7 +19,7 @@ export const handleSuspended: Handle = async ({ event, resolve }) => {
   if (!supabase || !hasSession(event.cookies.getAll())) return resolve(event);
 
   const profile = await event.locals.getProfile().catch(() => null);
-  if (!profile || profile.status !== 'suspended') return resolve(event);
+  if (!profile || profile.status === 'active') return resolve(event);
   // A temporary ban that has run out is lifted on the spot by the api, so the person carries on.
   if (profile.bannedUntil && profile.bannedUntil <= new Date()) {
     const { banned } = await readFromApi<{ banned: boolean }>(

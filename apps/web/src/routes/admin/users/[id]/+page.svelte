@@ -57,9 +57,8 @@
   const meaning = $derived.by(() => {
     if (data.standing === 'active') return m.admin_user_meaning_active();
     if (data.standing === 'banned') return m.admin_user_meaning_banned();
-    return ban?.until
-      ? m.admin_user_meaning_suspended({ date: date(ban.until) })
-      : m.admin_user_meaning_closed();
+    if (data.standing === 'closed' || !ban?.until) return m.admin_user_meaning_closed();
+    return m.admin_user_meaning_suspended({ date: date(ban.until) });
   });
 
   function copyId() {

@@ -23,7 +23,14 @@ afterAll(() => test.close());
 
 it('returns zero counts on an empty platform', async () => {
   const data = await adminOverview(test.db, now);
-  expect(data.people).toEqual({ total: 0, active: 0, suspended: 0, banned: 0, new30d: 0 });
+  expect(data.people).toEqual({
+    total: 0,
+    active: 0,
+    suspended: 0,
+    banned: 0,
+    closed: 0,
+    new30d: 0,
+  });
   expect(data.tables).toEqual({
     total: 0,
     active: 0,
@@ -44,7 +51,15 @@ it('returns zero counts on an empty platform', async () => {
 it('aggregates statuses independently, counts distinct GMs, omits private fields', async () => {
   await test.db.insert(profiles).values([
     { id: id(1), createdAt: new Date('2026-08-01') },
+    // An old closed account: suspended with no ban on it.
     { id: id(2), status: 'suspended', createdAt: new Date('2026-09-01T12:00:00Z') },
+    { id: id(7), status: 'closed', createdAt: new Date('2026-07-01') },
+    {
+      id: id(8),
+      status: 'banned',
+      bannedAt: new Date('2026-09-02'),
+      createdAt: new Date('2026-07-01'),
+    },
     { id: id(3), createdAt: new Date('2026-09-30') },
     { id: id(4), createdAt: new Date('2026-10-01') },
     // A ban that never ends is "banned", not "suspended".
@@ -108,7 +123,14 @@ it('aggregates statuses independently, counts distinct GMs, omits private fields
     .values({ name: 'Suggestion', slug: 'suggestion', status: 'pending' });
   await test.db.insert(tags).values({ name: 'Rejected', slug: 'rejected', status: 'rejected' });
   const data = await adminOverview(test.db, now);
-  expect(data.people).toEqual({ total: 6, active: 3, suspended: 2, banned: 1, new30d: 2 });
+  expect(data.people).toEqual({
+    total: 8,
+    active: 3,
+    suspended: 1,
+    banned: 2,
+    closed: 2,
+    new30d: 2,
+  });
   expect(data.tables).toEqual({
     total: 6,
     active: 2,

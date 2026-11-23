@@ -63,6 +63,7 @@
         [m.admin_active_profiles(), data.people.active],
         [m.admin_suspended(), data.people.suspended],
         [m.admin_banned(), data.people.banned],
+        [m.admin_closed(), data.people.closed],
       ],
     },
     {

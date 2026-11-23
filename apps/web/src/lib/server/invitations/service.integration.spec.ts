@@ -304,7 +304,7 @@ it('lets a join finish its profile FK check before a racing ban removes the seat
     .select({ status: profiles.status })
     .from(profiles)
     .where(eq(profiles.id, a.id));
-  expect(profile.status).toBe('suspended');
+  expect(profile.status).toBe('banned');
   expect(
     await db
       .select()
