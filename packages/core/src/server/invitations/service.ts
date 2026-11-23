@@ -1,3 +1,5 @@
+import { applyTransition } from '../state/transition';
+import { INVITATION_ENDING, invitationMachine } from '../../state/invitation-machine';
 import { and, asc, desc, eq, gt, inArray, lte, or, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { unfollowBothWays } from '../follows/service';
@@ -68,12 +70,17 @@ async function finish(
   now: Date,
   reason: string | null = null,
 ) {
-  const [updated] = await db
-    .update(playerInvitations)
-    .set({ status, respondedAt: now, cancellationReason: reason })
-    .where(and(eq(playerInvitations.id, i.id), eq(playerInvitations.status, 'pending')))
-    .returning();
-  if (!updated) return [];
+  const moved = await applyTransition(db, {
+    table: playerInvitations,
+    status: playerInvitations.status,
+    where: eq(playerInvitations.id, i.id),
+    machine: invitationMachine,
+    from: 'pending',
+    event: INVITATION_ENDING[status],
+    set: { respondedAt: now, cancellationReason: reason },
+  });
+  // Answered meanwhile.
+  if (!moved) return [];
   const type = {
     accepted: 'InvitationAccepted',
     declined: 'InvitationDeclined',

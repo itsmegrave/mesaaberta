@@ -1,3 +1,5 @@
+import { applyTransition } from '../state/transition';
+import { INVITATION_ENDING, invitationMachine } from '../../state/invitation-machine';
 import { and, asc, eq, gt, inArray, sql, type AnyColumn } from 'drizzle-orm';
 import { MAX_PARTNER_OWNERS, PARTNER_INVITATION_DAYS } from '../../partners/owners';
 import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
@@ -109,12 +111,18 @@ async function finish(
   actorId: string | null,
   now: Date,
 ): Promise<string[]> {
-  const [ended] = await db
-    .update(partnerInvitations)
-    .set({ status, respondedAt: now })
-    .where(and(eq(partnerInvitations.id, invitation.id), eq(partnerInvitations.status, 'pending')))
-    .returning();
-  if (!ended) return [];
+  const moved = await applyTransition(db, {
+    table: partnerInvitations,
+    status: partnerInvitations.status,
+    where: eq(partnerInvitations.id, invitation.id),
+    machine: invitationMachine,
+    from: 'pending',
+    event: INVITATION_ENDING[status],
+    set: { respondedAt: now },
+  });
+  // Answered meanwhile.
+  if (!moved) return [];
+  const ended = moved.rows[0] as Invitation;
   const type = {
     accepted: 'PartnerInvitationAccepted',
     declined: 'PartnerInvitationDeclined',

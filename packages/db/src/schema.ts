@@ -1,5 +1,6 @@
 import { TABLE_SESSION_STATUSES, TABLE_STATUSES } from './table-status';
 import { PROFILE_STATUSES } from './profile-status';
+import { INVITATION_STATUSES } from './invitation-status';
 import { EVENT_REVIEWS } from './event-review';
 import type { ReportExcerpt } from './report-excerpt';
 import { sql } from 'drizzle-orm';
@@ -1648,13 +1649,7 @@ export const workerHeartbeats = pgTable('worker_heartbeats', {
 }).enableRLS();
 
 // Consent-based invitations are not registrations; pending rows reserve seats without membership.
-export const invitationStatus = pgEnum('invitation_status', [
-  'pending',
-  'accepted',
-  'declined',
-  'expired',
-  'cancelled',
-]);
+export const invitationStatus = pgEnum('invitation_status', INVITATION_STATUSES);
 export const playerInvitations = pgTable(
   'player_invitations',
   {
