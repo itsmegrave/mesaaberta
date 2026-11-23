@@ -14,6 +14,8 @@ describe('StatusBadge', () => {
     ['table:concluded', 'Concluída'],
     ['table:not_held', 'Não realizada'],
     ['table:disabled', 'Desativada'],
+    ['table:cancelled', 'Cancelada'],
+    ['table:removed', 'Removida'],
     ['seat:pending', 'Pendente'],
     ['seat:confirmed', 'Confirmada'],
   ])('says %s in words, so the colour is never the only signal', async (status, word) => {

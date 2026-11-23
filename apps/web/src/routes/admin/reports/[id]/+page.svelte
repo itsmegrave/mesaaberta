@@ -33,6 +33,7 @@
   import { networkIcons, networkLabels } from '#lib/profile/social-presentation.js';
   import { m } from '#lib/paraglide/messages.js';
   import { getLocale } from '#lib/paraglide/runtime.js';
+  import { isTableDown } from '#lib/tables/status.js';
 
   let { data } = $props();
   const locale = getLocale();
@@ -284,7 +285,7 @@
               label={isTable ? m.admin_report_table() : m.admin_report_where()}
               class="flex flex-wrap items-center gap-2"
             >
-              {#if report.table.status === 'disabled'}
+              {#if isTableDown(report.table.status)}
                 <span class="font-semibold">{report.table.title}</span>
               {:else}
                 <a class="anchor font-semibold" href={`/t/${report.table.slug}`}

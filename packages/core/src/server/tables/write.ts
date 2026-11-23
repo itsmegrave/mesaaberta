@@ -17,7 +17,7 @@ import { instantToLocal, localToInstant } from '@mesaaberta/core/server/tables/s
 import { slugify, tableSlug } from '@mesaaberta/core/slug';
 import { minutesToHours } from '@mesaaberta/core/tables/format';
 import type { TableInput } from '../../tables/schema';
-import type { TableStatus } from '../../tables/status-values';
+import { isTableDown, type TableStatus } from '../../tables/status-values';
 import { formatCep } from '../../location/cep';
 import { seatAvailability } from '../invitations/seats';
 import { cancelPendingInvitations } from '../invitations/service';
@@ -614,7 +614,7 @@ export async function disableTable(
     if (!locked) throw new NotFound();
     authorize(actor, 'table:disable', { gmId: locked.gmId, tableStatus: locked.status });
     // Taking down a table that is already down changes nothing; its notices still go out again.
-    if (locked.status !== 'disabled')
+    if (!isTableDown(locked.status))
       await applyTransition(tx as unknown as AnyDb, {
         table: gameTables,
         status: gameTables.status,

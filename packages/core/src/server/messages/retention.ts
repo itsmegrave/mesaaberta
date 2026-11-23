@@ -3,6 +3,7 @@
 import { and, eq, inArray, lt } from 'drizzle-orm';
 import type { AnyDb } from '../db/client';
 import { conversations, gameTables } from '../db/schema';
+import { TABLE_DOWN_STATUSES } from '../../tables/status-values';
 
 /** Days a table's chat is kept after the table is disabled. The privacy policy promises this. */
 export const TABLE_CHAT_RETENTION_DAYS = 90;
@@ -21,7 +22,7 @@ export async function pruneTableChats(db: AnyDb, now = new Date()): Promise<numb
     .where(
       and(
         eq(conversations.kind, 'table'),
-        eq(gameTables.status, 'disabled'),
+        inArray(gameTables.status, [...TABLE_DOWN_STATUSES]),
         lt(gameTables.updatedAt, cutoff),
       ),
     );

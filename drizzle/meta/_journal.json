@@ -652,6 +652,13 @@
       "when": 1795458226931,
       "tag": "0092_calendar_feed_token_hash",
       "breakpoints": true
+    },
+    {
+      "idx": 93,
+      "version": "7",
+      "when": 1795463032731,
+      "tag": "0093_table_cancelled_removed",
+      "breakpoints": true
     }
   ]
 }

@@ -15,6 +15,8 @@
     | 'table:not_held'
     | 'table:draft'
     | 'table:disabled'
+    | 'table:cancelled'
+    | 'table:removed'
     | 'seat:pending'
     | 'seat:confirmed'
     | 'invitation:pending'
@@ -105,6 +107,16 @@
     },
     'table:disabled': {
       label: () => m.status_table_disabled(),
+      dot: 'bg-surface-500',
+      text: 'muted',
+    },
+    'table:cancelled': {
+      label: () => m.status_table_cancelled(),
+      dot: 'bg-surface-500',
+      text: 'muted',
+    },
+    'table:removed': {
+      label: () => m.status_table_removed(),
       dot: 'bg-surface-500',
       text: 'muted',
     },

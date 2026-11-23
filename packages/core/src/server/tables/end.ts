@@ -9,6 +9,7 @@ import { applyTransition } from '../state/transition';
 import { cancelPendingInvitations } from '../invitations/service';
 import { lockTableFamily, lockTableSchedule } from './schedule-guard';
 import { syncTableSessions } from './sessions';
+import { isTableDown } from '../../tables/status-values';
 
 /** Owner actions: acquire the schedule lock before the table lock, like publish and duplicate. */
 async function lockedOwnedTable(
@@ -71,7 +72,7 @@ export async function closeTable(db: AnyDb, actor: Actor | null, slug: string) {
   return db.transaction(async (tx) => {
     const transaction = tx as unknown as AnyDb;
     const table = await lockedOwnedTable(transaction, actor, slug);
-    if (table.status === 'disabled') return { eventIds: [], slug };
+    if (isTableDown(table.status)) return { eventIds: [], slug };
     if (table.status !== 'active' && table.status !== 'awaiting_confirmation') {
       throw new Invalid('slug', 'table_not_active');
     }

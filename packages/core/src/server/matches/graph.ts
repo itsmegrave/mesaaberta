@@ -37,7 +37,7 @@ export async function playedPairs(
         case when t.starts_at <= ${at}::timestamptz then t.starts_at end
       ) as last_at
       from game_tables t
-      where t.status not in ('draft', 'disabled', 'not_held')
+      where t.status not in ('draft', 'disabled', 'cancelled', 'removed', 'not_held')
         and (t.gm_id = any(${uuids(left)}) or exists (
           select 1 from registrations r where r.table_id = t.id and r.player_id = any(${uuids(left)})
             and r.status = 'confirmed' and r.attended is not false))

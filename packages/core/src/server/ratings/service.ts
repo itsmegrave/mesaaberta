@@ -6,6 +6,7 @@ import { AlreadyRated, Forbidden, NotFound, TooEarly } from '../errors';
 import { recordEvent } from '../events/outbox';
 import type { RatingInput } from '../../tables/rating';
 import { GM_SCORE, NEUTRAL_MEAN, gmScore, monthStart } from '../../ratings/gm-score';
+import { TABLE_DOWN_STATUSES } from '../../tables/status-values';
 
 /** Whether the first session is over. You rate what you played; a campaign is rated after its first session. */
 export const firstSessionEnded = (
@@ -104,7 +105,7 @@ export async function publicGmReviews(db: AnyDb, gmId: string, limit = PUBLIC_RE
         eq(ratings.commentPublic, true),
         isNotNull(ratings.comment),
         eq(profiles.status, 'active'),
-        notInArray(gameTables.status, ['draft', 'disabled']),
+        notInArray(gameTables.status, ['draft', ...TABLE_DOWN_STATUSES]),
       ),
     )
     .orderBy(desc(ratings.createdAt))

@@ -8,6 +8,7 @@ import {
   inArray,
   ne,
   notExists,
+  notInArray,
   or,
   sql,
   type SQL,
@@ -27,6 +28,7 @@ import { reservedSeatsSql } from '../invitations/seats';
 import { weeklyInterval } from './schedule';
 import { catalogOf } from '../catalog';
 import { gmRatings, type GmRating } from '../ratings/service';
+import { TABLE_DOWN_STATUSES } from '../../tables/status-values';
 
 /** Seats still free: the capacity minus the confirmed registrations. */
 export const seatsLeft = (capacity: number, taken = 0) => Math.max(0, capacity - taken);
@@ -275,7 +277,7 @@ export async function findTableBySlug(
 ): Promise<TableView | null> {
   const [row] = await query(
     db,
-    and(eq(gameTables.slug, slug), ne(gameTables.status, 'disabled')),
+    and(eq(gameTables.slug, slug), notInArray(gameTables.status, [...TABLE_DOWN_STATUSES])),
     now,
   );
   if (!row) return null;
