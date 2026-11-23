@@ -1,6 +1,7 @@
 import { TABLE_SESSION_STATUSES, TABLE_STATUSES } from './table-status';
 import { PROFILE_STATUSES } from './profile-status';
 import { CATALOG_STATUSES } from './catalog-status';
+import { LOGO_STATUSES, PARTNER_LINK_STATUSES, PLACE_CLAIM_STATUSES } from './review-status';
 import { INVITATION_STATUSES } from './invitation-status';
 import { REGISTRATION_STATUSES, SESSION_SIGNUP_STATUSES } from './seat-status';
 import { EVENT_REVIEWS } from './event-review';
@@ -241,12 +242,7 @@ export const systems = pgTable(
 // until an admin approves it; only an `approved` logo is shown. `missing` means the search found
 // nothing, so the next run skips it and the admin knows to add one by hand. A rejected logo keeps
 // its source (so the same one is not proposed again) but its file is deleted.
-export const systemLogoStatus = pgEnum('system_logo_status', [
-  'pending',
-  'approved',
-  'rejected',
-  'missing',
-]);
+export const systemLogoStatus = pgEnum('system_logo_status', LOGO_STATUSES);
 export const systemLogos = pgTable(
   'system_logos',
   {
@@ -1565,9 +1561,7 @@ export const placeClaims = pgTable(
     relation: text('relation', { enum: ['owner', 'staff', 'organizer'] }).notNull(),
     contact: text('contact').notNull(),
     note: text('note'),
-    status: text('status', { enum: ['pending', 'approved', 'rejected'] })
-      .notNull()
-      .default('pending'),
+    status: text('status', { enum: PLACE_CLAIM_STATUSES }).notNull().default('pending'),
     // The admin who decided. Not a foreign key, like `places.approved_by`.
     decidedBy: uuid('decided_by'),
     decidedAt: timestamp('decided_at', { withTimezone: true }),
@@ -1768,11 +1762,7 @@ export const placePartnerLinks = pgTable(
       .notNull()
       .references(() => partners.id, { onDelete: 'cascade' }),
     requestedBy: uuid('requested_by').references(() => profiles.id, { onDelete: 'set null' }),
-    status: text('status', {
-      enum: ['pending', 'approved', 'rejected', 'cancelled', 'removed'],
-    })
-      .notNull()
-      .default('pending'),
+    status: text('status', { enum: PARTNER_LINK_STATUSES }).notNull().default('pending'),
     // The admin who decided. Not a foreign key, like `place_claims.decided_by`.
     decidedBy: uuid('decided_by'),
     decidedAt: timestamp('decided_at', { withTimezone: true }),

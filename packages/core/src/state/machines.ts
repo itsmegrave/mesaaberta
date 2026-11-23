@@ -9,6 +9,12 @@ import { INVITATION_STATUSES } from '@mesaaberta/db/invitation-status';
 import { invitationMachine } from './invitation-machine';
 import { CATALOG_STATUSES } from '@mesaaberta/db/catalog-status';
 import { catalogMachine } from './catalog-machine';
+import {
+  LOGO_STATUSES,
+  PARTNER_LINK_STATUSES,
+  PLACE_CLAIM_STATUSES,
+} from '@mesaaberta/db/review-status';
+import { logoMachine, partnerLinkMachine, placeClaimMachine } from './review-machines';
 import { REGISTRATION_STATUSES, SESSION_SIGNUP_STATUSES } from '@mesaaberta/db/seat-status';
 import { registrationMachine, sessionSignupMachine } from './seat-machines';
 
@@ -63,5 +69,23 @@ export const STATUS_MACHINES: {
     column: 'systems / platforms / tags / place_features.status',
     machine: catalogMachine,
     values: CATALOG_STATUSES,
+  },
+  {
+    title: 'System logo (logo de sistema)',
+    column: 'system_logos.status',
+    machine: logoMachine,
+    values: LOGO_STATUSES,
+  },
+  {
+    title: 'Place claim (reivindicação de lugar)',
+    column: 'place_claims.status',
+    machine: placeClaimMachine,
+    values: PLACE_CLAIM_STATUSES,
+  },
+  {
+    title: 'Place partner link (parceiro no lugar)',
+    column: 'place_partner_links.status',
+    machine: partnerLinkMachine,
+    values: PARTNER_LINK_STATUSES,
   },
 ];

@@ -108,3 +108,42 @@ stateDiagram-v2
   disabled --> rejected: MERGE
   rejected --> [*]
 ```
+
+## System logo (logo de sistema)
+
+`system_logos.status`
+
+```mermaid
+stateDiagram-v2
+  pending --> approved: APPROVE
+  pending --> rejected: REJECT
+  approved --> rejected: REJECT
+  rejected --> [*]
+```
+
+## Place claim (reivindicação de lugar)
+
+`place_claims.status`
+
+```mermaid
+stateDiagram-v2
+  pending --> approved: APPROVE
+  pending --> rejected: REJECT
+  approved --> [*]
+  rejected --> [*]
+```
+
+## Place partner link (parceiro no lugar)
+
+`place_partner_links.status`
+
+```mermaid
+stateDiagram-v2
+  pending --> approved: APPROVE
+  pending --> rejected: REJECT
+  pending --> cancelled: CANCEL
+  approved --> removed: REMOVE
+  rejected --> [*]
+  cancelled --> [*]
+  removed --> [*]
+```

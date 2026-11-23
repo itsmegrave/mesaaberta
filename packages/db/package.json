@@ -11,6 +11,7 @@
     "./profile-status": "./src/profile-status.ts",
     "./catalog-status": "./src/catalog-status.ts",
     "./invitation-status": "./src/invitation-status.ts",
+    "./review-status": "./src/review-status.ts",
     "./seat-status": "./src/seat-status.ts",
     "./event-review": "./src/event-review.ts",
     "./report-excerpt": "./src/report-excerpt.ts"
