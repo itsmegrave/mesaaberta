@@ -22,6 +22,11 @@
       },
       {
         "kind": "improved",
+        "title": "Rodapé mais arejado",
+        "description": "No rodapé, o que vem depois de \"Feito pela comunidade, para a comunidade\" agora fica em um parágrafo próprio, logo abaixo da frase."
+      },
+      {
+        "kind": "improved",
         "title": "Precisa de você sem mesas por confirmar",
         "description": "Para a administração: a seção Precisa de você não lista mais as mesas que esperam a confirmação de quem mestra, porque isso cabe a quem mestra. Elas continuam em Mesas, no filtro Aguardando confirmação."
       }

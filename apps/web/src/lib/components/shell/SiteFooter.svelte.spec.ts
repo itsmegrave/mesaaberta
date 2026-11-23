@@ -65,17 +65,20 @@ describe('SiteFooter.svelte', () => {
       .not.toBeInTheDocument();
   });
 
-  it('adds the notes a private build declares after the community sentence', async () => {
+  it('adds each note a private build declares as its own paragraph after the community sentence', async () => {
     notes.push({
       text: 'Conheça a',
       link: { label: 'Taverna', href: 'https://example.test/taverna' },
     });
     render(SiteFooter, { site });
 
-    await expect.element(browserPage.getByText(/comunidade\. Conheça a/)).toBeVisible();
-    await expect
-      .element(browserPage.getByRole('link', { name: 'Taverna' }))
-      .toHaveAttribute('href', 'https://example.test/taverna');
+    const community = browserPage.getByText('Feito pela comunidade, para a comunidade.');
+    await expect.element(community).toBeVisible();
+    const link = browserPage.getByRole('link', { name: 'Taverna' });
+    await expect.element(link).toHaveAttribute('href', 'https://example.test/taverna');
+    const note = link.element().closest('p')!;
+    expect(note.textContent?.trim()).toMatch(/^Conheça a\s+Taverna\.$/);
+    expect(note.previousElementSibling).toBe(community.element());
   });
 
   it('names no one else in the public build', async () => {
