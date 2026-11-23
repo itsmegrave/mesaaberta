@@ -2,6 +2,8 @@ import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { AnyDb } from '../../db/client';
 import { crowdfundings, crowdfundingImports, crowdfundingImportRuns } from '../../db/schema';
 import { recordEvent } from '../../events/outbox';
+import { applyTransition } from '../../state/transition';
+import { IMPORT_RUN_ENDING, importRunMachine } from '../../../state/import-run-machine';
 import { platformOf } from '../../../crowdfunding/platforms';
 import { campaignUrlAliases, validateCandidate } from './candidate';
 import type { ImportSource, SourceCandidate } from './types';
@@ -158,19 +160,20 @@ export async function finishRun(
   now: Date,
   errorCode: string | null = null,
 ): Promise<boolean> {
-  const rows = await db
-    .update(crowdfundingImportRuns)
-    .set({ status, cursor, counters, finishedAt: now, leaseUntil: now, errorCode })
-    .where(
-      and(
-        eq(crowdfundingImportRuns.source, lease.source),
-        eq(crowdfundingImportRuns.runDate, lease.runDate),
-        eq(crowdfundingImportRuns.token, lease.token),
-        eq(crowdfundingImportRuns.status, 'running'),
-      ),
-    )
-    .returning({ token: crowdfundingImportRuns.token });
-  return rows.length === 1;
+  const moved = await applyTransition(db, {
+    table: crowdfundingImportRuns,
+    status: crowdfundingImportRuns.status,
+    where: and(
+      eq(crowdfundingImportRuns.source, lease.source),
+      eq(crowdfundingImportRuns.runDate, lease.runDate),
+      eq(crowdfundingImportRuns.token, lease.token),
+    ),
+    machine: importRunMachine,
+    from: 'running',
+    event: IMPORT_RUN_ENDING[status],
+    set: { cursor, counters, finishedAt: now, leaseUntil: now, errorCode },
+  });
+  return moved?.count === 1;
 }
 export async function checkpointRun(
   db: AnyDb,

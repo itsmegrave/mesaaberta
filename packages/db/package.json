@@ -10,6 +10,7 @@
     "./table-status": "./src/table-status.ts",
     "./profile-status": "./src/profile-status.ts",
     "./catalog-status": "./src/catalog-status.ts",
+    "./import-run-status": "./src/import-run-status.ts",
     "./invitation-status": "./src/invitation-status.ts",
     "./review-status": "./src/review-status.ts",
     "./seat-status": "./src/seat-status.ts",

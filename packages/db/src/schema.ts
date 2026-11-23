@@ -2,6 +2,7 @@ import { TABLE_SESSION_STATUSES, TABLE_STATUSES } from './table-status';
 import { PROFILE_STATUSES } from './profile-status';
 import { CATALOG_STATUSES } from './catalog-status';
 import { LOGO_STATUSES, PARTNER_LINK_STATUSES, PLACE_CLAIM_STATUSES } from './review-status';
+import { IMPORT_RUN_STATUSES } from './import-run-status';
 import { INVITATION_STATUSES } from './invitation-status';
 import { REGISTRATION_STATUSES, SESSION_SIGNUP_STATUSES } from './seat-status';
 import { EVENT_REVIEWS } from './event-review';
@@ -1608,7 +1609,7 @@ export const crowdfundingImportRuns = pgTable(
   {
     source: text('source', { enum: ['catarse', 'meeplestarter'] }).notNull(),
     runDate: date('run_date', { mode: 'string' }).notNull(),
-    status: text('status', { enum: ['running', 'complete', 'partial', 'failed'] }).notNull(),
+    status: text('status', { enum: IMPORT_RUN_STATUSES }).notNull(),
     token: uuid('token').notNull(),
     leaseUntil: timestamp('lease_until', { withTimezone: true }).notNull(),
     cursor: text('cursor'),
