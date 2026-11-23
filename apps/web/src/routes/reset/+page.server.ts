@@ -6,18 +6,32 @@ import { newPasswordSchema } from '#lib/auth/credentials.js';
 import { withoutSecrets } from '#lib/forms/server.js';
 import { callApiRaw } from '#lib/server/api-client.js';
 import type { ChangePasswordResult } from '@mesaaberta/core/server/auth/password';
+import {
+  RECOVERY_SIGN_IN_MINUTES,
+  signedInWithin,
+} from '@mesaaberta/core/server/auth/recent-sign-in';
 import type { Actions, PageServerLoad } from './$types';
 
 // This page is only for someone the recovery link just signed in. Without a session (an expired or
 // used link, or one opened in another browser) there is nothing to change a password for.
 export const load: PageServerLoad = async ({ locals, url }) => {
-  if (!(await locals.getUser())) redirect(303, '/forgot?error=link');
+  if (!(await recoverySignIn(locals))) redirect(303, '/forgot?error=link');
 
   return {
     done: url.searchParams.has('done'),
     form: initialForm({ password: '', passwordConfirm: '' }),
   };
 };
+
+/**
+ * Whether this session came from a recovery link just now: signed in within the last few minutes.
+ * A session that only stayed open (a shared computer, a copied cookie) cannot set a new password
+ * here; whoever holds it would otherwise lock the owner out without knowing the old one.
+ */
+async function recoverySignIn(locals: App.Locals): Promise<boolean> {
+  if (!(await locals.getUser())) return false;
+  return signedInWithin(await locals.signedInAt(), RECOVERY_SIGN_IN_MINUTES);
+}
 
 const STATUS = {
   weak_password: 400,
@@ -55,8 +69,7 @@ async function changeViaApi(
 
 export const actions: Actions = {
   default: async ({ request, locals }) => {
-    const user = locals.supabase ? await locals.getUser() : null;
-    if (!locals.supabase || !user) redirect(303, '/forgot?error=link');
+    if (!locals.supabase || !(await recoverySignIn(locals))) redirect(303, '/forgot?error=link');
 
     const form = validateStringForm(await request.formData(), newPasswordSchema, [
       'password',

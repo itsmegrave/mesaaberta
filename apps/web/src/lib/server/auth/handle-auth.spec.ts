@@ -255,6 +255,22 @@ describe('handleAuth with SESSION_CHECK=local', () => {
   it('is nobody when the token does not verify', async () => {
     const { event } = await run(vi.fn(async () => ({ data: null, error: new Error('bad') })));
     expect(await event.locals.getUser()).toBeNull();
+    expect(await event.locals.signedInAt()).toBeNull();
+  });
+
+  it('knows when the session last signed in, for changes that ask for a recent sign-in', async () => {
+    const getClaims = vi.fn(async () => ({
+      data: {
+        claims: {
+          sub: 'u-1',
+          aud: 'authenticated',
+          amr: [{ method: 'password', timestamp: 1_790_000_000 }],
+        },
+      },
+      error: null,
+    }));
+    const { event } = await run(getClaims);
+    expect(await event.locals.signedInAt()).toBe(1_790_000_000_000);
   });
 });
 

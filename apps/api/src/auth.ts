@@ -1,5 +1,11 @@
 import { Hono, type Context } from 'hono';
 import {
+  RECOVERY_SIGN_IN_MINUTES,
+  lastSignInAt,
+  signedInWithin,
+  unverifiedClaims,
+} from '@mesaaberta/core/server/auth/recent-sign-in';
+import {
   credentialsSchema,
   emailSchema,
   newPasswordSchema,
@@ -262,6 +268,10 @@ export function authRoutes(
 
     const token = /^Bearer (.+)$/.exec(c.req.header('authorization') ?? '')?.[1];
     if (!token) return c.json({ result: 'no_session' }, 401);
+    // Only a session a recovery link opened just now may set a password without the old one. The
+    // claims are read before Supabase checks the token, so this can only refuse, never let in.
+    if (!signedInWithin(lastSignInAt(unverifiedClaims(token)), RECOVERY_SIGN_IN_MINUTES))
+      return c.json({ result: 'no_session' }, 401);
     const body = (await c.req.json().catch(() => null)) as {
       password?: unknown;
       passwordConfirm?: unknown;

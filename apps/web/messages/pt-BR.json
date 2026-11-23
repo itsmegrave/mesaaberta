@@ -293,6 +293,7 @@
   "login_with_discord": "Continuar com Discord",
   "login_unavailable": "O login ainda não está disponível. Volte em breve.",
   "login_failed": "Não foi possível entrar. Tente de novo.",
+  "login_reauth": "Por segurança, entre de novo para continuar. Depois você volta para onde estava.",
   "nav_sign_in": "Entrar",
   "nav_sign_out": "Sair",
   "nav_account_menu": "Menu da conta",

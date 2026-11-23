@@ -3,10 +3,15 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { actions } from './+page.server';
 
-const setup = (env: object = {}, token: string | null = 'jwt-a') => {
+const setup = (
+  env: object = {},
+  token: string | null = 'jwt-a',
+  signedInAt: number | null = Date.now() - 60_000,
+) => {
   const locals = {
     env,
     getUser: async () => ({ id: 'user-1' }),
+    signedInAt: async () => signedInAt,
     supabase: {
       auth: {
         getSession: async () => ({ data: { session: token ? { access_token: token } : null } }),
@@ -41,6 +46,14 @@ const submit = (event: RequestEvent) =>
   (actions as Record<string, (e: RequestEvent) => Promise<unknown>>).default(event);
 
 describe('choosing a new password', () => {
+  it('refuses a session that did not just come from a recovery link, so an open session cannot lock the owner out', async () => {
+    const { fetch, env } = api({ status: 200, body: { result: 'ok' } });
+    const { event } = setup(env, 'jwt-a', Date.now() - 60 * 60_000);
+
+    await expect(submit(event())).rejects.toMatchObject({ location: '/forgot?error=link' });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   describe('through the api', () => {
     it('lets the api change it with the person’s own token', async () => {
       const { fetch, env } = api({ status: 200, body: { result: 'ok' } });
