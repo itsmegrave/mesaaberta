@@ -8,6 +8,9 @@ const headers = {
   // One year, this host only. No `includeSubDomains` or `preload` until the domain is settled:
   // both are hard to take back.
   'strict-transport-security': 'max-age=31536000',
+  // Powerful browser features the app never uses stay off, also for anything embedded. Passkeys
+  // (publickey-credentials-*) are left at their default.
+  'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=()',
 };
 
 export const handleSecurityHeaders: Handle = async ({ event, resolve }) => {

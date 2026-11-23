@@ -94,8 +94,11 @@ export default defineConfig({
             'data:',
             'https://lh3.googleusercontent.com',
             'https://cdn.discordapp.com',
-            // Table images, from the project's Supabase Storage bucket.
-            'https://*.supabase.co',
+            // Table images, from the project's Supabase Storage bucket: only that project when the
+            // build knows it (SUPABASE_URL), otherwise any Supabase project.
+            (process.env.SUPABASE_URL
+              ? new URL(process.env.SUPABASE_URL).origin
+              : 'https://*.supabase.co') as `https://${string}.${string}`,
             // The crop step shows the picked file from a blob URL until it is cut and sent.
             'blob:',
             // Files in an S3-compatible store (STORAGE_PROVIDER=s3) are read from its public domain,
