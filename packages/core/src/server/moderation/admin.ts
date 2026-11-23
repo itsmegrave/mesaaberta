@@ -26,6 +26,7 @@ import { lockTableRows, lockTableSchedule } from '../tables/schedule-guard';
 import { Invalid, NotFound } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import { applyTransition } from '../state/transition';
+import { tableLifecycle } from '../../tables/lifecycle-machine';
 import { reportMachine } from '../../moderation/report-machine';
 import { removeTableMember } from '@mesaaberta/core/server/messages/service';
 import { reportSubject } from './reports';
@@ -407,15 +408,15 @@ export async function closeReportedTable(
     if (table.status !== 'active') throw new Invalid('id', 'closed');
 
     const accepted = await settle(t, actor!, report, 'resolved', note, now);
-    await t
-      .update(gameTables)
-      .set({
-        status: 'disabled',
-        icalSequence: table.icalSequence + 1,
-        moderatedAt: now,
-        moderationNote: note,
-      })
-      .where(eq(gameTables.id, table.id));
+    await applyTransition(t, {
+      table: gameTables,
+      status: gameTables.status,
+      where: eq(gameTables.id, table.id),
+      machine: tableLifecycle,
+      from: 'active',
+      event: 'DISABLE',
+      set: { icalSequence: table.icalSequence + 1, moderatedAt: now, moderationNote: note },
+    });
     await syncTableSessions(t, [table.id]);
     const facts = { tableId: table.id, slug: table.slug, title: table.title };
     return [
@@ -459,15 +460,15 @@ export async function closeTableByAdmin(
       .for('update');
     if (!table) throw new Invalid('tableId', 'not_found');
     if (table.status !== 'active') throw new Invalid('tableId', 'closed');
-    await t
-      .update(gameTables)
-      .set({
-        status: 'disabled',
-        icalSequence: table.icalSequence + 1,
-        moderatedAt: now,
-        moderationNote: note,
-      })
-      .where(eq(gameTables.id, table.id));
+    await applyTransition(t, {
+      table: gameTables,
+      status: gameTables.status,
+      where: eq(gameTables.id, table.id),
+      machine: tableLifecycle,
+      from: 'active',
+      event: 'DISABLE',
+      set: { icalSequence: table.icalSequence + 1, moderatedAt: now, moderationNote: note },
+    });
     await syncTableSessions(t, [table.id]);
     const facts = { tableId: table.id, slug: table.slug, title: table.title };
     return [
@@ -559,10 +560,15 @@ export async function banAccount(
       )
     ).filter(({ status }) => status === 'active');
     for (const table of open) {
-      await t
-        .update(gameTables)
-        .set({ status: 'disabled', icalSequence: table.icalSequence + 1 })
-        .where(eq(gameTables.id, table.id));
+      await applyTransition(t, {
+        table: gameTables,
+        status: gameTables.status,
+        where: eq(gameTables.id, table.id),
+        machine: tableLifecycle,
+        from: 'active',
+        event: 'DISABLE',
+        set: { icalSequence: table.icalSequence + 1 },
+      });
       await syncTableSessions(t, [table.id]);
       eventIds.push(
         await recordEvent(t, {

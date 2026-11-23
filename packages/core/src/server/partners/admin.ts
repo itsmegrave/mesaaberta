@@ -30,6 +30,8 @@ import {
 } from '@mesaaberta/core/server/db/schema';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import { applyTransition } from '../state/transition';
+import { reportMachine } from '../../moderation/report-machine';
 
 // The admin side of the partners: what waits for review, what is up and what was taken down, and
 // approving, rejecting and removing. Every function authorizes the actor itself; the routes check
@@ -218,10 +220,15 @@ export async function resolveOpenPartnerReports(
     .for('update');
   const eventIds: string[] = [];
   for (const report of waiting) {
-    await t
-      .update(reports)
-      .set({ status: 'resolved', resolvedBy: actorId, resolvedAt: now })
-      .where(eq(reports.id, report.id));
+    await applyTransition(t, {
+      table: reports,
+      status: reports.status,
+      where: eq(reports.id, report.id),
+      machine: reportMachine,
+      from: OPEN_REPORT_STATUSES,
+      event: 'RESOLVE',
+      set: { resolvedBy: actorId, resolvedAt: now },
+    });
     eventIds.push(
       await recordEvent(
         t,
