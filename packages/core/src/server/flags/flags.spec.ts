@@ -211,3 +211,54 @@ describe('flagOverrides', () => {
     expect(flagOverrides(undefined, 'localhost')).toEqual({});
   });
 });
+
+describe('an encrypted GrowthBook payload', () => {
+  // The way GrowthBook encrypts it: AES-CBC with the SDK connection's key, as `iv.ciphertext`.
+  const encrypt = async (features: FeatureApiResponse['features']) => {
+    const raw = crypto.getRandomValues(new Uint8Array(16));
+    const key = btoa(String.fromCharCode(...raw));
+    const iv = crypto.getRandomValues(new Uint8Array(16));
+    const cryptoKey = await crypto.subtle.importKey('raw', raw, { name: 'AES-CBC' }, false, [
+      'encrypt',
+    ]);
+    const cipher = new Uint8Array(
+      await crypto.subtle.encrypt(
+        { name: 'AES-CBC', iv },
+        cryptoKey,
+        new TextEncoder().encode(JSON.stringify(features)),
+      ),
+    );
+    const b64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
+    return {
+      key,
+      payload: {
+        encryptedFeatures: `${b64(iv)}.${b64(cipher)}`,
+        dateUpdated: '2026-11-23T00:00:00.000Z',
+      } as FeatureApiResponse,
+    };
+  };
+
+  it('reads the flags with the decryption key, so targeting ids never travel in the clear', async () => {
+    const { key, payload: sealed } = await encrypt({ maintenance_mode: { defaultValue: true } });
+    const flags = createFlags(async () => sealed, { decryptionKey: key });
+
+    expect(await flags.isEnabled('maintenance_mode')).toBe(true);
+  });
+
+  it('falls back to the defaults, and says so, when the key is missing', async () => {
+    const { payload: sealed } = await encrypt({ maintenance_mode: { defaultValue: true } });
+    const log = { warn: vi.fn() };
+    const flags = createFlags(async () => sealed, { log });
+
+    expect(await flags.isEnabled('maintenance_mode')).toBe(false);
+    expect(log.warn).toHaveBeenCalledWith('flags.payload.encrypted_without_key', {});
+  });
+
+  it('still reads a payload sent in the clear when a key is set', async () => {
+    const flags = createFlags(serving({ maintenance_mode: { defaultValue: true } }), {
+      decryptionKey: 'unused',
+    });
+
+    expect(await flags.isEnabled('maintenance_mode')).toBe(true);
+  });
+});

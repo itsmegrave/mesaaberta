@@ -39,6 +39,9 @@ MAILPIT_URL=http://127.0.0.1:54344
 # Feature flags. Blank in wrangler.jsonc, so every flag returns its registry default. Set a
 # GrowthBook client key (read-only, not a secret) to load live values.
 # GROWTHBOOK_CLIENT_KEY=sdk-...
+# With "Encrypt SDK payload" on in the SDK connection, its decryption key (a secret: the payload
+# names the profiles some flags target). Without it an encrypted payload reads as all defaults.
+# GROWTHBOOK_DECRYPTION_KEY=...
 
 # Logo.dev, an extra source for the admin's game-system logo search (/admin/catalog/logos). The
 # publishable key serves logos by domain; the secret key also searches brands by name. Both are
