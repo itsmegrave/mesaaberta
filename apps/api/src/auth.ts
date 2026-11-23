@@ -17,6 +17,10 @@ import {
   SIGN_IN_LIMIT,
   SIGN_UP_LIMIT,
   attemptWait,
+  accountWait,
+  isLoopback,
+  recordSignInFailure,
+  SIGN_IN_ACCOUNT_LIMIT,
 } from '@mesaaberta/core/server/auth/attempt-limit';
 import { completeLogin } from '@mesaaberta/core/server/auth/login';
 import { ensureProfile } from '@mesaaberta/core/server/auth/profile';
@@ -205,13 +209,20 @@ export function authRoutes(
     const { db, close } = open(connectionString);
     try {
       // Counted per network before Supabase sees it, so a script cannot guess passwords in a loop.
-      const wait = await attemptWait(db, SIGN_IN_LIMIT, ip);
+      // And per account, from any network: too many wrong passwords for this e-mail. Like the
+      // network limit, never on this machine (local development and the e2e suite).
+      const counted = isLoopback(ip) ? null : db;
+      const wait =
+        (await attemptWait(db, SIGN_IN_LIMIT, ip)) ??
+        (await accountWait(counted, SIGN_IN_ACCOUNT_LIMIT, parsed.data.email));
       if (wait !== null) return c.json({ result: 'rate_limited', retryAfter: wait }, 429);
 
       const { result, session } = await signInForSession(
         { supabase: makeSupabase(url, key), db, log: logger, ip: ip || null },
         { ...parsed.data, captchaToken: captchaTokenOf(body) },
       );
+      if (result === 'invalid')
+        await recordSignInFailure(counted, SIGN_IN_ACCOUNT_LIMIT, parsed.data.email);
       if (result !== 'ok') return c.json({ result }, SIGN_IN_STATUS[result]);
       return c.json({ result, session });
     } finally {

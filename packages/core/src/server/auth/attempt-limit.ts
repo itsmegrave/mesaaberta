@@ -2,6 +2,7 @@ import { and, asc, count, eq, gt, lt, sql } from 'drizzle-orm';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { authAttempts } from '@mesaaberta/core/server/db/schema';
 import { RateLimited } from '@mesaaberta/core/server/errors';
+import { groupsOfV6 } from '../crowdfunding/address';
 
 /**
  * Limits on the forms anyone can use without an account (sign in, sign up, password reset), per
@@ -12,7 +13,7 @@ import { RateLimited } from '@mesaaberta/core/server/errors';
  * person who mistypes a password a few times must not be locked out. A script is far faster.
  */
 export type AttemptLimit = {
-  action: 'sign_in' | 'sign_up' | 'password_reset' | 'cep_lookup';
+  action: 'sign_in' | 'sign_up' | 'password_reset' | 'cep_lookup' | 'sign_in_failed_account';
   max: number;
   windowSeconds: number;
 };
@@ -30,6 +31,17 @@ export const SIGN_UP_LIMIT = {
 export const PASSWORD_RESET_LIMIT = {
   action: 'password_reset',
   max: 10,
+  windowSeconds: 60 * 60,
+} as const satisfies AttemptLimit;
+
+/**
+ * Wrong passwords for one e-mail, from any address: a script spread over many networks still gets
+ * only this many guesses at one account. Only failures count, so the owner signing in is never
+ * what locks them out, and a locked account can still come in by passkey, provider or reset link.
+ */
+export const SIGN_IN_ACCOUNT_LIMIT = {
+  action: 'sign_in_failed_account',
+  max: 20,
   windowSeconds: 60 * 60,
 } as const satisfies AttemptLimit;
 
@@ -105,7 +117,69 @@ export const isLoopback = (ip: string) =>
   ip === '::1' || ip.startsWith('127.') || ip.startsWith('::ffff:127.');
 
 /**
- * `recordAttempt` for a form action: the seconds to wait when the address is over the limit, null
+ * The network an address stands for. An IPv6 visitor usually holds a whole /64 and can pick a new
+ * address in it for every request, so IPv6 counts by its first four groups; IPv4 by the address.
+ */
+export function networkOf(ip: string): string {
+  if (!ip.includes(':')) return ip;
+  const groups = groupsOfV6(ip.toLowerCase());
+  if (!groups) return ip;
+  const first5Zero = groups.slice(0, 5).every((group) => group === 0);
+  // An IPv4 address written as IPv6 (::ffff:a.b.c.d) is that IPv4 address.
+  if (first5Zero && groups[5] === 0xffff)
+    return `${groups[6] >> 8}.${groups[6] & 255}.${groups[7] >> 8}.${groups[7] & 255}`;
+  return `${groups
+    .slice(0, 4)
+    .map((group) => group.toString(16))
+    .join(':')}::/64`;
+}
+
+/** The e-mail as a count key: one account however it is typed. */
+const accountOf = (email: string) => email.trim().toLowerCase();
+
+/**
+ * The seconds to wait before another sign-in to `email`, when it already had `limit.max` wrong
+ * passwords in the window, else null. Only reads: `recordSignInFailure` counts the failures.
+ */
+export async function accountWait(
+  db: AnyDb | null,
+  limit: AttemptLimit,
+  email: string,
+  now: Date = new Date(),
+): Promise<number | null> {
+  if (!db) return null;
+  const key = await attemptKey(limit.action, accountOf(email));
+  const windowStart = new Date(now.getTime() - limit.windowSeconds * 1000);
+  const inWindow = and(eq(authAttempts.key, key), gt(authAttempts.createdAt, windowStart));
+  const [{ used }] = await db.select({ used: count() }).from(authAttempts).where(inWindow);
+  if (used < limit.max) return null;
+  const [oldest] = await db
+    .select({ createdAt: authAttempts.createdAt })
+    .from(authAttempts)
+    .where(inWindow)
+    .orderBy(asc(authAttempts.createdAt))
+    .limit(1);
+  const frees = (oldest?.createdAt.getTime() ?? now.getTime()) + limit.windowSeconds * 1000;
+  return Math.max(1, Math.ceil((frees - now.getTime()) / 1000));
+}
+
+/** Counts one wrong password for `email` (see `accountWait`). Never throws for the limit. */
+export async function recordSignInFailure(
+  db: AnyDb | null,
+  limit: AttemptLimit,
+  email: string,
+  now: Date = new Date(),
+): Promise<void> {
+  if (!db) return;
+  try {
+    await recordAttempt(db, limit, accountOf(email), now);
+  } catch (error) {
+    if (!(error instanceof RateLimited)) throw error;
+  }
+}
+
+/**
+ * `recordAttempt` for a form action: the seconds to wait when the network is over the limit, null
  * when it may go on. Without a database (local preview) nothing is limited.
  */
 export async function attemptWait(
@@ -115,7 +189,7 @@ export async function attemptWait(
 ): Promise<number | null> {
   if (!db || isLoopback(ip)) return null;
   try {
-    await recordAttempt(db, limit, ip);
+    await recordAttempt(db, limit, networkOf(ip));
     return null;
   } catch (error) {
     if (error instanceof RateLimited) return error.retryAfterSeconds;
