@@ -161,3 +161,17 @@ stateDiagram-v2
   partial --> [*]
   failed --> [*]
 ```
+
+## Widget (enquete, popup)
+
+`widgets.status`
+
+```mermaid
+stateDiagram-v2
+  draft --> live: PUBLISH
+  live --> paused: PAUSE
+  live --> closed: CLOSE
+  paused --> live: PUBLISH
+  paused --> closed: CLOSE
+  closed --> [*]
+```

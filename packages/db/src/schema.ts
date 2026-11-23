@@ -4,6 +4,7 @@ import { CATALOG_STATUSES } from './catalog-status';
 import { LOGO_STATUSES, PARTNER_LINK_STATUSES, PLACE_CLAIM_STATUSES } from './review-status';
 import { IMPORT_RUN_STATUSES } from './import-run-status';
 import { INVITATION_STATUSES } from './invitation-status';
+import { WIDGET_STATUSES } from './widget-status';
 import { REGISTRATION_STATUSES, SESSION_SIGNUP_STATUSES } from './seat-status';
 import { EVENT_REVIEWS } from './event-review';
 import type { ReportExcerpt } from './report-excerpt';
@@ -1862,7 +1863,7 @@ export const placeHostInvitations = pgTable(
 // Widgets an extension floats over the app's pages, a poll today (Trello #231). The tables live here,
 // not in the private package, so every deployment keeps one schema; a build without that extension
 // never reads them.
-export const widgetStatus = pgEnum('widget_status', ['draft', 'live', 'paused', 'closed']);
+export const widgetStatus = pgEnum('widget_status', WIDGET_STATUSES);
 
 export const widgets = pgTable(
   'widgets',

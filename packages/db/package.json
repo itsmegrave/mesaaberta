@@ -13,6 +13,7 @@
     "./import-run-status": "./src/import-run-status.ts",
     "./invitation-status": "./src/invitation-status.ts",
     "./review-status": "./src/review-status.ts",
+    "./widget-status": "./src/widget-status.ts",
     "./seat-status": "./src/seat-status.ts",
     "./event-review": "./src/event-review.ts",
     "./report-excerpt": "./src/report-excerpt.ts"

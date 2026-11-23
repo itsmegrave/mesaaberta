@@ -11,6 +11,8 @@ import { CATALOG_STATUSES } from '@mesaaberta/db/catalog-status';
 import { catalogMachine } from './catalog-machine';
 import { IMPORT_RUN_STATUSES } from '@mesaaberta/db/import-run-status';
 import { importRunMachine } from './import-run-machine';
+import { WIDGET_STATUSES } from '@mesaaberta/db/widget-status';
+import { widgetMachine } from './widget-machine';
 import {
   LOGO_STATUSES,
   PARTNER_LINK_STATUSES,
@@ -95,5 +97,11 @@ export const STATUS_MACHINES: {
     column: 'crowdfunding_import_runs.status',
     machine: importRunMachine,
     values: IMPORT_RUN_STATUSES,
+  },
+  {
+    title: 'Widget (enquete, popup)',
+    column: 'widgets.status',
+    machine: widgetMachine,
+    values: WIDGET_STATUSES,
   },
 ];
