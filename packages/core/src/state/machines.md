@@ -147,3 +147,31 @@ stateDiagram-v2
   cancelled --> [*]
   removed --> [*]
 ```
+
+## Crowdfunding import run (importação diária)
+
+`crowdfunding_import_runs.status`
+
+```mermaid
+stateDiagram-v2
+  running --> complete: COMPLETE
+  running --> partial: PARTIAL
+  running --> failed: FAIL
+  complete --> [*]
+  partial --> [*]
+  failed --> [*]
+```
+
+## Widget (enquete, popup)
+
+`widgets.status`
+
+```mermaid
+stateDiagram-v2
+  draft --> live: PUBLISH
+  live --> paused: PAUSE
+  live --> closed: CLOSE
+  paused --> live: PUBLISH
+  paused --> closed: CLOSE
+  closed --> [*]
+```
