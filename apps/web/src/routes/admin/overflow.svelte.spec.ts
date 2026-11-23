@@ -244,10 +244,6 @@ describe('admin pages on a phone', () => {
         attention: {
           reports: { oldestAt: new Date('2026-10-01T12:00:00Z') },
           posts: { count: 1, first: long },
-          awaiting: {
-            count: 1,
-            first: { title: long, startsAt: new Date('2026-10-10T22:00:00Z'), timezone: 'UTC' },
-          },
           suggestions: { platforms: 1, tags: 2, duplicates: 1 },
         },
         recent: [

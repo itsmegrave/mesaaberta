@@ -2024,8 +2024,6 @@
   "admin_attention_reports_detail": "A mais antiga chegou em {date}",
   "admin_attention_posts": "Publicações para verificar",
   "admin_attention_posts_detail": "{title} pode ter ido ao ar sem confirmação",
-  "admin_attention_awaiting": "Mesas aguardando a mestragem",
-  "admin_attention_awaiting_detail": "{title}, de {date}",
   "admin_attention_suggestions": "Sugestões no catálogo",
   "admin_attention_suggestions_detail": "{platforms} plataformas · {tags} tags",
   "admin_attention_duplicates": "{count} repetem entradas do catálogo",
