@@ -7,7 +7,7 @@ import Page from './+page.svelte';
 const show = (over = {}) =>
   render(Page, {
     data: {
-      people: { total: 26, active: 20, suspended: 4, banned: 2, new30d: 3 },
+      people: { total: 26, active: 20, suspended: 3, banned: 2, closed: 1, new30d: 3 },
       combinar: { people: 4, matches: 2, playedAfter: 1, alone: 1, groups: 1, largest: 3 },
       ratings: { total: 7, new30d: 2, ofGms: 5, ofPlayers: 2 },
       tables: {
@@ -53,11 +53,12 @@ describe('admin overview', () => {
     await page.viewport(1280, 900);
   });
 
-  it('counts banned profiles apart from suspended ones', async () => {
+  it('counts temporary bans, permanent bans and closed accounts apart', async () => {
     show();
 
-    await expect.element(page.getByText('Perfis suspensos')).toBeVisible();
+    await expect.element(page.getByText('Perfis suspensos temporariamente')).toBeVisible();
     await expect.element(page.getByText('Perfis banidos')).toBeVisible();
+    await expect.element(page.getByText('Contas encerradas')).toBeVisible();
   });
 
   it('lists the tables by every status', async () => {

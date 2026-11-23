@@ -1,24 +1,39 @@
-import { and, asc, desc, eq, ilike, isNotNull, isNull, sql, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, isNotNull, isNull, or, sql, type SQL } from 'drizzle-orm';
 import type { AnyDb } from '@mesaaberta/core/server/db/client';
 import { profiles } from '@mesaaberta/core/server/db/schema';
 import { gmRatingOf } from '@mesaaberta/core/server/ratings/service';
-import { standingOf } from '../../profile/standing';
+import { standingOf, type ProfileStanding } from '../../profile/standing';
 import { profileFilters } from '../../admin/profile-filters';
+
+/**
+ * The SQL for each standing (see `standingOf`). A row written before `banned` and `closed` existed
+ * is `suspended` and is told apart by its ban fields; drop those branches after the backfill.
+ */
+export const standingWhere: Record<ProfileStanding, SQL> = {
+  active: eq(profiles.status, 'active'),
+  suspended: and(
+    eq(profiles.status, 'suspended'),
+    isNotNull(profiles.bannedAt),
+    isNotNull(profiles.bannedUntil),
+  )!,
+  banned: or(
+    eq(profiles.status, 'banned'),
+    and(
+      eq(profiles.status, 'suspended'),
+      isNotNull(profiles.bannedAt),
+      isNull(profiles.bannedUntil),
+    ),
+  )!,
+  closed: or(
+    eq(profiles.status, 'closed'),
+    and(eq(profiles.status, 'suspended'), isNull(profiles.bannedAt)),
+  )!,
+};
 
 export async function listAdminProfiles(db: AnyDb, params: URLSearchParams) {
   const filters = profileFilters(params);
   const search = filters.query.replace(/[\\%_]/g, '\\$&');
-  const banned = and(
-    eq(profiles.status, 'suspended'),
-    isNotNull(profiles.bannedAt),
-    isNull(profiles.bannedUntil),
-  );
-  const byStanding: Record<'active' | 'suspended' | 'banned', SQL | undefined> = {
-    active: eq(profiles.status, 'active'),
-    // Suspended: a ban with an end date, or a closed account. Banned: a ban that never ends.
-    suspended: and(eq(profiles.status, 'suspended'), sql`not coalesce(${banned}, false)`),
-    banned,
-  };
+  const byStanding = standingWhere;
   const matching = search ? ilike(profiles.username, `%${search}%`) : undefined;
   const where = and(filters.status === 'all' ? undefined : byStanding[filters.status], matching);
   // The segmented filter counts what each standing would show with the search kept.
@@ -27,7 +42,8 @@ export async function listAdminProfiles(db: AnyDb, params: URLSearchParams) {
       all: sql<number>`count(*)`.mapWith(Number),
       active: sql<number>`count(*) filter (where ${byStanding.active})`.mapWith(Number),
       suspended: sql<number>`count(*) filter (where ${byStanding.suspended})`.mapWith(Number),
-      banned: sql<number>`count(*) filter (where ${banned})`.mapWith(Number),
+      banned: sql<number>`count(*) filter (where ${byStanding.banned})`.mapWith(Number),
+      closed: sql<number>`count(*) filter (where ${byStanding.closed})`.mapWith(Number),
     })
     .from(profiles)
     .where(matching);

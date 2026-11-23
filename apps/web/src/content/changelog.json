@@ -19,6 +19,11 @@
         "kind": "improved",
         "title": "Pedal Overdrive em um lugar só",
         "description": "Para quem entrou na conta, o pedal Overdrive agora fica só no menu da conta, junto de Claro e Escuro, e não mais repetido na barra lateral."
+      },
+      {
+        "kind": "improved",
+        "title": "Suspensões, banimentos e contas encerradas separados",
+        "description": "Para a administração: a visão geral e a lista de pessoas agora separam quem está suspenso por um tempo, quem foi banido e quem encerrou a própria conta, cada um com o seu filtro e a sua etiqueta."
       }
     ]
   },
