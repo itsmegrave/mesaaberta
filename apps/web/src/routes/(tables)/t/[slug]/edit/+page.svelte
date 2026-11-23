@@ -80,6 +80,10 @@
 
   {#if data.status === 'disabled'}
     <p role="status" class="mt-4 max-w-sm font-semibold">{m.form_edit_disabled()}</p>
+  {:else if data.status === 'cancelled'}
+    <p role="status" class="mt-4 max-w-sm font-semibold">{m.form_edit_cancelled()}</p>
+  {:else if data.status === 'removed'}
+    <p role="status" class="mt-4 max-w-sm font-semibold">{m.form_edit_removed()}</p>
   {/if}
 
   <TableForm

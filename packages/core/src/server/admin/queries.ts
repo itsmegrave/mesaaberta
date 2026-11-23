@@ -17,6 +17,7 @@ import {
 import { listQueue } from './catalog';
 import { matchGraphStats } from '../matches/graph';
 import { standingWhere } from './profiles';
+import { TABLE_DOWN_STATUSES } from '../../tables/status-values';
 
 const countWhere = (condition: SQL) =>
   sql<number>`count(*) filter (where ${condition})`.mapWith(Number);
@@ -54,7 +55,7 @@ export async function adminOverview(db: AnyDb, now = new Date()) {
       .select({
         total: sql<number>`count(*)`.mapWith(Number),
         active: countWhere(sql`${gameTables.status} = 'active'`),
-        disabled: countWhere(sql`${gameTables.status} = 'disabled'`),
+        disabled: countWhere(inArray(gameTables.status, [...TABLE_DOWN_STATUSES])),
         awaiting: countWhere(sql`${gameTables.status} = 'awaiting_confirmation'`),
         concluded: countWhere(sql`${gameTables.status} = 'concluded'`),
         notHeld: countWhere(sql`${gameTables.status} = 'not_held'`),

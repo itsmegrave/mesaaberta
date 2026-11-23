@@ -44,6 +44,9 @@ export const tableLifecycle = createMachine({
     concluded: {},
     not_held: { on: { DISABLE: 'disabled' } },
     disabled: {},
+    // The split of `disabled` (no move leads here yet; the writes switch over in a later release).
+    cancelled: {},
+    removed: {},
     // Not public yet: the GM publishes it (`publishTable`) or drops it.
     draft: { on: { PUBLISH: 'active', DISABLE: 'disabled' } },
   },

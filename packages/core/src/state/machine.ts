@@ -1,5 +1,5 @@
 // Relative imports only: the Cron Trigger's Worker entry bundles this file without `#lib`.
-import { getNextSnapshot, type AnyStateMachine } from 'xstate';
+import { createMachine, getNextSnapshot, type AnyStateMachine } from 'xstate';
 
 /**
  * The status machines (drawn in `machines.md`) are plain XState v5 machines used as
@@ -7,6 +7,12 @@ import { getNextSnapshot, type AnyStateMachine } from 'xstate';
  * them as actors; these helpers only ask them which move exists. The database update that applies
  * a move still checks the current status (`applyTransition`), so two moves at once cannot both win.
  */
+
+/**
+ * XState's `createMachine`, for status machines defined outside this package: the private package
+ * builds its own (Instagram posts) without depending on xstate itself.
+ */
+export const defineStatusMachine = createMachine;
 
 const snapshotAt = (machine: AnyStateMachine, from: string) =>
   machine.resolveState({ value: from, context: machine.config.context ?? undefined });

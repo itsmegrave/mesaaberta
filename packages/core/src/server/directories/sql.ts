@@ -1,5 +1,6 @@
 import { and, isNull, notInArray, sql } from 'drizzle-orm';
 import { gameTables, profiles } from '../db/schema';
+import { TABLE_DOWN_STATUSES } from '../../tables/status-values';
 
 // The SQL the public directories share (`/systems`, `/gamemasters`).
 
@@ -12,7 +13,7 @@ export const escapeLike = (text: string) => text.replace(/[\\%_]/g, '\\$&');
 // A table counts once it is public: never a draft, and never one closed or taken down by the
 // moderation (`disabled`).
 export const published = and(
-  notInArray(gameTables.status, ['draft', 'disabled']),
+  notInArray(gameTables.status, ['draft', ...TABLE_DOWN_STATUSES]),
   isNull(gameTables.moderatedAt),
 );
 // Open is what /tables lists: active and not started yet.

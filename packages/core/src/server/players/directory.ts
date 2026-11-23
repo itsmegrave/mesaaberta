@@ -90,7 +90,7 @@ export async function listLookingPlayers(
       showFavoriteSystems: profiles.showFavoriteSystems,
       availability: profiles.availability,
       // A one-table select leaves column names bare, so the subquery names its own tables.
-      played: sql<number>`(select count(*)::int from registrations r inner join game_tables t on t.id = r.table_id where r.player_id = profiles.id and r.status = 'confirmed' and t.status not in ('draft', 'disabled') and t.moderated_at is null and t.starts_at <= ${now.toISOString()}::timestamptz)`,
+      played: sql<number>`(select count(*)::int from registrations r inner join game_tables t on t.id = r.table_id where r.player_id = profiles.id and r.status = 'confirmed' and t.status not in ('draft', 'disabled', 'cancelled', 'removed') and t.moderated_at is null and t.starts_at <= ${now.toISOString()}::timestamptz)`,
     })
     .from(profiles)
     .where(where)

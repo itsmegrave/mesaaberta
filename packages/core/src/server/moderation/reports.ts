@@ -20,6 +20,7 @@ import { recordEvent } from '@mesaaberta/core/server/events/outbox';
 import { enforceRateLimit, REPORT_LIMIT } from '@mesaaberta/core/server/rate-limit';
 import { isMember } from '../messages/access';
 import { publicName } from '../db/public-name';
+import { isTableDown } from '../../tables/status-values';
 
 async function seated(db: AnyDb, tableId: string, playerId: string) {
   const [row] = await db
@@ -46,7 +47,7 @@ export async function fileReport(
     .from(gameTables)
     .where(eq(gameTables.slug, slug));
   // A disabled table is off the public pages: there is nothing left to report.
-  if (!table || table.status === 'disabled') throw new NotFound(`no table with slug "${slug}"`);
+  if (!table || isTableDown(table.status)) throw new NotFound(`no table with slug "${slug}"`);
 
   const playerId = input.targetType === 'player' ? input.playerId : '';
   if (input.targetType === 'player' && !playerId) throw new Invalid('playerId', 'required');
