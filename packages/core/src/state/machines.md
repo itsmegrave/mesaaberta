@@ -93,3 +93,18 @@ stateDiagram-v2
   waiting --> going: PROMOTE
   going --> [*]
 ```
+
+## Catalog entry (sistema, plataforma, tag, recurso de lugar)
+
+`systems / platforms / tags / place_features.status`
+
+```mermaid
+stateDiagram-v2
+  pending --> approved: APPROVE
+  pending --> rejected: REJECT
+  pending --> rejected: MERGE
+  approved --> disabled: DISABLE
+  approved --> rejected: MERGE
+  disabled --> rejected: MERGE
+  rejected --> [*]
+```

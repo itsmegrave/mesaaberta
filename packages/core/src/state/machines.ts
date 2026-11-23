@@ -7,6 +7,8 @@ import { tableLifecycle } from '../tables/lifecycle-machine';
 import { tableSessionMachine } from '../tables/session-machine';
 import { INVITATION_STATUSES } from '@mesaaberta/db/invitation-status';
 import { invitationMachine } from './invitation-machine';
+import { CATALOG_STATUSES } from '@mesaaberta/db/catalog-status';
+import { catalogMachine } from './catalog-machine';
 import { REGISTRATION_STATUSES, SESSION_SIGNUP_STATUSES } from '@mesaaberta/db/seat-status';
 import { registrationMachine, sessionSignupMachine } from './seat-machines';
 
@@ -55,5 +57,11 @@ export const STATUS_MACHINES: {
     column: 'table_session_signups.status',
     machine: sessionSignupMachine,
     values: SESSION_SIGNUP_STATUSES,
+  },
+  {
+    title: 'Catalog entry (sistema, plataforma, tag, recurso de lugar)',
+    column: 'systems / platforms / tags / place_features.status',
+    machine: catalogMachine,
+    values: CATALOG_STATUSES,
   },
 ];

@@ -20,6 +20,9 @@ import {
 import { authorize, type Actor } from '@mesaaberta/core/server/auth/policy';
 import { Invalid } from '@mesaaberta/core/server/errors';
 import { recordEvent } from '@mesaaberta/core/server/events/outbox';
+import { applyTransition } from '../state/transition';
+import { catalogMachine } from '../../state/catalog-machine';
+import type { CatalogStatus } from '@mesaaberta/db/catalog-status';
 import type { CatalogDecision } from '@mesaaberta/core/server/events/types';
 import { listedPlacesPicking } from '@mesaaberta/core/server/places/features';
 import { rebuildTagsOf } from '@mesaaberta/core/server/places/tags';
@@ -433,10 +436,16 @@ export async function approveEntry(db: AnyDb, actor: Actor | null, kind: Catalog
   return db.transaction(async (tx) => {
     const current = await entry(tx, kind, id);
     if (current.status !== 'pending') throw new Invalid('id', 'not_pending');
-    await tx
-      .update(table)
-      .set({ status: 'approved', reviewedBy: actor!.id, reviewedAt: new Date() })
-      .where(eq(table.id, id));
+    const moved = await applyTransition(tx, {
+      table,
+      status: table.status,
+      where: eq(table.id, id),
+      machine: catalogMachine,
+      from: 'pending',
+      event: 'APPROVE',
+      set: { reviewedBy: actor!.id, reviewedAt: new Date() },
+    });
+    if (!moved) throw new Invalid('id', 'not_pending');
     await rebuildPlacesPicking(tx, kind, id);
     return recordEvent(tx, {
       type: 'CatalogEntryApproved',
@@ -460,10 +469,16 @@ export async function rejectEntry(db: AnyDb, actor: Actor | null, kind: CatalogK
     if (kind === 'placeTag')
       await tx.delete(placeFeaturePicks).where(eq(placeFeaturePicks.featureId, id));
     else if (kind !== 'system') await tx.delete(linkOf(kind)).where(eq(linkColumn(kind), id));
-    await tx
-      .update(table)
-      .set({ status: 'rejected', reviewedBy: actor!.id, reviewedAt: new Date() })
-      .where(eq(table.id, id));
+    const moved = await applyTransition(tx, {
+      table,
+      status: table.status,
+      where: eq(table.id, id),
+      machine: catalogMachine,
+      from: 'pending',
+      event: 'REJECT',
+      set: { reviewedBy: actor!.id, reviewedAt: new Date() },
+    });
+    if (!moved) throw new Invalid('id', 'not_pending');
     return recordEvent(tx, {
       type: 'CatalogEntryRejected',
       actorId: actor!.id,
@@ -574,10 +589,16 @@ export async function mergeEntry(
           );
       }
     }
-    await tx
-      .update(table)
-      .set({ status: 'rejected', mergedInto: toId, reviewedBy: actor!.id, reviewedAt: new Date() })
-      .where(eq(table.id, fromId));
+    const moved = await applyTransition(tx, {
+      table,
+      status: table.status,
+      where: eq(table.id, fromId),
+      machine: catalogMachine,
+      from: from.status as Exclude<CatalogStatus, 'rejected'>,
+      event: 'MERGE',
+      set: { mergedInto: toId, reviewedBy: actor!.id, reviewedAt: new Date() },
+    });
+    if (!moved) throw new Invalid('id', 'gone');
     await rebuildPlacesPicking(tx, kind, toId);
     return recordEvent(tx, {
       type: 'CatalogEntryMerged',
@@ -597,10 +618,16 @@ export async function disableEntry(db: AnyDb, actor: Actor | null, kind: Catalog
   return db.transaction(async (tx) => {
     const current = await entry(tx, kind, id);
     if (current.status !== 'approved') throw new Invalid('id', 'not_approved');
-    await tx
-      .update(table)
-      .set({ status: 'disabled', reviewedBy: actor!.id, reviewedAt: new Date() })
-      .where(eq(table.id, id));
+    const moved = await applyTransition(tx, {
+      table,
+      status: table.status,
+      where: eq(table.id, id),
+      machine: catalogMachine,
+      from: 'approved',
+      event: 'DISABLE',
+      set: { reviewedBy: actor!.id, reviewedAt: new Date() },
+    });
+    if (!moved) throw new Invalid('id', 'not_approved');
     return recordEvent(tx, {
       type: 'CatalogEntryDisabled',
       actorId: actor!.id,

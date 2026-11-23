@@ -1,5 +1,6 @@
 import { TABLE_SESSION_STATUSES, TABLE_STATUSES } from './table-status';
 import { PROFILE_STATUSES } from './profile-status';
+import { CATALOG_STATUSES } from './catalog-status';
 import { INVITATION_STATUSES } from './invitation-status';
 import { REGISTRATION_STATUSES, SESSION_SIGNUP_STATUSES } from './seat-status';
 import { EVENT_REVIEWS } from './event-review';
@@ -66,12 +67,7 @@ export const tableSessionStatus = pgEnum('table_session_status', TABLE_SESSION_S
 export const tableModality = pgEnum('table_modality', ['online', 'in_person']);
 // Where a platform or a tag stands in the catalog. Only approved ones are public; the rest are for
 // the GM who suggested them and the admins (the suggestion flow is card #34).
-export const catalogStatus = pgEnum('catalog_status', [
-  'pending',
-  'approved',
-  'rejected',
-  'disabled',
-]);
+export const catalogStatus = pgEnum('catalog_status', CATALOG_STATUSES);
 // A pending request takes no seat; only a confirmed one does.
 export const registrationStatus = pgEnum('registration_status', REGISTRATION_STATUSES);
 
