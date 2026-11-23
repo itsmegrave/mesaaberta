@@ -19,6 +19,11 @@
         "kind": "improved",
         "title": "Pedal Overdrive em um lugar só",
         "description": "Para quem entrou na conta, o pedal Overdrive agora fica só no menu da conta, junto de Claro e Escuro, e não mais repetido na barra lateral."
+      },
+      {
+        "kind": "improved",
+        "title": "Rodapé mais arejado",
+        "description": "No rodapé, o que vem depois de \"Feito pela comunidade, para a comunidade\" agora fica em um parágrafo próprio, logo abaixo da frase."
       }
     ]
   },

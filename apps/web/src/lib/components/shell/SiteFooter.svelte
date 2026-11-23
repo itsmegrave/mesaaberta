@@ -8,7 +8,7 @@
   import { isUnder } from '#lib/navigation/main-nav.js';
   import { m } from '#lib/paraglide/messages.js';
 
-  // The site footer: the brand with the community sentence (and any notes a private build adds),
+  // The site footer: the brand with the community sentence (and, below it, any notes a private build adds),
   // the pages and the contact, then a bottom bar with the open-source sentence and the credits.
   let {
     site,
@@ -114,17 +114,18 @@
           <TableLogo size={32} />
           <span class="font-brand text-xl font-semibold tracking-wider">Mesa Aberta</span>
         </p>
-        <p class="max-w-sm text-sm leading-relaxed text-muted">
-          {m.footer_community()}
-          {#each footerNotes as note (note.text)}
+        <p class="max-w-sm text-sm leading-relaxed text-muted">{m.footer_community()}</p>
+        <!-- Each note a private build adds is its own paragraph under the community sentence. -->
+        {#each footerNotes as note (note.text)}
+          <p class="max-w-sm text-sm leading-relaxed text-muted">
             {note.text}
             {#if note.link}
               <a href={note.link.href} rel="noopener" target="_blank" class={strong}
                 >{note.link.label}</a
               >.
             {/if}
-          {/each}
-        </p>
+          </p>
+        {/each}
         {#if site.INSTAGRAM_HANDLE}
           <!-- eslint-disable svelte/no-navigation-without-resolve -- Instagram is an external website, not an app route -->
           <a
