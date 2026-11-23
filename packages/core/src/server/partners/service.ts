@@ -31,6 +31,9 @@ import { enforceRateLimit, REPORT_LIMIT } from '@mesaaberta/core/server/rate-lim
 import { resolveOpenPartnerReports } from './admin';
 import { addSubmitterAsOwner, ownerIdsOf, ownersOf } from './owners';
 import { partnerReachOf } from '../places/partner-links';
+import { applyTransition } from '../state/transition';
+import { listingMachine } from '../../state/listing-machines';
+import type { ListingStatus } from '@mesaaberta/db/listing-status';
 
 // The member side of the partners (link exchange) page. A partner is sent by a member, waits for an
 // admin (`approvedAt`), and is then public. Editing it clears the approval again. Who looks after it
@@ -168,11 +171,19 @@ export async function updatePartner(
       .set({
         ...next,
         ...(logoPath ? { logoPath } : {}),
-        approvedAt: null,
-        approvedBy: null,
         updatedAt: now,
       })
       .where(eq(partners.id, id));
+    // Any edit by an owner sends it back to review.
+    await applyTransition<ListingStatus>(t, {
+      table: partners,
+      status: partners.status,
+      where: eq(partners.id, id),
+      machine: listingMachine,
+      from: current.status,
+      event: 'REVIEW_AGAIN',
+      set: { approvedAt: null, approvedBy: null },
+    });
     await writeLinks(t, id, input);
 
     const eventId = await recordEvent(
@@ -208,10 +219,15 @@ export async function withdrawPartner(
     if (!partner) throw new NotFound(`no partner "${id}"`);
     authorize(actor, 'partner:edit', { ownerIds: await ownersOf(t, partner) });
 
-    await t
-      .update(partners)
-      .set({ removedAt: now, removedBy: actor!.id, removalReason: null, removalNote: null })
-      .where(eq(partners.id, id));
+    await applyTransition<ListingStatus>(t, {
+      table: partners,
+      status: partners.status,
+      where: eq(partners.id, id),
+      machine: listingMachine,
+      from: partner.status,
+      event: 'REMOVE',
+      set: { removedAt: now, removedBy: actor!.id, removalReason: null, removalNote: null },
+    });
     const eventIds = await resolveOpenPartnerReports(t, actor!.id, id, now);
     eventIds.push(
       await recordEvent(

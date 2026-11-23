@@ -5,6 +5,7 @@ import { LOGO_STATUSES, PARTNER_LINK_STATUSES, PLACE_CLAIM_STATUSES } from './re
 import { IMPORT_RUN_STATUSES } from './import-run-status';
 import { INVITATION_STATUSES } from './invitation-status';
 import { WIDGET_STATUSES } from './widget-status';
+import { CROWDFUNDING_STATUSES, LISTING_STATUSES } from './listing-status';
 import { REGISTRATION_STATUSES, SESSION_SIGNUP_STATUSES } from './seat-status';
 import { EVENT_REVIEWS } from './event-review';
 import type { ReportExcerpt } from './report-excerpt';
@@ -1204,6 +1205,8 @@ export const crowdfundings = pgTable(
     endsOn: date('ends_on', { mode: 'string' }).notNull(),
     // A path in the table images bucket, or null: the tile then shows the chest and the host.
     imagePath: text('image_path'),
+    // `crowdfundingMachine`. Kept in step with `removed_at`, which says when.
+    status: text('status', { enum: CROWDFUNDING_STATUSES }).notNull().default('listed'),
     removedAt: timestamp('removed_at', { withTimezone: true }),
     // The admin who removed it, and why. Not a foreign key, like `reports.resolved_by`.
     removedBy: uuid('removed_by'),
@@ -1228,6 +1231,7 @@ export const crowdfundings = pgTable(
     check('crowdfundings_owner_length', sql`char_length(${campaign.owner}) BETWEEN 1 AND 80`),
     check('crowdfundings_dates_order', sql`${campaign.endsOn} >= ${campaign.startsOn}`),
     check('crowdfundings_removal_note_length', sql`char_length(${campaign.removalNote}) <= 1000`),
+    check('crowdfundings_status', sql`${campaign.status} IN ('listed','removed')`),
   ],
 ).enableRLS();
 
@@ -1263,6 +1267,8 @@ export const partners = pgTable(
     // and a line saying what it gives. Both optional; a description needs a code.
     couponCode: text('coupon_code'),
     couponDescription: text('coupon_description'),
+    // `listingMachine`. Kept in step with `approved_at` and `removed_at`, which say when.
+    status: text('status', { enum: LISTING_STATUSES }).notNull().default('pending'),
     // Null while the partner waits for an admin (or after an edit); the list shows approved ones only.
     approvedAt: timestamp('approved_at', { withTimezone: true }),
     // The admin who approved it. Not a foreign key, like `crowdfundings.removed_by`.
@@ -1298,6 +1304,7 @@ export const partners = pgTable(
       sql`${partner.couponDescription} IS NULL OR ${partner.couponCode} IS NOT NULL`,
     ),
     check('partners_removal_note_length', sql`char_length(${partner.removalNote}) <= 1000`),
+    check('partners_status', sql`${partner.status} IN ('pending','approved','removed')`),
   ],
 ).enableRLS();
 
@@ -1350,6 +1357,8 @@ export const tools = pgTable(
     platformId: uuid('platform_id').references(() => platforms.id, { onDelete: 'set null' }),
     // Null for the seeded ones.
     submitterId: uuid('submitter_id').references(() => profiles.id, { onDelete: 'set null' }),
+    // `listingMachine`. Kept in step with `approved_at` and `removed_at`, which say when.
+    status: text('status', { enum: LISTING_STATUSES }).notNull().default('pending'),
     approvedAt: timestamp('approved_at', { withTimezone: true }),
     // The admin who approved it. Not a foreign key, like `partners.approved_by`.
     approvedBy: uuid('approved_by'),
@@ -1378,6 +1387,7 @@ export const tools = pgTable(
     check('tools_description_length', sql`char_length(${tool.description}) BETWEEN 1 AND 140`),
     check('tools_site_url_length', sql`char_length(${tool.siteUrl}) <= 300`),
     check('tools_removal_note_length', sql`char_length(${tool.removalNote}) <= 1000`),
+    check('tools_status', sql`${tool.status} IN ('pending','approved','removed')`),
   ],
 ).enableRLS();
 
@@ -1427,6 +1437,8 @@ export const places = pgTable(
     siteUrl: text('site_url'),
     // A path in the table images bucket, or null.
     imagePath: text('image_path'),
+    // `listingMachine`. Kept in step with `approved_at` and `removed_at`, which say when.
+    status: text('status', { enum: LISTING_STATUSES }).notNull().default('pending'),
     // Null while it waits for an admin (or after the submitter edits it).
     approvedAt: timestamp('approved_at', { withTimezone: true }),
     // The admin who approved it. Not a foreign key, like `partners.approved_by`.
@@ -1475,6 +1487,7 @@ export const places = pgTable(
       sql`(${place.hiddenAt} IS NULL) = (${place.hiddenReason} IS NULL)`,
     ),
     check('places_removal_note_length', sql`char_length(${place.removalNote}) <= 1000`),
+    check('places_status', sql`${place.status} IN ('pending','approved','removed')`),
   ],
 ).enableRLS();
 
