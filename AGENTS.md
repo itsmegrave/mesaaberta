@@ -80,7 +80,7 @@ The system is live at mesaaberta.app. The split into web / api / worker and the 
 
 - Bun workspaces (`apps/*`, `packages/*`). The pinned Bun is 1.4.2; an older local Bun writes a different lockfile, so use `bunx bun@1.4.2 install` to change `bun.lock` and `--frozen-lockfile` to validate it.
 - Check with `bunx bun@1.4.2 run --bun svelte-check --tsgo --tsconfig ./tsconfig.json`, run unit tests with `bun run --bun vitest run --project server <path>`, and bundle a Worker with `wrangler deploy --dry-run`.
-- `bun run verify` is the one gate before a pull request: lint, typecheck and unit tests, in that order. While iterating, run the single spec you are changing instead.
+- `bun run verify` is the one gate before a pull request. It checks what the branch changed: Prettier and ESLint on the changed files, the typecheck, and the specs the change can reach (all of them when data, styles or tooling changed). `bun run verify:all` runs everything, as CI does on `main`. While iterating, run the single spec you are changing.
 - Playwright e2e runs in CI only. The onboarding "without a single CSP violation" test is known to be flaky (the combobox positioner's inline style vs `style-src-attr`); rerun the failed shard and read its log before assuming a regression.
 - Tests and CI never touch Cloudflare; they use Docker or simulated bindings.
 

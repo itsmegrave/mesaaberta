@@ -6,7 +6,7 @@ Thanks for helping. Bug reports, fixes, features and translations are all welcom
 
 - One issue, one small pull request that closes it.
 - Conventional commits, one concern per commit.
-- The PR should build green (`bun run lint`, `bun run check`, `bun run test`; and `bun run test:integration` when you touch anything that depends on database concurrency, see the README) and include a short test plan.
+- The PR should build green (`bun run verify` checks what your branch changed: lint, types and the unit tests it can reach; CI adds the end-to-end tests; and `bun run test:integration` when you touch anything that depends on database concurrency, see the README) and include a short test plan.
 - Tests describe behavior, not wording. Each test should name the break it catches.
 - Every PR gets an OWASP Top 10 review before it merges: fill in the checklist in the PR template and fix any finding first.
 
