@@ -1,23 +1,91 @@
-# Project instructions
+# Project rules
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) for the project workflow, code style, translations and UI conventions.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) first: workflow, code style, translations and internal links all apply to agents too.
 
-## UI libraries and components
+## How to work on a task
 
-- Prefer the project's existing Skeleton Svelte components and wrappers whenever they provide the control or interaction. Use TanStack Query for client-side server state, TanStack Table for interactive tables, and TanStack Form for form state and validation. Superforms has been removed; use the shared actionForm contract for native POST and Query mutations.
-- Use the shared MAButton (also every submit button: `type="submit"` with the form's `controller`), TextInput, MATextArea, FormField and MAForm components and shared TanStack Form/Query integration for forms. Reuse or extend existing wrappers before adding new ones. When Skeleton has no standalone primitive, keep the semantic HTML inside the shared wrapper instead of repeating control markup and styling across screens. TanStack Table is for data tables.
+Size the task first and say which size you picked.
+
+- **Small** (the diff fits in one sentence): implement it with its check, then verify.
+- **Medium** (several files, or code you have not read): explore, propose a plan and wait for approval before editing.
+- **Large** (a new feature, a schema or auth change, anything cross-cutting): write a spec, a plan and tasks before any code. They live in the private `itsmegrave/mesaaberta-infra` repo under `docs/specs/` (its README has the layout), never here. This repository is public: do not quote or link a spec from a commit or a pull request.
+
+Then:
+
+- A bug starts with a failing spec that reproduces it.
+- Say a task is done only with the output of the check you ran.
+- Before opening a pull request, run `bun run verify` and have a fresh-context reviewer read the diff against the plan. It reports gaps in correctness and requirements, not style.
+- Ask first: a new dependency, a migration, a production flag, any Cloudflare resource.
+- After two failed corrections on the same problem, stop and say so instead of trying a third variation.
+
+## UI and forms
+
+- Prefer the project's existing Skeleton Svelte components and wrappers whenever they provide the control or interaction. Use TanStack Query for client-side server state, TanStack Table for interactive tables and TanStack Form for form state and validation. Superforms has been removed; use the shared actionForm contract for native POST and Query mutations.
+- Use the shared MAButton (also every submit button: `type="submit"` with the form's `controller`), TextInput, MATextArea, MACheckbox, FormField and MAForm components and the shared TanStack Form/Query integration. Reuse or extend existing wrappers before adding new ones. When Skeleton has no standalone primitive, keep the semantic HTML inside the shared wrapper instead of repeating control markup and styling across screens.
 - Components: shared primitives that only draw what they are given live in `src/lib/components/ui/`; groups (`admin/`, `chat/`, `shell/`, `report/`) keep their pure parts in their own `ui/`; a component used by one route subtree lives in that route's `components/` (and `components/ui/`). State and behaviour go in `.svelte.ts` modules (runes), plain logic in `.ts`. A component named like an HTML element or a Skeleton component takes the MA prefix (MAButton, MAForm, MATextArea, MAAvatar, MAToaster). `src/lib/components/{Button,Form,Icon,StatusBadge,TextInput}.svelte` are forwarding files kept for the private package; import the `ui/` components instead.
-- Keep semantic HTML for document structure and use native form elements when these libraries do not provide an equivalent, progressive enhancement requires them, or a documented accessibility or CSP constraint requires them. Basic buttons and fields may use semantic HTML styled with Skeleton's shared classes when there is no standalone component.
+- Form migrations preserve SvelteKit actions, server authorization and validation, and drafts. The app requires JavaScript: do not build no-JS fallbacks (`<noscript>` buttons, native inputs shown before mount). Follow the UI/form contract in CONTRIBUTING.
+- Keep semantic HTML for document structure and use native form elements when these libraries have no equivalent or a documented accessibility or CSP constraint requires them.
 - Before adding a custom control, inspect the installed library components and existing project wrappers. Preserve keyboard behavior, labels, validation, focus states and responsive behavior.
 
 ## Spacing and visual consistency
 
-- Use Tailwind's 4px spacing grid and existing theme tokens for spacing, sizing, radius, borders and color. Avoid arbitrary values and one-off values; add a named token only when the design needs a value the existing scale cannot express.
-- Calculated layout values and precise illustration geometry may use arbitrary values when needed; leave a short code comment explaining non-obvious cases.
-- When changing a screen or component, review its mobile and desktop padding, gaps, border weight and color, radius, and focus treatment for consistency with nearby UI.
+- Use Tailwind's 4px spacing grid and the existing theme tokens for spacing, sizing, radius, borders and color. Avoid arbitrary values and one-off values; add a named token only when the design needs a value the existing scale cannot express.
+- Calculated layout values and precise illustration geometry may use arbitrary values; leave a short comment explaining non-obvious cases.
+- When changing a screen or component, review its mobile and desktop padding, gaps, border weight and color, radius and focus treatment against nearby UI.
 
-## API ownership
+## Pagination
+
+- Paginated lists take the page number from `?page=N` (the first page has no parameter). A value that isn't a positive whole number reads as page 1, and a page past the last answers 404.
+
+## Security review before merging
+
+- Before merging any PR in mesaaberta, mesaaberta-privy or mesaaberta-infra, review the change against the OWASP Top 10 (2025) with the checklist in `.github/pull_request_template.md`. Fix any finding before merging, and write the result in the PR body ("OWASP Top 10 review: no findings", or each finding and its fix).
+
+## Architecture migration (Trello #120)
+
+The system is live at mesaaberta.app. The split into web / api / worker and the move to Bun is a strangler migration, not a rewrite. Decisions and ADRs live in the private `itsmegrave/mesaaberta-infra` repo (`docs/adr`), never here.
+
+### Where things live
+
+- `apps/web`: the SvelteKit app (`src`, `e2e`, `messages`, `static`, `vite.config.ts`, `host.config.ts`). Paths such as `src/lib/...` in these docs are relative to it. Root `package.json` scripts `cd` into it; `wrangler.jsonc`, `drizzle/` and `scripts/` stay at the root.
+- `packages/db` (`@mesaaberta/db`): Drizzle schema and the postgres.js client. Migrations stay in `drizzle/`.
+- `packages/contracts`: `DomainEvent` types and shared vocabulary.
+- `packages/events`: the `EventBus` port, the Postgres outbox and poller, the transport contract (`JobTransport`/`JobExecutor`, ADR 0003).
+- `packages/core` (`@mesaaberta/core`): the event-delivery graph (handlers, sweeper, scheduled, connectors, logger, privacy and Sentry options). The web app imports it directly (`@mesaaberta/core/...`); the old `src/lib` re-export shims are gone.
+- `packages/privy` (`@mesaaberta/privy`): only a placeholder here. The closed features (Instagram, apoia.se later) live in the private repo `itsmegrave/mesaaberta-privy` as `Extension`s, which infra checks out at a pinned tag into this directory and overlays onto three files: `packages/core/src/server/extensions/installed.ts` (empty here), `apps/web/src/lib/extensions/panels.ts` and `origins.ts`. The overlay also copies the blog posts (privy `blog/*.md`) into `apps/web/src/content/blog/`, which is empty here. Extensions declare their own GrowthBook flags (`Extension.flags`) and read them through `flagsFromEnv`. The placeholder's `package.json` must keep the private package's dependencies or the frozen install fails. The public code never imports the package (`boundary.spec.ts`).
+- `apps/worker` (`@mesaaberta/worker`): the background Worker. **Deployed and owns the crons** (the event sweep `*/5 * * * *`, the daily import `0 4 * * *` and the logo search `*/10 * * * *`; the web Worker's `triggers.crons` is empty) and consumes the `domain-events-canary` queue and its dead-letter queue. It has no routes. Its README has the cutover and rollback.
+- `apps/api` (`@mesaaberta/api`): a Hono app that owns writes, policies and the outbox one route at a time, behind `api_<area>` flags. **Deployed, reached only through the web Worker's Service Binding** (`src/lib/server/api-client.ts`); it serves `/healthz` and the `/v1` reads, auth forms and writes listed in its README, which also has the rule for moving a route.
+- `apps/mcp` (`@mesaaberta/mcp`): the MCP server for Claude and other MCP clients, read-only so far (phase 1). A public Hono Worker at `mcp.mesaaberta.app` that checks Supabase OAuth 2.1 access tokens (they must carry `client_id`, so only a client the person approved on `/oauth/consent` gets in) and calls the api over a Service Binding as that person. It holds no database, store or secret; `use_mcp` gates it. Its README has the tools and the setup.
+- Ports (adapters with a no-op default): social (`SocialPublisher`), mail (`mailerFor`, `MAIL_PROVIDER=none`), analytics, flags (`createFlags` seam), telemetry (`TelemetrySink`; Sentry is the web and worker adapter).
+
+### Rules for changes
+
+- `packages/**` must stay runtime-neutral: no Node builtins, `Buffer`, `process` or `Bun.*` (ESLint enforces it; specs are exempt). Use `bytesToBase64` instead of `Buffer`.
+- The delivery graph (`packages/core/src/server/events/{handlers,sweeper,scheduled}.ts`) must not import `@sveltejs/*`, `$app`, `$env`, paraglide or `@sentry/sveltekit`. `delivery-graph.spec.ts` fails if it does.
+- When code moves into a package, leave a re-export shim at the old path and mock the new path in specs, not the shim.
+- Strangler: each behavioral step ships behind a GrowthBook flag named `api_<area>`, default off. Behavior-preserving moves (extractions, shims) need no flag; rollback is a revert.
+- Schema: expand, then migrate, then contract. Only additive migrations while old and new code run together. Never rename a handler (`handledBy` stores names) and never truncate or move `events` (audit and Marco Civil log).
+- Anything under `/admin` may be on for all admins from the start; the flag is only a kill switch. Percentage ramps are for member-facing traffic. Pure UI fixes ship unflagged.
+- There is no staging environment: canaries run on production (ADR 0003 addendum). Tell the user before creating or toggling a production flag, and before creating any Cloudflare resource (queues, Workers, KV). Do not flip the release flag `is_platform_released`.
+- `EVENT_POLLER` stays off. Every refactor flag with a rollout starts at admins + 30% (30% is the floor, including `api_events_fenced_leases`). `QUEUES_164_VERIFIED` is set only after evidence.
+- Production deploys come from the private repo's pinned tagged release, which runs the migrations before it deploys. Workers Builds is disconnected; do not reconnect it (two deploy paths would race on migrations).
+
+### API ownership
 
 - Implement every new endpoint for domain reads or writes in `apps/api`, backed by shared services in `packages/core`.
 - Web form actions and loaders consume the authenticated API contract. New features must use the required API transport, without a migration flag or a local database fallback; unavailable API calls fail as service errors.
 - Existing endpoints keep their current migration behavior until explicitly migrated. Tests for new flows run the API alongside the web app.
+
+### Tooling
+
+- Bun workspaces (`apps/*`, `packages/*`). The pinned Bun is 1.4.2; an older local Bun writes a different lockfile, so use `bunx bun@1.4.2 install` to change `bun.lock` and `--frozen-lockfile` to validate it.
+- Check with `bunx bun@1.4.2 run --bun svelte-check --tsgo --tsconfig ./tsconfig.json`, run unit tests with `bun run --bun vitest run --project server <path>`, and bundle a Worker with `wrangler deploy --dry-run`.
+- `bun run verify` is the one gate before a pull request: lint, typecheck and unit tests, in that order. While iterating, run the single spec you are changing instead.
+- Playwright e2e runs in CI only. The onboarding "without a single CSP violation" test is known to be flaky (the combobox positioner's inline style vs `style-src-attr`); rerun the failed shard and read its log before assuming a regression.
+- Tests and CI never touch Cloudflare; they use Docker or simulated bindings.
+
+### Workflow
+
+- Link the Trello card in the PR body and post the PR link and an update on the card (#120: https://trello.com/c/3n967DND). Trello is the source of truth for what is open.
+- Squash merge with `--admin` is authorized once CI is green and the PR body holds the OWASP Top 10 review (below). Delete the worktree and branch afterwards.
+- Work in a `git worktree` off `origin/main`; the main checkout may hold unrelated uncommitted work.
