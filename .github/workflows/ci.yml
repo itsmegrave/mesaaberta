@@ -61,6 +61,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # verify.ts compares with the pull request's base commit.
+          fetch-depth: 0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
@@ -68,7 +71,17 @@ jobs:
         with:
           bun-version-file: .bun-version
       - run: bun install --frozen-lockfile
-      - run: bun run lint
+      # A pull request lints the files it changed (scripts/verify.ts, which lints everything when the
+      # tooling itself changed). A push to main and the weekly run lint the whole repository.
+      - name: Lint
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ -n "$BASE_SHA" ]; then
+            bun scripts/verify.ts --lint --base "$BASE_SHA"
+          else
+            bun run lint
+          fi
 
   typecheck:
     name: Typecheck
@@ -93,6 +106,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # verify.ts compares with the pull request's base commit.
+          fetch-depth: 0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
@@ -101,7 +117,17 @@ jobs:
           bun-version-file: .bun-version
       - run: bun install --frozen-lockfile
       - run: bun run playwright install --with-deps chromium
-      - run: bun run test:unit
+      # A pull request runs the specs its changes can reach, and every spec when it touches data,
+      # styles or tooling (scripts/verify.ts). A push to main and the weekly run always run them all.
+      - name: Unit tests
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ -n "$BASE_SHA" ]; then
+            bun scripts/verify.ts --tests --base "$BASE_SHA"
+          else
+            bun run test:unit
+          fi
 
   integration:
     name: Integration tests

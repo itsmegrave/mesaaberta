@@ -17,6 +17,8 @@
     "prepare": "(cd apps/web && bun run --bun svelte-kit sync) && bun run i18n && bun run wrangler types || echo ''",
     "check": "bun run wrangler types && bun run i18n && cd apps/web && bun run --bun svelte-kit sync && bun run --bun svelte-check --tsgo --tsconfig ./tsconfig.json",
     "check:watch": "bun run wrangler types && bun run i18n && cd apps/web && bun run --bun svelte-kit sync && bun run --bun svelte-check --tsgo --tsconfig ./tsconfig.json --watch",
+    "verify": "bun scripts/verify.ts",
+    "verify:all": "bun scripts/verify.ts --all",
     "lint": "bun run --bun prettier --check . && bun run --bun eslint .",
     "lint:fix": "bun run --bun prettier --write . && bun run --bun eslint . --fix",
     "format": "bun run --bun prettier --write .",
