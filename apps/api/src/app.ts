@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { isConnectionLost } from '@mesaaberta/core/server/db/connection-lost';
 import { REQUEST_ID_HEADER, requestIdFrom, withRequestId } from '@mesaaberta/contracts';
 import { logger } from '@mesaaberta/core/server/logger';
 import { buildInfoOf, type BuildEnv } from '@mesaaberta/core/server/build-info';
@@ -178,6 +179,16 @@ export function createApi() {
   // The caller never sees the cause. The logger forwards the error's type, code and stack location to
   // Sentry, never its message, and the route is the template (`/v1/account/password/code`).
   app.onError((error, c) => {
+    // Hyperdrive closed the connection under a query: nothing ran to an answer, and web sends a
+    // read once more on this 503. A warning, not an issue; web reports it if the retry fails too.
+    if (isConnectionLost(error)) {
+      logger.warn('api.database_connection_lost', {
+        route: c.req.routePath,
+        method: c.req.method,
+        error,
+      });
+      return c.json({ error: 'database_unavailable' }, 503);
+    }
     logger.error('api.request_failed', {
       release: buildInfoOf(c.env as BuildEnv | undefined).version ?? undefined,
       route: c.req.routePath,

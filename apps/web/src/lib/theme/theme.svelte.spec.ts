@@ -46,6 +46,19 @@ describe('applyChoice', () => {
 
     expect(metas().slice(-2)).toEqual([MODE_COLOURS.dark, MODE_COLOURS.dark]);
   });
+
+  it('reads the media attribute in a browser without HTMLMetaElement.media', () => {
+    document.head.insertAdjacentHTML(
+      'beforeend',
+      '<meta name="theme-color" content="x" media="(prefers-color-scheme: light)"><meta name="theme-color" content="y" media="(prefers-color-scheme: dark)"><meta name="theme-color" content="z">',
+    );
+    // Older browsers have no `media` property on <meta> (Sentry MESA-ABERTA-APP-22).
+    for (const meta of document.querySelectorAll('meta[name="theme-color"]'))
+      Object.defineProperty(meta, 'media', { value: undefined });
+
+    expect(() => applyChoice('system')).not.toThrow();
+    expect(metas().slice(-3)).toEqual([MODE_COLOURS.light, MODE_COLOURS.dark, MODE_COLOURS.light]);
+  });
 });
 
 describe('applyStyle', () => {

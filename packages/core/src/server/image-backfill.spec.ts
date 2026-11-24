@@ -161,6 +161,13 @@ describe('originals earlier runs kept', () => {
     expect(leftovers).toEqual(['u/face.jpg']);
   });
 
+  it('finds the leftovers in one query, not one per original (Sentry N+1)', async () => {
+    const execute = vi.spyOn(test.db, 'execute');
+    await leftoverOriginals(test.db as never, 20);
+    expect(execute).toHaveBeenCalledTimes(1);
+    execute.mockRestore();
+  });
+
   it('moves a row to the WebP an earlier run stored, without converting it again', async () => {
     await test.db
       .update(systemLogos)

@@ -72,7 +72,8 @@ function paintChrome(choice: ThemeChoice): void {
   const colours = currentStyle() === 'overdrive' ? OVERDRIVE_COLOURS : MODE_COLOURS;
   const mode = document.documentElement.dataset.mode === 'dark' ? 'dark' : 'light';
   for (const meta of document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) {
-    const scheme = meta.media.includes('dark') ? 'dark' : 'light';
+    // The attribute, not `meta.media`: older browsers have no such property on <meta>.
+    const scheme = (meta.getAttribute('media') ?? '').includes('dark') ? 'dark' : 'light';
     meta.content = colours[choice === 'system' ? scheme : mode];
   }
 }

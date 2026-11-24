@@ -95,6 +95,13 @@ async function stillUsed(db: AnyDb, bucket: Bucket, path: string) {
  */
 export async function leftoverOriginals(db: AnyDb, limit: number) {
   const buckets = [...new Set(IMAGE_COLUMNS.map((c) => c.bucket))];
+  // Still pointed at by a row of a column in the same bucket: checked inside the one query, so a run
+  // costs one round trip however many originals it looks at.
+  const used = IMAGE_COLUMNS.map(
+    ({ table, column, bucket }) =>
+      sql`select 1 from ${sql.identifier(table)}
+          where o.bucket_id = ${bucket} and ${sql.identifier(column)} = o.name`,
+  );
   type Row = { path: string; bucket: Bucket };
   try {
     const result = await db.execute(
@@ -106,15 +113,10 @@ export async function leftoverOriginals(db: AnyDb, limit: number) {
             and lower(o.name) ~ '\.(png|jpe?g)$'
             and exists (select 1 from storage.objects w where w.bucket_id = o.bucket_id
                         and w.name = regexp_replace(o.name, '\.[^.]+$', '.webp'))
-          limit ${limit * 4}`,
+            and not exists (${sql.join(used, sql` union all `)})
+          limit ${limit}`,
     );
-    const rows = (Array.isArray(result) ? result : (result as { rows: Row[] }).rows) as Row[];
-    const unused: Row[] = [];
-    for (const row of rows) {
-      if (unused.length >= limit) break;
-      if (!(await stillUsed(db, row.bucket, row.path))) unused.push(row);
-    }
-    return unused;
+    return (Array.isArray(result) ? result : (result as { rows: Row[] }).rows) as Row[];
   } catch {
     return [];
   }
@@ -172,7 +174,8 @@ export async function runImageBackfill(
     for (const { path, bucket } of await leftoverOriginals(db as AnyDb, ORIGINALS_CLEANUP_BATCH)) {
       const target = bucketOf(bucket);
       if (!target) break;
-      if (await removeOriginal(db as AnyDb, target, bucket, path)) result.removed += 1;
+      // The query already left out every original a row points at.
+      if (await removeOriginal(db as AnyDb, target, bucket, path, true)) result.removed += 1;
     }
     for (const { path, bucket } of await picturesToConvert(db, batch)) {
       try {
@@ -226,8 +229,14 @@ export async function runImageBackfill(
   return result;
 
   /** Deletes a converted original once no row points at it; a refusal waits for a later run. */
-  async function removeOriginal(db: AnyDb, target: BucketStorage, bucket: Bucket, path: string) {
-    if (await stillUsed(db, bucket, path)) return false;
+  async function removeOriginal(
+    db: AnyDb,
+    target: BucketStorage,
+    bucket: Bucket,
+    path: string,
+    knownUnused = false,
+  ) {
+    if (!knownUnused && (await stillUsed(db, bucket, path))) return false;
     const { error } = await target.remove([path]);
     if (error) {
       log.warn('images.original_not_removed', {

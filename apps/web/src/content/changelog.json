@@ -13,6 +13,11 @@
         "kind": "new",
         "title": "Convite para criar passkey",
         "description": "Quem ainda não tem passkey vê um convite depois de entrar, com um botão que leva direto a Conta e acesso para criar uma."
+      },
+      {
+        "kind": "fixed",
+        "title": "Menos erros ao abrir as mesas",
+        "description": "Quando a conexão com o banco de dados caía por um instante, a lista de mesas podia mostrar uma página de erro. Agora o site tenta de novo sozinho antes de desistir."
       }
     ]
   },
