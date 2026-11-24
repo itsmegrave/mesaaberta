@@ -68,12 +68,13 @@ describe('api app', () => {
     });
 
     const response = await app.request('/dropped');
+    const errorCalls = errors.mock.calls.length;
     errors.mockRestore();
     warn.mockRestore();
 
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ error: 'database_unavailable' });
-    expect(errors).not.toHaveBeenCalled();
+    expect(errorCalls).toBe(0);
     expect(warnings.map((line) => JSON.parse(line))).toContainEqual(
       expect.objectContaining({
         msg: 'api.database_connection_lost',
