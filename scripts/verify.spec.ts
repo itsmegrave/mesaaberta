@@ -36,7 +36,7 @@ describe('verify: what a change runs', () => {
       existing: ['apps/web/src/a.ts'],
     }).steps;
     const disk = steps.find((s) => s.label.includes('read files from disk'));
-    expect(disk?.cmd).toContain('packages/core/src/server/logger-fields.spec.ts');
+    expect(disk?.cmd).toContain('/repo/packages/core/src/server/logger-fields.spec.ts');
   });
 
   it('runs every unit spec when a data file changed, which imports cannot reach', () => {

@@ -168,7 +168,8 @@ export function plan(options: Options): { reason: string; steps: Step[] } {
       if (diskSpecs.length > 0)
         steps.push({
           label: 'Unit tests (specs that read files from disk)',
-          cmd: [...vitest, ...diskSpecs],
+          // Absolute: Vitest matches filters against paths relative to apps/web.
+          cmd: [...vitest, ...diskSpecs.map((file) => path.join(root, file))],
           cwd: web,
         });
     }
