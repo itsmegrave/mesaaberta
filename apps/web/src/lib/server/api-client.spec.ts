@@ -175,6 +175,53 @@ describe('callApiRaw when Cloudflare answers for the api', () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
+  it('tries a read once more when the api lost its database connection', async () => {
+    const fetch = vi
+      .fn<(request: Request) => Promise<Response>>()
+      .mockResolvedValueOnce(Response.json({ error: 'database_unavailable' }, { status: 503 }))
+      .mockResolvedValueOnce(Response.json({ tables: [] }));
+
+    const answer = await callApiRaw(
+      envWith(fetch),
+      '/v1/reads/tables',
+      null,
+      log,
+      undefined,
+      {},
+      'GET',
+    );
+
+    expect(answer).toEqual({ ok: true, status: 200, body: { tables: [] } });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns the refusal when the database is still unavailable on the second try', async () => {
+    const fetch = vi.fn(async (_request: Request) =>
+      Response.json({ error: 'database_unavailable' }, { status: 503 }),
+    );
+
+    const answer = await callApiRaw(
+      envWith(fetch),
+      '/v1/reads/tables',
+      null,
+      log,
+      undefined,
+      {},
+      'GET',
+    );
+
+    expect(answer).toEqual({ ok: false, status: 503, body: { error: 'database_unavailable' } });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('never sends a write twice when the database connection dropped', async () => {
+    const fetch = vi.fn(async (_request: Request) =>
+      Response.json({ error: 'database_unavailable' }, { status: 503 }),
+    );
+    await callApiRaw(envWith(fetch), '/v1/tables/x/join', 'a', log, {});
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
   it('never sends a write twice', async () => {
     const fetch = vi.fn(async (_request: Request) => errorPage());
     expect(await callApiRaw(envWith(fetch), '/v1/tables/x/join', 'a', log, {})).toBeNull();

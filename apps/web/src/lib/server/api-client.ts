@@ -109,13 +109,20 @@ export async function callApiRaw(
   // A read is safe to send again. When the answer was not the api's JSON (Cloudflare's error page,
   // an empty 500, or a body cut off mid-stream) that isolate failed while the next one usually does
   // not: one more try, a moment later, keeps the page up instead of a 503.
-  if (first.kind === 'not_json' && method === 'GET') {
+  // The api answers 503 `database_unavailable` when Hyperdrive dropped its connection mid-query:
+  // the read never finished, and the next connection usually works.
+  if ((first.kind === 'not_json' || isDatabaseDrop(first)) && method === 'GET') {
     await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
     const second = await answerOnce(env, path, actorId, log, json, headers, method, 2);
     return second.kind === 'answer' ? second.answer : null;
   }
   return first.kind === 'answer' ? first.answer : null;
 }
+
+const isDatabaseDrop = (attempt: Attempt) =>
+  attempt.kind === 'answer' &&
+  attempt.answer.status === 503 &&
+  (attempt.answer.body as { error?: unknown } | null)?.error === 'database_unavailable';
 
 /** How long a failed read waits before its one retry. */
 export const RETRY_DELAY_MS = 150;

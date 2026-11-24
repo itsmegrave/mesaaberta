@@ -53,6 +53,35 @@ describe('api app', () => {
     expect(await response.json()).toEqual({ error: 'internal_error' });
   });
 
+  it('answers a dropped database connection as a 503 the caller may retry, without an issue', async () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const warnings: string[] = [];
+    const warn = vi.spyOn(console, 'warn').mockImplementation((line: string) => {
+      warnings.push(line);
+    });
+    const app = createApi();
+    app.get('/dropped', () => {
+      // What drizzle throws when Hyperdrive closes the connection under a query.
+      throw new Error('Failed query', {
+        cause: Object.assign(new Error('write CONNECTION_CLOSED'), { code: 'CONNECTION_CLOSED' }),
+      });
+    });
+
+    const response = await app.request('/dropped');
+    errors.mockRestore();
+    warn.mockRestore();
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: 'database_unavailable' });
+    expect(errors).not.toHaveBeenCalled();
+    expect(warnings.map((line) => JSON.parse(line))).toContainEqual(
+      expect.objectContaining({
+        msg: 'api.database_connection_lost',
+        causeCode: 'CONNECTION_CLOSED',
+      }),
+    );
+  });
+
   it('logs one line per request with the route template, never the path', async () => {
     const lines: string[] = [];
     const spy = vi
