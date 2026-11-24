@@ -176,6 +176,8 @@ export default defineConfig({
             '../api/**/*.{test,spec}.{js,ts}',
             '../worker/**/*.{test,spec}.{js,ts}',
             '../mcp/**/*.{test,spec}.{js,ts}',
+            // The repository's own scripts (verify.ts decides what CI checks on a pull request).
+            '../../scripts/**/*.{test,spec}.{js,ts}',
           ],
           exclude: [
             'src/**/*.svelte.{test,spec}.{js,ts}',
